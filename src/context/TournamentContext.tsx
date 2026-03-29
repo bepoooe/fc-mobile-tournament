@@ -1,0 +1,494 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
+import {
+  addLateEntrantFixtures,
+  createId,
+  createKnockout,
+  defaultState,
+  generateGroupFixtures,
+  getQualifiedPlayers,
+  propagateKnockout,
+  snakeDraftGroups,
+  standingsGoalDiffMap,
+  suggestBalancedGroup,
+} from '../utils/tournament'
+import type {
+  Fixture,
+  KnockoutTie,
+  Player,
+  TournamentContextType,
+  TournamentState,
+} from '../types'
+
+const STORAGE_KEY = 'techstorm_tournament_state'
+
+const TournamentContext = createContext<TournamentContextType | null>(null)
+
+const parseState = (): TournamentState => {
+  const raw = localStorage.getItem(STORAGE_KEY)
+  if (!raw) return defaultState()
+
+  try {
+    const parsed = JSON.parse(raw) as TournamentState
+    return {
+      ...defaultState(),
+      ...parsed,
+      settings: { ...defaultState().settings, ...parsed.settings },
+      knockout: { ...defaultState().knockout, ...parsed.knockout },
+    }
+  } catch {
+    return defaultState()
+  }
+}
+
+const updateTie = (
+  tie: KnockoutTie,
+  leg: 'leg1' | 'leg2' | 'decider',
+  homeGoals: number,
+  awayGoals: number,
+): KnockoutTie => {
+  if (leg === 'decider') {
+    return {
+      ...tie,
+      decider: {
+        ...tie.decider,
+        homeGoals,
+        awayGoals,
+        completed: true,
+      },
+    }
+  }
+
+  return {
+    ...tie,
+    [leg]: {
+      ...tie[leg],
+      homeGoals,
+      awayGoals,
+      completed: true,
+    },
+  }
+}
+
+export const TournamentProvider = ({ children }: { children: ReactNode }) => {
+  const [state, setState] = useState<TournamentState>(parseState)
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  }, [state])
+
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === null) {
+        alert('Warning: Browser storage was cleared in another tab.')
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  const setSettings = useCallback((settings: Partial<TournamentState['settings']>) => {
+    setState((prev) => ({ ...prev, settings: { ...prev.settings, ...settings } }))
+  }, [])
+
+  const setAdminPassword = useCallback((password: string) => {
+    setState((prev) => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        adminPassword: password,
+      },
+    }))
+  }, [])
+
+  const addPlayer = useCallback((name: string, ovr: number, joinedLate = false) => {
+    const player: Player = {
+      id: createId(),
+      name: name.trim(),
+      ovr,
+      groupId: null,
+      joinedLate,
+    }
+
+    setState((prev) => ({
+      ...prev,
+      players: [...prev.players, player],
+    }))
+
+    return player
+  }, [])
+
+  const bulkAddPlayers = useCallback(
+    (incoming: Array<{ name: string; ovr: number }>) => {
+      const normalized = incoming
+        .filter((player) => player.name.trim() && Number.isFinite(player.ovr))
+        .map((player) => ({
+          id: createId(),
+          name: player.name.trim(),
+          ovr: Math.round(player.ovr),
+          groupId: null,
+          joinedLate: false,
+        }))
+
+      if (!normalized.length) return
+
+      setState((prev) => ({
+        ...prev,
+        players: [...prev.players, ...normalized],
+      }))
+    },
+    [],
+  )
+
+  const updatePlayer = useCallback((id: string, name: string, ovr: number) => {
+    setState((prev) => ({
+      ...prev,
+      players: prev.players.map((player) =>
+        player.id === id ? { ...player, name: name.trim(), ovr } : player,
+      ),
+    }))
+  }, [])
+
+  const removePlayer = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      players: prev.players.filter((player) => player.id !== id),
+      groups: prev.groups.map((group) => ({
+        ...group,
+        playerIds: group.playerIds.filter((playerId) => playerId !== id),
+      })),
+      fixtures: prev.fixtures.filter(
+        (fixture) => fixture.homeId !== id && fixture.awayId !== id,
+      ),
+    }))
+  }, [])
+
+  const clearAllPlayers = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      players: [],
+      groups: [],
+      fixtures: [],
+      knockout: defaultState().knockout,
+      stage: 'setup',
+      groupsLocked: false,
+      championId: null,
+    }))
+  }, [])
+
+  const generateGroups = useCallback(() => {
+    setState((prev) => {
+      const result = snakeDraftGroups(prev.players, prev.settings.groupSize)
+      return {
+        ...prev,
+        players: result.players,
+        groups: result.groups,
+        fixtures: [],
+        groupsLocked: false,
+        stage: 'setup',
+        knockout: defaultState().knockout,
+        championId: null,
+      }
+    })
+  }, [])
+
+  const movePlayerToGroup = useCallback((playerId: string, targetGroupId: string) => {
+    setState((prev) => {
+      const groups = prev.groups.map((group) => ({
+        ...group,
+        playerIds: group.playerIds.filter((id) => id !== playerId),
+      }))
+
+      const target = groups.find((group) => group.id === targetGroupId)
+      if (target) {
+        target.playerIds.push(playerId)
+      }
+
+      return {
+        ...prev,
+        groups,
+        players: prev.players.map((player) =>
+          player.id === playerId ? { ...player, groupId: targetGroupId } : player,
+        ),
+      }
+    })
+  }, [])
+
+  const lockGroups = useCallback(() => {
+    setState((prev) => {
+      if (prev.groups.length === 0) return prev
+      return {
+        ...prev,
+        groupsLocked: true,
+        stage: 'group_stage',
+        fixtures: generateGroupFixtures(prev.groups),
+      }
+    })
+  }, [])
+
+  const addLatePlayerToSuggestedGroup = useCallback((name: string, ovr: number) => {
+    let assignedGroup: string | null = null
+
+    setState((prev) => {
+      const playerId = createId()
+      const suggestedGroupId = suggestBalancedGroup(ovr, prev.groups, prev.players)
+      assignedGroup = suggestedGroupId
+      if (!suggestedGroupId) return prev
+
+      const players = [
+        ...prev.players,
+        {
+          id: playerId,
+          name: name.trim(),
+          ovr,
+          groupId: suggestedGroupId,
+          joinedLate: true,
+        },
+      ]
+
+      const groups = prev.groups.map((group) =>
+        group.id === suggestedGroupId
+          ? { ...group, playerIds: [...group.playerIds, playerId] }
+          : group,
+      )
+
+      const fixtures = addLateEntrantFixtures(playerId, suggestedGroupId, prev.fixtures, groups)
+
+      return {
+        ...prev,
+        players,
+        groups,
+        fixtures,
+      }
+    })
+
+    return assignedGroup
+  }, [])
+
+  const setFixtureScore = useCallback((fixtureId: string, homeGoals: number, awayGoals: number) => {
+    setState((prev) => {
+      const fixtures = prev.fixtures.map((fixture) =>
+        fixture.id === fixtureId
+          ? {
+              ...fixture,
+              homeGoals,
+              awayGoals,
+              completed: true,
+            }
+          : fixture,
+      )
+      return {
+        ...prev,
+        fixtures,
+        stage: fixtures.some((fixture) => fixture.completed) ? 'group_stage' : prev.stage,
+      }
+    })
+  }, [])
+
+  const generateKnockout = useCallback(() => {
+    setState((prev) => {
+      const gdMap = standingsGoalDiffMap(prev.groups, prev.fixtures)
+      const qualifiedPlayers = getQualifiedPlayers(
+        prev.groups,
+        prev.fixtures,
+        prev.settings.qualifiersPerGroup,
+      )
+      const knockout = propagateKnockout(createKnockout(qualifiedPlayers, gdMap))
+
+      return {
+        ...prev,
+        knockout,
+        stage: 'knockout',
+      }
+    })
+  }, [])
+
+  const setTieLegScore = useCallback(
+    (
+      roundIndex: number,
+      tieId: string,
+      leg: 'leg1' | 'leg2' | 'decider',
+      homeGoals: number,
+      awayGoals: number,
+    ) => {
+      setState((prev) => {
+        const rounds = prev.knockout.rounds.map((round, index) => {
+          if (index !== roundIndex) return round
+          return {
+            ...round,
+            ties: round.ties.map((tie) =>
+              tie.id === tieId ? updateTie(tie, leg, homeGoals, awayGoals) : tie,
+            ),
+          }
+        })
+
+        const next = propagateKnockout({ ...prev.knockout, rounds })
+
+        const stage = next.finalSeries?.championId
+          ? 'completed'
+          : next.finalSeries?.player1Id && next.finalSeries?.player2Id
+            ? 'final'
+            : 'knockout'
+
+        return {
+          ...prev,
+          knockout: next,
+          championId: next.finalSeries?.championId ?? null,
+          stage,
+        }
+      })
+    },
+    [],
+  )
+
+  const coinTossTie = useCallback((roundIndex: number, tieId: string) => {
+    setState((prev) => {
+      const rounds = prev.knockout.rounds.map((round, index) => {
+        if (index !== roundIndex) return round
+        return {
+          ...round,
+          ties: round.ties.map((tie) => {
+            if (tie.id !== tieId || !tie.playerAId || !tie.playerBId) return tie
+            const winner = Math.random() > 0.5 ? tie.playerAId : tie.playerBId
+            return {
+              ...tie,
+              coinTossWinnerId: winner,
+              decider: {
+                ...tie.decider,
+                homeId: winner,
+              },
+            }
+          }),
+        }
+      })
+
+      return {
+        ...prev,
+        knockout: { ...prev.knockout, rounds },
+      }
+    })
+  }, [])
+
+  const setFinalGameResult = useCallback(
+    (gameId: string, winnerId: string | null, isVoid: boolean) => {
+      setState((prev) => {
+        if (!prev.knockout.finalSeries) return prev
+
+        const finalSeries = {
+          ...prev.knockout.finalSeries,
+          games: prev.knockout.finalSeries.games.map((game) =>
+            game.id === gameId ? { ...game, winnerId, void: isVoid } : game,
+          ),
+        }
+
+        const next = propagateKnockout({ ...prev.knockout, finalSeries })
+
+        return {
+          ...prev,
+          knockout: next,
+          championId: next.finalSeries?.championId ?? null,
+          stage: next.finalSeries?.championId ? 'completed' : 'final',
+        }
+      })
+    },
+    [],
+  )
+
+  const importState = useCallback((incoming: TournamentState) => {
+    setState({
+      ...defaultState(),
+      ...incoming,
+      settings: { ...defaultState().settings, ...incoming.settings },
+    })
+  }, [])
+
+  const exportState = useCallback(() => state, [state])
+
+  const resetTournament = useCallback(() => {
+    setState(defaultState())
+  }, [])
+
+  const value = useMemo<TournamentContextType>(
+    () => ({
+      state,
+      resetTournament,
+      setAdminPassword,
+      setSettings,
+      importState,
+      exportState,
+      addPlayer,
+      updatePlayer,
+      removePlayer,
+      clearAllPlayers,
+      bulkAddPlayers,
+      generateGroups,
+      movePlayerToGroup,
+      lockGroups,
+      addLatePlayerToSuggestedGroup,
+      setFixtureScore,
+      generateKnockout,
+      setTieLegScore,
+      coinTossTie,
+      setFinalGameResult,
+    }),
+    [
+      state,
+      resetTournament,
+      setAdminPassword,
+      setSettings,
+      importState,
+      exportState,
+      addPlayer,
+      updatePlayer,
+      removePlayer,
+      clearAllPlayers,
+      bulkAddPlayers,
+      generateGroups,
+      movePlayerToGroup,
+      lockGroups,
+      addLatePlayerToSuggestedGroup,
+      setFixtureScore,
+      generateKnockout,
+      setTieLegScore,
+      coinTossTie,
+      setFinalGameResult,
+    ],
+  )
+
+  return <TournamentContext.Provider value={value}>{children}</TournamentContext.Provider>
+}
+
+export const useTournament = () => {
+  const context = useContext(TournamentContext)
+  if (!context) {
+    throw new Error('useTournament must be used within TournamentProvider')
+  }
+  return context
+}
+
+export const usePlayerMap = () => {
+  const { state } = useTournament()
+  return useMemo(
+    () =>
+      state.players.reduce<Record<string, Player>>((acc, player) => {
+        acc[player.id] = player
+        return acc
+      }, {}),
+    [state.players],
+  )
+}
+
+export const useGroupFixtures = (groupId: string): Fixture[] => {
+  const { state } = useTournament()
+  return useMemo(
+    () => state.fixtures.filter((fixture) => fixture.groupId === groupId),
+    [state.fixtures, groupId],
+  )
+}

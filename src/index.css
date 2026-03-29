@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  color: #f4f4f5;
+  background:
+    radial-gradient(circle at 8% 12%, rgba(236, 72, 153, 0.18), transparent 22%),
+    radial-gradient(circle at 88% 18%, rgba(167, 139, 250, 0.16), transparent 24%),
+    radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.14), transparent 30%),
+    #0a0a0f;
+  line-height: 1.45;
+}
+
+::selection {
+  background: rgba(255, 0, 255, 0.28);
+  color: #fff;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 70, 239, 0.7) rgba(39, 39, 42, 0.35);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(39, 39, 42, 0.35);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 0, 255, 0.8), rgba(204, 0, 255, 0.8));
+  border-radius: 9999px;
+}
+
+.panel {
+  @apply rounded-xl border border-neonPurple/35 bg-zinc-900/70 p-4 shadow-neon backdrop-blur-sm transition duration-200;
+}
+
+.panel:hover {
+  border-color: rgba(255, 77, 255, 0.6);
+  box-shadow: 0 0 16px rgba(255, 0, 255, 0.55), 0 0 34px rgba(204, 0, 255, 0.24);
+}
+
+.input {
+  @apply w-full rounded-md border border-neonPurple/35 bg-zinc-950/90 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-neonPink focus:ring-2 focus:ring-neonPink/80;
+}
+
+.input::placeholder {
+  color: rgba(212, 212, 216, 0.62);
+}
+
+.btn-primary {
+  @apply rounded-md border border-neonPink bg-neonPink/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neonPink transition hover:-translate-y-[1px] hover:bg-neonPink/25 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-secondary {
+  @apply rounded-md border border-neonPurple/45 bg-neonPurple/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-200 transition hover:-translate-y-[1px] hover:border-neonPink/70 hover:text-neonPink;
+}
+
+.btn-danger {
+  @apply rounded-md border border-red-400/55 bg-red-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-300 transition hover:-translate-y-[1px] hover:bg-red-500/20;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgba(255, 0, 255, 0.9);
+  outline-offset: 2px;
+}
+
+.section-heading {
+  @apply font-pixel text-xs uppercase tracking-wider text-neonPink;
+}
+
+.section-lead {
+  @apply mt-2 text-sm text-zinc-300;
+}
+
+.status-chip {
+  @apply inline-flex items-center rounded-full border border-emerald-300/60 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-100;
+}
+
+.fade-in {
+  animation: fadeIn 0.35s ease-out;
+}
+
+.confetti-dot {
+  position: absolute;
+  top: -2rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #ff00ff, #cc00ff);
+  animation: confetti 3.2s linear infinite;
+}
+
+.pitch-bracket {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 40%),
+    radial-gradient(circle at 18% 20%, rgba(255, 0, 255, 0.18), transparent 42%),
+    radial-gradient(circle at 82% 16%, rgba(204, 0, 255, 0.18), transparent 42%),
+    linear-gradient(180deg, rgba(24, 24, 33, 0.78), rgba(12, 12, 20, 0.86)),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.025),
+      rgba(255, 255, 255, 0.025) 30px,
+      rgba(255, 255, 255, 0.01) 30px,
+      rgba(255, 255, 255, 0.01) 60px
+    );
+}
+
+.tie-card {
+  position: relative;
+  border: 1px solid rgba(216, 180, 254, 0.45);
+  border-radius: 0.65rem;
+  background: rgba(17, 17, 27, 0.9);
+  padding: 0.65rem;
+  font-size: 0.75rem;
+  box-shadow: 0 0 12px rgba(236, 72, 153, 0.25);
+}
+
+.tie-left::after,
+.tie-right::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 2px;
+  background: rgba(255, 77, 255, 0.85);
+}
+
+.tie-left::after {
+  right: -22px;
+}
+
+.tie-right::after {
+  left: -22px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    font-size: 11px;
+    padding: 0.48rem 0.7rem;
+  }
+}
