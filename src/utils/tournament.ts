@@ -6,10 +6,14 @@ import {
   type KnockoutTie,
   type Player,
   type StandingRow,
+  type Tiebreaker,
   type TournamentState,
+  type SeedingMode,
 } from '../types'
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+export const MAX_PLAYERS = 80
+export const MIN_PLAYERS = 2
 
 export const createId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
@@ -28,6 +32,8 @@ export const defaultState = (): TournamentState => ({
     tournamentName: 'TechStorm Tournament',
     groupSize: 4,
     qualifiersPerGroup: 2,
+    seedingMode: 'ovr_snake',
+    tiebreakers: ['points', 'gd', 'gf', 'head_to_head'],
     adminPassword: 'techstorm2025',
   },
   stage: 'setup',
@@ -35,28 +41,47 @@ export const defaultState = (): TournamentState => ({
   championId: null,
 })
 
+const shuffled = <T,>(items: T[]) => {
+  const list = [...items]
+  for (let i = list.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const temp = list[i]
+    list[i] = list[j]
+    list[j] = temp
+  }
+  return list
+}
+
+const orderedBySeedingMode = (players: Player[], seedingMode: SeedingMode) => {
+  if (seedingMode === 'random') {
+    return shuffled(players)
+  }
+
+  if (seedingMode === 'manual') {
+    return [...players]
+  }
+
+  return [...players].sort((a, b) => b.ovr - a.ovr)
+}
+
 export const snakeDraftGroups = (
   players: Player[],
-  groupSize: 4 | 5 | 6,
+  groupSize: 4 | 5 | 6 | 8,
+  seedingMode: SeedingMode = 'ovr_snake',
 ): { groups: Group[]; players: Player[] } => {
-  const sorted = [...players].sort((a, b) => b.ovr - a.ovr)
-  const groupCount = Math.max(1, Math.ceil(sorted.length / groupSize))
+  const ordered = orderedBySeedingMode(players, seedingMode)
+  const groupCount = Math.max(1, Math.ceil(ordered.length / groupSize))
   const groups: Group[] = Array.from({ length: groupCount }, (_, i) => ({
     id: createId(),
     name: `Group ${LETTERS[i] ?? i + 1}`,
     playerIds: [],
   }))
 
-  let index = 0
-  let direction = 1
-  for (const player of sorted) {
-    groups[index].playerIds.push(player.id)
-    if (index === groupCount - 1) {
-      direction = -1
-    } else if (index === 0) {
-      direction = 1
-    }
-    index += direction
+  for (let i = 0; i < ordered.length; i += 1) {
+    const row = Math.floor(i / groupCount)
+    const col = i % groupCount
+    const targetIndex = row % 2 === 0 ? col : groupCount - 1 - col
+    groups[targetIndex].playerIds.push(ordered[i].id)
   }
 
   const byPlayer = new Map<string, string>()
@@ -66,7 +91,7 @@ export const snakeDraftGroups = (
     }
   }
 
-  const updatedPlayers = sorted.map((player) => ({
+  const updatedPlayers = players.map((player) => ({
     ...player,
     groupId: byPlayer.get(player.id) ?? null,
   }))
@@ -97,6 +122,7 @@ export const generateGroupFixtures = (groups: Group[]): Fixture[] => {
 export const calculateStandings = (
   group: Group,
   fixtures: Fixture[],
+  tiebreakers: Tiebreaker[] = ['points', 'gd', 'gf', 'head_to_head'],
 ): StandingRow[] => {
   const rows: Record<string, StandingRow> = {}
   for (const playerId of group.playerIds) {
@@ -147,12 +173,65 @@ export const calculateStandings = (
     }
   }
 
+  const headToHeadDiff = (leftId: string, rightId: string) => {
+    let leftPoints = 0
+    let rightPoints = 0
+    let leftGd = 0
+    let rightGd = 0
+    let leftGf = 0
+    let rightGf = 0
+
+    for (const fixture of fixtures) {
+      if (!fixture.completed || fixture.homeGoals === null || fixture.awayGoals === null) {
+        continue
+      }
+
+      const pairMatch =
+        (fixture.homeId === leftId && fixture.awayId === rightId) ||
+        (fixture.homeId === rightId && fixture.awayId === leftId)
+      if (!pairMatch) continue
+
+      const leftGoals = fixture.homeId === leftId ? fixture.homeGoals : fixture.awayGoals
+      const rightGoals = fixture.homeId === rightId ? fixture.homeGoals : fixture.awayGoals
+
+      leftGf += leftGoals
+      rightGf += rightGoals
+      leftGd += leftGoals - rightGoals
+      rightGd += rightGoals - leftGoals
+
+      if (leftGoals > rightGoals) {
+        leftPoints += 3
+      } else if (rightGoals > leftGoals) {
+        rightPoints += 3
+      } else {
+        leftPoints += 1
+        rightPoints += 1
+      }
+    }
+
+    if (leftPoints !== rightPoints) return leftPoints - rightPoints
+    if (leftGd !== rightGd) return leftGd - rightGd
+    return leftGf - rightGf
+  }
+
   return Object.values(rows)
     .map((row) => ({ ...row, gd: row.gf - row.ga }))
     .sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points
-      if (b.gd !== a.gd) return b.gd - a.gd
-      if (b.gf !== a.gf) return b.gf - a.gf
+      for (const tiebreaker of tiebreakers) {
+        if (tiebreaker === 'points' && b.points !== a.points) {
+          return b.points - a.points
+        }
+        if (tiebreaker === 'gd' && b.gd !== a.gd) {
+          return b.gd - a.gd
+        }
+        if (tiebreaker === 'gf' && b.gf !== a.gf) {
+          return b.gf - a.gf
+        }
+        if (tiebreaker === 'head_to_head') {
+          const delta = headToHeadDiff(a.playerId, b.playerId)
+          if (delta !== 0) return -delta
+        }
+      }
       return a.playerId.localeCompare(b.playerId)
     })
 }
@@ -160,10 +239,11 @@ export const calculateStandings = (
 export const standingsGoalDiffMap = (
   groups: Group[],
   fixtures: Fixture[],
+  tiebreakers: Tiebreaker[] = ['points', 'gd', 'gf', 'head_to_head'],
 ): Record<string, number> => {
   const map: Record<string, number> = {}
   for (const group of groups) {
-    const standings = calculateStandings(group, fixtures)
+    const standings = calculateStandings(group, fixtures, tiebreakers)
     for (const row of standings) {
       map[row.playerId] = row.gd
     }
@@ -175,10 +255,11 @@ export const getQualifiedPlayers = (
   groups: Group[],
   fixtures: Fixture[],
   qualifiersPerGroup: number,
+  tiebreakers: Tiebreaker[] = ['points', 'gd', 'gf', 'head_to_head'],
 ): string[] => {
   const qualified: string[] = []
   for (const group of groups) {
-    const standings = calculateStandings(group, fixtures)
+    const standings = calculateStandings(group, fixtures, tiebreakers)
     const top = standings.slice(0, Math.min(qualifiersPerGroup, standings.length))
     for (const row of top) {
       qualified.push(row.playerId)

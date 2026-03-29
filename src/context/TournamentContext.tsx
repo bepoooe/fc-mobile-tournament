@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useCallback,
@@ -14,6 +15,8 @@ import {
   defaultState,
   generateGroupFixtures,
   getQualifiedPlayers,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
   propagateKnockout,
   snakeDraftGroups,
   standingsGoalDiffMap,
@@ -37,11 +40,29 @@ const parseState = (): TournamentState => {
 
   try {
     const parsed = JSON.parse(raw) as TournamentState
+    const fallback = defaultState()
+    const mergedSettings = { ...fallback.settings, ...parsed.settings }
+
+    const players = Array.isArray(parsed.players)
+      ? parsed.players.slice(0, MAX_PLAYERS)
+      : fallback.players
+
     return {
-      ...defaultState(),
+      ...fallback,
       ...parsed,
-      settings: { ...defaultState().settings, ...parsed.settings },
-      knockout: { ...defaultState().knockout, ...parsed.knockout },
+      players,
+      settings: {
+        ...mergedSettings,
+        groupSize: [4, 5, 6, 8].includes(mergedSettings.groupSize)
+          ? mergedSettings.groupSize
+          : fallback.settings.groupSize,
+        qualifiersPerGroup: Math.max(1, Math.floor(mergedSettings.qualifiersPerGroup || 1)),
+        tiebreakers:
+          mergedSettings.tiebreakers && mergedSettings.tiebreakers.length
+            ? mergedSettings.tiebreakers
+            : fallback.settings.tiebreakers,
+      },
+      knockout: { ...fallback.knockout, ...parsed.knockout },
     }
   } catch {
     return defaultState()
@@ -95,7 +116,21 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const setSettings = useCallback((settings: Partial<TournamentState['settings']>) => {
-    setState((prev) => ({ ...prev, settings: { ...prev.settings, ...settings } }))
+    setState((prev) => {
+      const merged = { ...prev.settings, ...settings }
+      return {
+        ...prev,
+        settings: {
+          ...merged,
+          groupSize: [4, 5, 6, 8].includes(merged.groupSize) ? merged.groupSize : 4,
+          qualifiersPerGroup: Math.max(1, Math.floor(merged.qualifiersPerGroup || 1)),
+          tiebreakers:
+            merged.tiebreakers && merged.tiebreakers.length
+              ? merged.tiebreakers
+              : prev.settings.tiebreakers,
+        },
+      }
+    })
   }, [])
 
   const setAdminPassword = useCallback((password: string) => {
@@ -109,6 +144,10 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const addPlayer = useCallback((name: string, ovr: number, joinedLate = false) => {
+    if (state.players.length >= MAX_PLAYERS) {
+      throw new Error(`Player limit reached (${MAX_PLAYERS})`)
+    }
+
     const player: Player = {
       id: createId(),
       name: name.trim(),
@@ -123,7 +162,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
     }))
 
     return player
-  }, [])
+  }, [state.players.length])
 
   const bulkAddPlayers = useCallback(
     (incoming: Array<{ name: string; ovr: number }>) => {
@@ -141,7 +180,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
 
       setState((prev) => ({
         ...prev,
-        players: [...prev.players, ...normalized],
+        players: [...prev.players, ...normalized].slice(0, MAX_PLAYERS),
       }))
     },
     [],
@@ -185,7 +224,12 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
 
   const generateGroups = useCallback(() => {
     setState((prev) => {
-      const result = snakeDraftGroups(prev.players, prev.settings.groupSize)
+      if (prev.players.length < MIN_PLAYERS) return prev
+      const result = snakeDraftGroups(
+        prev.players,
+        prev.settings.groupSize,
+        prev.settings.seedingMode,
+      )
       return {
         ...prev,
         players: result.players,
@@ -223,7 +267,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
 
   const lockGroups = useCallback(() => {
     setState((prev) => {
-      if (prev.groups.length === 0) return prev
+      if (prev.groups.length === 0 || prev.players.length < MIN_PLAYERS) return prev
       return {
         ...prev,
         groupsLocked: true,
@@ -237,6 +281,10 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
     let assignedGroup: string | null = null
 
     setState((prev) => {
+      if (prev.players.length >= MAX_PLAYERS) {
+        return prev
+      }
+
       const playerId = createId()
       const suggestedGroupId = suggestBalancedGroup(ovr, prev.groups, prev.players)
       assignedGroup = suggestedGroupId
@@ -292,14 +340,43 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
     })
   }, [])
 
+  const clearFixtureScore = useCallback((fixtureId: string) => {
+    setState((prev) => {
+      const fixtures = prev.fixtures.map((fixture) =>
+        fixture.id === fixtureId
+          ? {
+              ...fixture,
+              homeGoals: null,
+              awayGoals: null,
+              completed: false,
+            }
+          : fixture,
+      )
+      return {
+        ...prev,
+        fixtures,
+      }
+    })
+  }, [])
+
   const generateKnockout = useCallback(() => {
     setState((prev) => {
-      const gdMap = standingsGoalDiffMap(prev.groups, prev.fixtures)
+      const gdMap = standingsGoalDiffMap(
+        prev.groups,
+        prev.fixtures,
+        prev.settings.tiebreakers,
+      )
       const qualifiedPlayers = getQualifiedPlayers(
         prev.groups,
         prev.fixtures,
         prev.settings.qualifiersPerGroup,
+        prev.settings.tiebreakers,
       )
+
+      if (qualifiedPlayers.length < MIN_PLAYERS) {
+        return prev
+      }
+
       const knockout = propagateKnockout(createKnockout(qualifiedPlayers, gdMap))
 
       return {
@@ -342,6 +419,52 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
           knockout: next,
           championId: next.finalSeries?.championId ?? null,
           stage,
+        }
+      })
+    },
+    [],
+  )
+
+  const clearTieLegScore = useCallback(
+    (roundIndex: number, tieId: string, leg: 'leg1' | 'leg2' | 'decider') => {
+      setState((prev) => {
+        const rounds = prev.knockout.rounds.map((round, index) => {
+          if (index !== roundIndex) return round
+          return {
+            ...round,
+            ties: round.ties.map((tie) => {
+              if (tie.id !== tieId) return tie
+              if (leg === 'decider') {
+                return {
+                  ...tie,
+                  decider: {
+                    ...tie.decider,
+                    homeGoals: null,
+                    awayGoals: null,
+                    completed: false,
+                  },
+                }
+              }
+
+              return {
+                ...tie,
+                [leg]: {
+                  ...tie[leg],
+                  homeGoals: null,
+                  awayGoals: null,
+                  completed: false,
+                },
+              }
+            }),
+          }
+        })
+
+        const next = propagateKnockout({ ...prev.knockout, rounds })
+        return {
+          ...prev,
+          knockout: next,
+          championId: next.finalSeries?.championId ?? null,
+          stage: next.finalSeries?.championId ? 'completed' : prev.stage,
         }
       })
     },
@@ -401,11 +524,48 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
     [],
   )
 
+  const clearFinalGameResult = useCallback((gameId: string) => {
+    setState((prev) => {
+      if (!prev.knockout.finalSeries) return prev
+
+      const finalSeries = {
+        ...prev.knockout.finalSeries,
+        games: prev.knockout.finalSeries.games.map((game) =>
+          game.id === gameId ? { ...game, winnerId: null, void: false } : game,
+        ),
+      }
+
+      const next = propagateKnockout({ ...prev.knockout, finalSeries })
+      return {
+        ...prev,
+        knockout: next,
+        championId: next.finalSeries?.championId ?? null,
+        stage: next.finalSeries?.championId ? 'completed' : 'final',
+      }
+    })
+  }, [])
+
   const importState = useCallback((incoming: TournamentState) => {
+    const fallback = defaultState()
+    const players = Array.isArray(incoming.players)
+      ? incoming.players.slice(0, MAX_PLAYERS)
+      : []
+
     setState({
-      ...defaultState(),
+      ...fallback,
       ...incoming,
-      settings: { ...defaultState().settings, ...incoming.settings },
+      players,
+      settings: {
+        ...fallback.settings,
+        ...incoming.settings,
+        groupSize: [4, 5, 6, 8].includes(incoming.settings?.groupSize)
+          ? incoming.settings.groupSize
+          : fallback.settings.groupSize,
+        qualifiersPerGroup: Math.max(
+          1,
+          Math.floor(incoming.settings?.qualifiersPerGroup ?? fallback.settings.qualifiersPerGroup),
+        ),
+      },
     })
   }, [])
 
@@ -433,10 +593,13 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
       lockGroups,
       addLatePlayerToSuggestedGroup,
       setFixtureScore,
+      clearFixtureScore,
       generateKnockout,
       setTieLegScore,
+      clearTieLegScore,
       coinTossTie,
       setFinalGameResult,
+      clearFinalGameResult,
     }),
     [
       state,
@@ -455,10 +618,13 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
       lockGroups,
       addLatePlayerToSuggestedGroup,
       setFixtureScore,
+      clearFixtureScore,
       generateKnockout,
       setTieLegScore,
+      clearTieLegScore,
       coinTossTie,
       setFinalGameResult,
+      clearFinalGameResult,
     ],
   )
 

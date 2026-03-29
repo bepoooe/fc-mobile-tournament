@@ -53,7 +53,7 @@ body {
 }
 
 .panel {
-  @apply rounded-xl border border-neonPurple/35 bg-zinc-900/70 p-4 shadow-neon backdrop-blur-sm transition duration-200;
+  @apply rounded-xl border border-neonPurple/35 bg-zinc-900/80 p-4 shadow-neon backdrop-blur-sm transition duration-200;
 }
 
 .panel:hover {
@@ -62,7 +62,7 @@ body {
 }
 
 .input {
-  @apply w-full rounded-md border border-neonPurple/35 bg-zinc-950/90 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-neonPink focus:ring-2 focus:ring-neonPink/80;
+  @apply w-full rounded-md border border-neonPurple/35 bg-zinc-950/95 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-neonPink focus:ring-2 focus:ring-neonPink/80;
 }
 
 .input::placeholder {
@@ -70,15 +70,21 @@ body {
 }
 
 .btn-primary {
-  @apply rounded-md border border-neonPink bg-neonPink/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neonPink transition hover:-translate-y-[1px] hover:bg-neonPink/25 disabled:cursor-not-allowed disabled:opacity-50;
+  @apply rounded-md border border-neonPink bg-neonPink/15 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-neonPink transition hover:-translate-y-[1px] hover:bg-neonPink/25 disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 .btn-secondary {
-  @apply rounded-md border border-neonPurple/45 bg-neonPurple/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-200 transition hover:-translate-y-[1px] hover:border-neonPink/70 hover:text-neonPink;
+  @apply rounded-md border border-neonPurple/45 bg-neonPurple/10 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-zinc-200 transition hover:-translate-y-[1px] hover:border-neonPink/70 hover:text-neonPink;
 }
 
 .btn-danger {
-  @apply rounded-md border border-red-400/55 bg-red-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-300 transition hover:-translate-y-[1px] hover:bg-red-500/20;
+  @apply rounded-md border border-red-400/55 bg-red-500/10 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-red-300 transition hover:-translate-y-[1px] hover:bg-red-500/20;
+}
+
+.content-shell {
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
 }
 
 button:focus-visible,
@@ -93,7 +99,7 @@ select:focus-visible {
 }
 
 .section-lead {
-  @apply mt-2 text-sm text-zinc-300;
+  @apply mt-2 text-sm text-zinc-200;
 }
 
 .status-chip {
@@ -173,6 +179,7 @@ select:focus-visible {
   .btn-secondary,
   .btn-danger {
     font-size: 11px;
-    padding: 0.48rem 0.7rem;
+    padding: 0.6rem 0.8rem;
+    min-height: 40px;
   }
 }

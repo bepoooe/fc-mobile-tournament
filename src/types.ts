@@ -5,6 +5,10 @@ export type Stage =
   | 'final'
   | 'completed'
 
+export type SeedingMode = 'ovr_snake' | 'random' | 'manual'
+
+export type Tiebreaker = 'points' | 'gd' | 'gf' | 'head_to_head'
+
 export interface Player {
   id: string
   name: string
@@ -92,8 +96,10 @@ export interface KnockoutState {
 
 export interface TournamentSettings {
   tournamentName: string
-  groupSize: 4 | 5 | 6
+  groupSize: 4 | 5 | 6 | 8
   qualifiersPerGroup: number
+  seedingMode: SeedingMode
+  tiebreakers: Tiebreaker[]
   adminPassword: string
 }
 
@@ -125,6 +131,7 @@ export interface TournamentContextType {
   lockGroups: () => void
   addLatePlayerToSuggestedGroup: (name: string, ovr: number) => string | null
   setFixtureScore: (fixtureId: string, homeGoals: number, awayGoals: number) => void
+  clearFixtureScore: (fixtureId: string) => void
   generateKnockout: () => void
   setTieLegScore: (
     roundIndex: number,
@@ -133,6 +140,12 @@ export interface TournamentContextType {
     homeGoals: number,
     awayGoals: number,
   ) => void
+  clearTieLegScore: (
+    roundIndex: number,
+    tieId: string,
+    leg: 'leg1' | 'leg2' | 'decider',
+  ) => void
   coinTossTie: (roundIndex: number, tieId: string) => void
   setFinalGameResult: (gameId: string, winnerId: string | null, isVoid: boolean) => void
+  clearFinalGameResult: (gameId: string) => void
 }

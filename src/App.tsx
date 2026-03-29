@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { TournamentProvider, useGroupFixtures, usePlayerMap, useTournament } from './context/TournamentContext'
 import { calculateStandings } from './utils/tournament'
-import type { Fixture, Group, KnockoutTie, StandingRow } from './types'
+import { MAX_PLAYERS, MIN_PLAYERS } from './utils/tournament'
+import type { Fixture, Group, KnockoutTie, StandingRow, Tiebreaker, TournamentState } from './types'
 
 declare global {
   interface Window {
@@ -193,11 +194,12 @@ const readExcelPlayers = async (file: File): Promise<Array<{ name: string; ovr: 
 const groupStandingsMap = (
   groups: Group[],
   fixtures: Fixture[],
+  tiebreakers: Tiebreaker[],
 ): Record<string, StandingRow[]> => {
   const map: Record<string, StandingRow[]> = {}
   for (const group of groups) {
     const ownFixtures = fixtures.filter((fixture) => fixture.groupId === group.id)
-    map[group.id] = calculateStandings(group, ownFixtures)
+    map[group.id] = calculateStandings(group, ownFixtures, tiebreakers)
   }
   return map
 }
@@ -237,13 +239,15 @@ const AppShell = () => {
         </div>
       </header>
 
-      <main className="fade-in mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {page === 'home' && <HomePage />}
-        {page === 'groups' && <GroupsPage />}
-        {page === 'knockout' && <KnockoutPage />}
-        {page === 'champion' && <ChampionPage />}
-        {page === 'rules' && <RulesPage />}
-        {page === 'admin' && <AdminPage />}
+      <main className="fade-in mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="content-shell mx-auto w-full max-w-6xl space-y-6">
+          {page === 'home' && <HomePage />}
+          {page === 'groups' && <GroupsPage />}
+          {page === 'knockout' && <KnockoutPage />}
+          {page === 'champion' && <ChampionPage />}
+          {page === 'rules' && <RulesPage />}
+          {page === 'admin' && <AdminPage />}
+        </div>
       </main>
     </div>
   )
@@ -294,8 +298,8 @@ const GroupsPage = () => {
   const { state } = useTournament()
   const playerMap = usePlayerMap()
   const standingsByGroup = useMemo(
-    () => groupStandingsMap(state.groups, state.fixtures),
-    [state.groups, state.fixtures],
+    () => groupStandingsMap(state.groups, state.fixtures, state.settings.tiebreakers),
+    [state.groups, state.fixtures, state.settings.tiebreakers],
   )
 
   if (!state.groups.length) {
@@ -539,14 +543,16 @@ const AdminPage = () => {
   const [authenticated, setAuthenticated] = useState(false)
   const [password, setPassword] = useState('')
   const [adminTab, setAdminTab] = useState<AdminTab>('players')
+  const [authError, setAuthError] = useState('')
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
     if (password === state.settings.adminPassword) {
       setAuthenticated(true)
       setPassword('')
+      setAuthError('')
     } else {
-      alert('Invalid password')
+      setAuthError('Invalid password. Please try again.')
     }
   }
 
@@ -559,10 +565,14 @@ const AdminPage = () => {
           <input
             type="password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              setPassword(event.target.value)
+              if (authError) setAuthError('')
+            }}
             className="input"
             placeholder="Enter admin password"
           />
+          {authError && <p className="text-xs text-red-300">{authError}</p>}
           <button className="btn-primary" type="submit">
             Login
           </button>
@@ -612,6 +622,7 @@ const PlayerManagement = () => {
   const [ovr, setOvr] = useState<number>(90)
   const [editId, setEditId] = useState<string | null>(null)
   const [excelLoading, setExcelLoading] = useState(false)
+  const [feedback, setFeedback] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
 
   const confirmDeletePlayer = (playerId: string, playerName: string) => {
     const proceed = window.confirm(
@@ -619,6 +630,7 @@ const PlayerManagement = () => {
     )
     if (!proceed) return
     removePlayer(playerId)
+    setFeedback({ tone: 'ok', text: `${playerName} removed successfully.` })
   }
 
   const confirmDeleteAllPlayers = () => {
@@ -627,23 +639,45 @@ const PlayerManagement = () => {
     )
     if (!proceed) return
     clearAllPlayers()
+    setFeedback({ tone: 'ok', text: 'All players removed. Tournament reset to setup phase.' })
   }
 
   const submitPlayer = (event: FormEvent) => {
     event.preventDefault()
-    if (!name.trim() || !ovr) return
+    if (!name.trim()) {
+      setFeedback({ tone: 'error', text: 'Player name is required.' })
+      return
+    }
+    if (!Number.isFinite(ovr) || ovr < 1 || ovr > 999) {
+      setFeedback({ tone: 'error', text: 'OVR must be between 1 and 999.' })
+      return
+    }
+
+    if (!editId && state.players.length >= MAX_PLAYERS) {
+      setFeedback({ tone: 'error', text: `Maximum ${MAX_PLAYERS} players supported.` })
+      return
+    }
 
     if (state.groupsLocked) {
       const groupId = addLatePlayerToSuggestedGroup(name, ovr)
       if (groupId) {
         const group = state.groups.find((item) => item.id === groupId)
-        alert(`Late player assigned to ${group?.name}`)
+        setFeedback({ tone: 'ok', text: `Late player assigned to ${group?.name}.` })
+      } else {
+        setFeedback({ tone: 'error', text: 'Could not assign late player to a group.' })
       }
     } else if (editId) {
       updatePlayer(editId, name, ovr)
+      setFeedback({ tone: 'ok', text: 'Player updated successfully.' })
       setEditId(null)
     } else {
-      addPlayer(name, ovr)
+      try {
+        addPlayer(name, ovr)
+        setFeedback({ tone: 'ok', text: 'Player added successfully.' })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Could not add player.'
+        setFeedback({ tone: 'error', text: message })
+      }
     }
 
     setName('')
@@ -663,10 +697,10 @@ const PlayerManagement = () => {
         )
       }
       bulkAddPlayers(rows)
-      alert(`Imported ${rows.length} players from Excel`)
+      setFeedback({ tone: 'ok', text: `Imported up to ${rows.length} players from Excel.` })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not parse file'
-      alert(message)
+      setFeedback({ tone: 'error', text: message })
     } finally {
       setExcelLoading(false)
       event.target.value = ''
@@ -677,6 +711,12 @@ const PlayerManagement = () => {
     <section className="space-y-4">
       <div className="panel space-y-3">
         <h3 className="font-pixel text-xs text-neonPink">Player Management</h3>
+        <p className="text-xs text-zinc-300">{state.players.length}/{MAX_PLAYERS} players configured.</p>
+        {feedback && (
+          <p className={`rounded border px-3 py-2 text-xs ${feedback.tone === 'ok' ? 'border-emerald-300/50 bg-emerald-500/10 text-emerald-100' : 'border-red-300/50 bg-red-500/10 text-red-100'}`}>
+            {feedback.text}
+          </p>
+        )}
         <div className="flex flex-wrap gap-2">
           <label className="btn-secondary cursor-pointer">
             Upload Excel (.xlsx)
@@ -711,6 +751,19 @@ const PlayerManagement = () => {
           <button className="btn-primary" type="submit">
             {state.groupsLocked ? 'Add Late Player' : editId ? 'Update Player' : 'Add Player'}
           </button>
+          {editId && !state.groupsLocked && (
+            <button
+              className="btn-secondary"
+              type="button"
+              onClick={() => {
+                setEditId(null)
+                setName('')
+                setOvr(90)
+              }}
+            >
+              Cancel Edit
+            </button>
+          )}
         </form>
       </div>
 
@@ -732,19 +785,17 @@ const PlayerManagement = () => {
                 <td className="px-2 py-2">{state.groups.find((group) => group.id === player.groupId)?.name || '-'}</td>
                 <td className="px-2 py-2">
                   <div className="flex gap-2">
-                    {!state.groupsLocked && (
-                      <button
-                        className="btn-secondary px-2 py-1"
-                        type="button"
-                        onClick={() => {
-                          setEditId(player.id)
-                          setName(player.name)
-                          setOvr(player.ovr)
-                        }}
-                      >
-                        Edit
-                      </button>
-                    )}
+                    <button
+                      className="btn-secondary px-2 py-1"
+                      type="button"
+                      onClick={() => {
+                        setEditId(player.id)
+                        setName(player.name)
+                        setOvr(player.ovr)
+                      }}
+                    >
+                      Edit
+                    </button>
                     <button
                       className="btn-danger px-2 py-1"
                       type="button"
@@ -765,28 +816,53 @@ const PlayerManagement = () => {
 
 const GroupManagement = () => {
   const { state, setSettings, generateGroups, movePlayerToGroup, lockGroups } = useTournament()
+  const canGenerate = state.players.length >= MIN_PLAYERS
 
   return (
     <section className="space-y-4">
       <div className="panel space-y-3">
         <h3 className="font-pixel text-xs text-neonPink">Group Generator</h3>
-        <div className="grid gap-2 md:grid-cols-3">
+        <p className="text-xs text-zinc-300">
+          Configure groups for {state.players.length} players. Minimum {MIN_PLAYERS}, maximum {MAX_PLAYERS}.
+        </p>
+        <div className="grid gap-2 md:grid-cols-4">
           <label className="text-xs text-zinc-300">
             Group Size
             <select
               value={state.settings.groupSize}
               onChange={(event) =>
-                setSettings({ groupSize: Number(event.target.value) as 4 | 5 | 6 })
+                setSettings({ groupSize: Number(event.target.value) as 4 | 5 | 6 | 8 })
               }
               className="input mt-1"
             >
               <option value={4}>4</option>
               <option value={5}>5</option>
               <option value={6}>6</option>
+              <option value={8}>8</option>
             </select>
           </label>
-          <button type="button" className="btn-primary" onClick={generateGroups}>
-            Generate Snake Draft Groups
+          <label className="text-xs text-zinc-300">
+            Seeding Mode
+            <select
+              value={state.settings.seedingMode}
+              onChange={(event) =>
+                setSettings({
+                  seedingMode: event.target.value as 'ovr_snake' | 'random' | 'manual',
+                })
+              }
+              className="input mt-1"
+            >
+              <option value="ovr_snake">OVR Snake Draft</option>
+              <option value="random">Random Draw</option>
+              <option value="manual">Manual Order</option>
+            </select>
+          </label>
+          <button type="button" className="btn-primary" onClick={generateGroups} disabled={!canGenerate}>
+            {state.settings.seedingMode === 'ovr_snake'
+              ? 'Generate OVR Snake Groups'
+              : state.settings.seedingMode === 'random'
+                ? 'Generate Random Groups'
+                : 'Generate Manual Order Groups'}
           </button>
           <button
             type="button"
@@ -796,6 +872,7 @@ const GroupManagement = () => {
           >
             Confirm Groups & Create Fixtures
           </button>
+          {!canGenerate && <p className="text-xs text-amber-300 md:col-span-4">Add at least two players before generating groups.</p>}
         </div>
       </div>
 
@@ -825,6 +902,7 @@ const GroupManagement = () => {
                         ))}
                       </select>
                     )}
+                    {state.groupsLocked && <span className="text-[11px] text-zinc-500">Locked</span>}
                   </div>
                 )
               })}
@@ -837,7 +915,7 @@ const GroupManagement = () => {
 }
 
 const FixturesManagement = () => {
-  const { state, setFixtureScore, setSettings } = useTournament()
+  const { state, setFixtureScore, clearFixtureScore, setSettings } = useTournament()
   const playerMap = usePlayerMap()
 
   if (!state.fixtures.length) {
@@ -854,8 +932,34 @@ const FixturesManagement = () => {
             type="number"
             min={1}
             value={state.settings.qualifiersPerGroup}
-            onChange={(event) => setSettings({ qualifiersPerGroup: Math.max(1, Number(event.target.value)) })}
+            onChange={(event) =>
+              setSettings({
+                qualifiersPerGroup: Math.max(1, Number(event.target.value)),
+              })
+            }
           />
+        </label>
+        <label className="text-xs text-zinc-200">
+          Primary Tiebreaker
+          <select
+            className="input mt-1 w-48"
+            value={state.settings.tiebreakers[0] ?? 'points'}
+            onChange={(event) =>
+              setSettings({
+                tiebreakers: [
+                  event.target.value as 'points' | 'gd' | 'gf' | 'head_to_head',
+                  'gd',
+                  'gf',
+                  'head_to_head',
+                ],
+              })
+            }
+          >
+            <option value="points">Points</option>
+            <option value="gd">Goal Difference</option>
+            <option value="gf">Goals For</option>
+            <option value="head_to_head">Head to Head</option>
+          </select>
         </label>
       </div>
       {state.groups.map((group) => (
@@ -871,6 +975,7 @@ const FixturesManagement = () => {
               homeName={playerMap[fixture.homeId]?.name || 'Player A'}
               awayName={playerMap[fixture.awayId]?.name || 'Player B'}
               onConfirm={(home, away) => setFixtureScore(fixture.id, home, away)}
+              onClear={() => clearFixtureScore(fixture.id)}
             />
           ))}
         </div>
@@ -886,8 +991,12 @@ const GroupFixtureCard = ({
   group: Group
   playerMap: Record<string, { name: string }>
 }) => {
+  const { state } = useTournament()
   const fixtures = useGroupFixtures(group.id)
-  const standings = useMemo(() => calculateStandings(group, fixtures), [group, fixtures])
+  const standings = useMemo(
+    () => calculateStandings(group, fixtures, state.settings.tiebreakers),
+    [group, fixtures, state.settings.tiebreakers],
+  )
 
   return (
     <div className="panel">
@@ -933,17 +1042,19 @@ const FixtureEditor = ({
   homeName,
   awayName,
   onConfirm,
+  onClear,
 }: {
   fixture: Fixture
   homeName: string
   awayName: string
   onConfirm: (home: number, away: number) => void
+  onClear: () => void
 }) => {
   const [home, setHome] = useState<number>(fixture.homeGoals ?? 0)
   const [away, setAway] = useState<number>(fixture.awayGoals ?? 0)
 
   return (
-    <div className="grid gap-2 rounded border border-neonPurple/30 bg-zinc-950/70 p-3 text-xs md:grid-cols-[1fr_auto_auto_auto] md:items-center">
+    <div className="grid gap-2 rounded border border-neonPurple/30 bg-zinc-950/70 p-3 text-xs md:grid-cols-[1fr_auto_auto_auto_auto] md:items-center">
       <p>
         {homeName} vs {awayName}
       </p>
@@ -952,19 +1063,35 @@ const FixtureEditor = ({
       <button type="button" className="btn-primary" onClick={() => onConfirm(home, away)}>
         Confirm
       </button>
+      <button type="button" className="btn-secondary" onClick={onClear}>
+        Reset
+      </button>
     </div>
   )
 }
 
 const KnockoutManagement = () => {
-  const { state, generateKnockout, setTieLegScore, coinTossTie, setFinalGameResult } = useTournament()
+  const {
+    state,
+    generateKnockout,
+    setTieLegScore,
+    clearTieLegScore,
+    coinTossTie,
+    setFinalGameResult,
+    clearFinalGameResult,
+  } = useTournament()
   const playerMap = usePlayerMap()
   const finalSeries = state.knockout.finalSeries
 
   return (
     <section className="space-y-4">
       <div className="panel">
-        <button className="btn-primary" type="button" onClick={generateKnockout}>
+        <button
+          className="btn-primary"
+          type="button"
+          onClick={generateKnockout}
+          disabled={!state.fixtures.length}
+        >
           Generate Knockout Bracket
         </button>
       </div>
@@ -982,12 +1109,14 @@ const KnockoutManagement = () => {
                 defaultHome={tie.leg1.homeGoals}
                 defaultAway={tie.leg1.awayGoals}
                 onSave={(home, away) => setTieLegScore(roundIndex, tie.id, 'leg1', home, away)}
+                onClear={() => clearTieLegScore(roundIndex, tie.id, 'leg1')}
               />
               <ScoreLegInput
                 label="Leg 2"
                 defaultHome={tie.leg2.homeGoals}
                 defaultAway={tie.leg2.awayGoals}
                 onSave={(home, away) => setTieLegScore(roundIndex, tie.id, 'leg2', home, away)}
+                onClear={() => clearTieLegScore(roundIndex, tie.id, 'leg2')}
               />
               <div className="mt-2 rounded border border-neonPink/20 p-2">
                 <button type="button" className="btn-secondary" onClick={() => coinTossTie(roundIndex, tie.id)}>
@@ -1001,6 +1130,7 @@ const KnockoutManagement = () => {
                   defaultHome={tie.decider.homeGoals}
                   defaultAway={tie.decider.awayGoals}
                   onSave={(home, away) => setTieLegScore(roundIndex, tie.id, 'decider', home, away)}
+                  onClear={() => clearTieLegScore(roundIndex, tie.id, 'decider')}
                 />
               </div>
               <p className="mt-2 text-neonPink">Winner: {(tie.winnerId && playerMap[tie.winnerId]?.name) || 'Pending'}</p>
@@ -1044,6 +1174,13 @@ const KnockoutManagement = () => {
               >
                 Mark Void
               </button>
+              <button
+                className="btn-secondary"
+                type="button"
+                onClick={() => clearFinalGameResult(game.id)}
+              >
+                Clear
+              </button>
               <span className="text-zinc-400">{game.void ? 'Replay Required' : 'Recorded'}</span>
             </div>
           ))}
@@ -1061,22 +1198,27 @@ const ScoreLegInput = ({
   defaultHome,
   defaultAway,
   onSave,
+  onClear,
 }: {
   label: string
   defaultHome: number | null
   defaultAway: number | null
   onSave: (home: number, away: number) => void
+  onClear: () => void
 }) => {
   const [home, setHome] = useState<number>(defaultHome ?? 0)
   const [away, setAway] = useState<number>(defaultAway ?? 0)
 
   return (
-    <div className="mt-2 grid gap-2 md:grid-cols-[100px_80px_80px_auto] md:items-center">
+    <div className="mt-2 grid gap-2 md:grid-cols-[100px_80px_80px_auto_auto] md:items-center">
       <span>{label}</span>
       <input className="input" type="number" min={0} value={home} onChange={(event) => setHome(Number(event.target.value))} />
       <input className="input" type="number" min={0} value={away} onChange={(event) => setAway(Number(event.target.value))} />
       <button className="btn-primary" type="button" onClick={() => onSave(home, away)}>
         Save
+      </button>
+      <button className="btn-secondary" type="button" onClick={onClear}>
+        Reset
       </button>
     </div>
   )
@@ -1086,6 +1228,7 @@ const SettingsManagement = () => {
   const { state, setSettings, setAdminPassword, exportState, importState, resetTournament } = useTournament()
   const fileRef = useRef<HTMLInputElement | null>(null)
   const [newPassword, setNewPassword] = useState(state.settings.adminPassword)
+  const [feedback, setFeedback] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
 
   const exportData = () => {
     const blob = new Blob([JSON.stringify(exportState(), null, 2)], {
@@ -1097,6 +1240,7 @@ const SettingsManagement = () => {
     anchor.download = 'techstorm-tournament-backup.json'
     anchor.click()
     URL.revokeObjectURL(url)
+    setFeedback({ tone: 'ok', text: 'Backup exported successfully.' })
   }
 
   const importData = (event: ChangeEvent<HTMLInputElement>) => {
@@ -1106,11 +1250,14 @@ const SettingsManagement = () => {
     const reader = new FileReader()
     reader.onload = () => {
       try {
-        const parsed = JSON.parse(String(reader.result))
-        importState(parsed)
-        alert('Data imported successfully')
+        const parsed = JSON.parse(String(reader.result)) as Record<string, unknown>
+        if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.players)) {
+          throw new Error('Backup format is invalid.')
+        }
+        importState(parsed as unknown as TournamentState)
+        setFeedback({ tone: 'ok', text: 'Data imported successfully.' })
       } catch {
-        alert('Invalid backup file')
+        setFeedback({ tone: 'error', text: 'Invalid backup file.' })
       }
     }
     reader.readAsText(file)
@@ -1123,12 +1270,18 @@ const SettingsManagement = () => {
     )
     if (!proceed) return
     resetTournament()
+    setFeedback({ tone: 'ok', text: 'Tournament data cleared.' })
   }
 
   return (
     <section className="space-y-4">
       <div className="panel space-y-3">
         <h3 className="font-pixel text-xs text-neonPink">Settings</h3>
+        {feedback && (
+          <p className={`rounded border px-3 py-2 text-xs ${feedback.tone === 'ok' ? 'border-emerald-300/50 bg-emerald-500/10 text-emerald-100' : 'border-red-300/50 bg-red-500/10 text-red-100'}`}>
+            {feedback.text}
+          </p>
+        )}
         <label className="text-xs text-zinc-300">
           Tournament Name
           <input
@@ -1149,7 +1302,14 @@ const SettingsManagement = () => {
             <button
               type="button"
               className="btn-primary"
-              onClick={() => setAdminPassword(newPassword)}
+              onClick={() => {
+                if (!newPassword.trim()) {
+                  setFeedback({ tone: 'error', text: 'Admin password cannot be empty.' })
+                  return
+                }
+                setAdminPassword(newPassword)
+                setFeedback({ tone: 'ok', text: 'Admin password updated.' })
+              }}
             >
               Save Password
             </button>
