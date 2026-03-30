@@ -11,7 +11,12 @@ declare global {
         SheetNames: string[]
         Sheets: Record<string, unknown>
       }
+      writeFile: (workbook: unknown, fileName: string) => void
       utils: {
+        book_new: () => unknown
+        book_append_sheet: (workbook: unknown, worksheet: unknown, name: string) => void
+        aoa_to_sheet: (data: Array<Array<string | number>>) => unknown
+        json_to_sheet: (data: Array<Record<string, string | number>>) => unknown
         sheet_to_json: (
           sheet: unknown,
           options?: Record<string, unknown>,
@@ -258,6 +263,134 @@ const groupStandingsMap = (
     map[group.id] = calculateStandings(group, ownFixtures, tiebreakers)
   }
   return map
+}
+
+const exportGroupsToExcel = (
+  groups: Group[],
+  players: TournamentState['players'],
+  tournamentName: string,
+) => {
+  if (!window.XLSX) {
+    throw new Error('SheetJS not loaded. Refresh page and try again.')
+  }
+  if (!groups.length) {
+    throw new Error('Generate groups first, then export.')
+  }
+
+  const playerMap = new Map(players.map((player) => [player.id, player]))
+  const rows: Array<Record<string, string | number>> = []
+
+  for (const group of groups) {
+    group.playerIds.forEach((playerId, index) => {
+      const player = playerMap.get(playerId)
+      if (!player) return
+
+      rows.push({
+        Group: group.name,
+        Slot: index + 1,
+        Player: player.name,
+        OVR: player.ovr,
+      })
+    })
+  }
+
+  const workbook = window.XLSX.utils.book_new()
+
+  const generatedAt = new Date()
+  const generatedDate = generatedAt.toISOString().slice(0, 10)
+  const generatedTime = generatedAt.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  const overviewRows: Array<Array<string | number>> = [
+    ['Tournament', tournamentName],
+    ['Export Type', 'Group Allocation'],
+    ['Generated On', generatedDate],
+    ['Generated At', generatedTime],
+    ['Total Groups', groups.length],
+    ['Total Players', rows.length],
+    [],
+    ['Group', 'Players', 'Average OVR', 'Highest OVR', 'Lowest OVR'],
+  ]
+
+  for (const group of groups) {
+    const groupPlayers = group.playerIds
+      .map((id) => playerMap.get(id))
+      .filter((player): player is NonNullable<typeof player> => Boolean(player))
+    const ovrs = groupPlayers.map((player) => player.ovr)
+    const avg = ovrs.length
+      ? Number((ovrs.reduce((sum, value) => sum + value, 0) / ovrs.length).toFixed(1))
+      : 0
+
+    overviewRows.push([
+      group.name,
+      groupPlayers.length,
+      avg,
+      ovrs.length ? Math.max(...ovrs) : '-',
+      ovrs.length ? Math.min(...ovrs) : '-',
+    ])
+  }
+
+  const overviewSheet = window.XLSX.utils.aoa_to_sheet(overviewRows) as {
+    [key: string]: unknown
+  }
+  overviewSheet['!cols'] = [{ wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }]
+  overviewSheet['!autofilter'] = { ref: `A8:E${overviewRows.length}` }
+  overviewSheet['!freeze'] = { xSplit: 0, ySplit: 8 }
+  window.XLSX.utils.book_append_sheet(workbook, overviewSheet, 'Overview')
+
+  const allGroupsRows: Array<Array<string | number>> = [
+    [tournamentName],
+    ['Group Allocation Export'],
+    [`Generated on ${generatedDate} at ${generatedTime}`],
+    [],
+    ['Group', 'Slot', 'Player Name', 'OVR'],
+  ]
+
+  for (const row of rows) {
+    allGroupsRows.push([row.Group, row.Slot, row.Player, row.OVR])
+  }
+
+  const allGroupsSheet = window.XLSX.utils.aoa_to_sheet(allGroupsRows) as {
+    [key: string]: unknown
+  }
+  allGroupsSheet['!cols'] = [{ wch: 18 }, { wch: 10 }, { wch: 36 }, { wch: 10 }]
+  allGroupsSheet['!autofilter'] = { ref: `A5:D${allGroupsRows.length}` }
+  allGroupsSheet['!freeze'] = { xSplit: 0, ySplit: 5 }
+  window.XLSX.utils.book_append_sheet(workbook, allGroupsSheet, 'All Groups')
+
+  for (const group of groups) {
+    const groupRows: Array<Array<string | number>> = [
+      [group.name],
+      ['Tournament', tournamentName],
+      ['Generated On', generatedDate],
+      [],
+      ['Slot', 'Player Name', 'OVR'],
+    ]
+
+    group.playerIds.forEach((playerId, index) => {
+      const player = playerMap.get(playerId)
+      if (!player) return
+      groupRows.push([index + 1, player.name, player.ovr])
+    })
+
+    const groupSheet = window.XLSX.utils.aoa_to_sheet(groupRows) as { [key: string]: unknown }
+    groupSheet['!cols'] = [{ wch: 10 }, { wch: 36 }, { wch: 10 }]
+    groupSheet['!autofilter'] = { ref: `A5:C${groupRows.length}` }
+    groupSheet['!freeze'] = { xSplit: 0, ySplit: 5 }
+
+    const sheetName = group.name.replace(/[^a-z0-9 ]/gi, '').slice(0, 31) || 'Group'
+    window.XLSX.utils.book_append_sheet(workbook, groupSheet, sheetName)
+  }
+
+  const dateTag = generatedDate
+  const safeName = tournamentName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  const fileName = `${safeName || 'tournament'}-groups-${dateTag}.xlsx`
+  window.XLSX.writeFile(workbook, fileName)
 }
 
 const AppShell = () => {
@@ -873,6 +1006,17 @@ const PlayerManagement = () => {
 const GroupManagement = () => {
   const { state, setSettings, generateGroups, movePlayerToGroup, lockGroups } = useTournament()
   const canGenerate = state.players.length >= MIN_PLAYERS
+  const [feedback, setFeedback] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
+
+  const onExportGroups = () => {
+    try {
+      exportGroupsToExcel(state.groups, state.players, state.settings.tournamentName)
+      setFeedback({ tone: 'ok', text: 'Groups exported to Excel successfully.' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not export groups.'
+      setFeedback({ tone: 'error', text: message })
+    }
+  }
 
   return (
     <section className="space-y-4">
@@ -928,8 +1072,21 @@ const GroupManagement = () => {
           >
             Confirm Groups & Create Fixtures
           </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={onExportGroups}
+            disabled={!state.groups.length}
+          >
+            Export Groups (.xlsx)
+          </button>
           {!canGenerate && <p className="text-xs text-amber-300 md:col-span-4">Add at least two players before generating groups.</p>}
         </div>
+        {feedback && (
+          <p className={`rounded border px-3 py-2 text-xs ${feedback.tone === 'ok' ? 'border-emerald-300/50 bg-emerald-500/10 text-emerald-100' : 'border-red-300/50 bg-red-500/10 text-red-100'}`}>
+            {feedback.text}
+          </p>
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
