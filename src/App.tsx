@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent 
 import { TournamentProvider, useGroupFixtures, usePlayerMap, useTournament } from './context/TournamentContext'
 import { calculateStandings } from './utils/tournament'
 import { MAX_PLAYERS, MIN_PLAYERS } from './utils/tournament'
-import type { Fixture, Group, KnockoutTie, StandingRow, Tiebreaker, TournamentState } from './types'
+import type { Fixture, Group, StandingRow, Tiebreaker, TournamentState } from './types'
+import { KnockoutPage } from './components/KnockoutPage'
 
 declare global {
   interface Window {
@@ -26,14 +27,13 @@ declare global {
   }
 }
 
-type Page = 'groups' | 'fixtures' | 'knockout' | 'champion' | 'rules' | 'admin'
+type Page = 'groups' | 'fixtures' | 'knockout' | 'rules' | 'admin'
 type AdminTab = 'players' | 'groups' | 'fixtures' | 'score_entry' | 'knockout' | 'settings'
 
 const navItems: Array<{ key: Page; label: string }> = [
   { key: 'groups', label: 'Groups' },
   { key: 'fixtures', label: 'Fixtures' },
   { key: 'knockout', label: 'Knockout' },
-  { key: 'champion', label: 'Champion' },
   { key: 'rules', label: 'Rules' },
   { key: 'admin', label: 'Admin' },
 ]
@@ -265,15 +265,6 @@ const groupStandingsMap = (
   return map
 }
 
-const compactRoundLabel = (name: string) => {
-  const normalized = name.toLowerCase()
-  if (normalized.includes('round of 16')) return 'Round 16'
-  if (normalized.includes('round of 32')) return 'Round 32'
-  if (normalized.includes('quarter')) return 'QF'
-  if (normalized.includes('semi')) return 'SF'
-  return name
-}
-
 const exportGroupsToExcel = (
   groups: Group[],
   players: TournamentState['players'],
@@ -451,7 +442,6 @@ const AppShell = () => {
           {page === 'groups' && <GroupsPage />}
           {page === 'fixtures' && <FixturesPage />}
           {page === 'knockout' && <KnockoutPage />}
-          {page === 'champion' && <ChampionPage />}
           {page === 'rules' && <RulesPage />}
           {page === 'admin' && <AdminPage />}
         </div>
@@ -560,220 +550,6 @@ const FixturesPage = () => {
           </div>
         )
       })}
-    </section>
-  )
-}
-
-const KnockoutPage = () => {
-  const { state } = useTournament()
-  const playerMap = usePlayerMap()
-  const rounds = state.knockout.rounds
-  const [viewportWidth, setViewportWidth] = useState<number>(() =>
-    typeof window === 'undefined' ? 1920 : window.innerWidth,
-  )
-
-  useEffect(() => {
-    const onResize = () => setViewportWidth(window.innerWidth)
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
-
-  const bracketWidth = useMemo(() => {
-    const roundsCount = Math.max(1, rounds.length)
-    const sideWidth = roundsCount * 256 + Math.max(0, roundsCount - 1) * 16
-    return sideWidth * 2 + 300 + 48
-  }, [rounds.length])
-
-  const bracketScale = useMemo(() => {
-    const availableWidth = Math.max(320, viewportWidth - 72)
-    const autoFitScale = availableWidth / bracketWidth
-    return Math.min(0.7, Math.max(0.42, autoFitScale))
-  }, [viewportWidth, bracketWidth])
-
-  const scaledBracketWidth = useMemo(
-    () => Math.max(320, Math.floor(bracketWidth * bracketScale)),
-    [bracketWidth, bracketScale],
-  )
-
-  const mirroredRounds = useMemo(
-    () =>
-      rounds.map((round) => {
-        const splitAt = Math.ceil(round.ties.length / 2)
-        return {
-          id: round.id,
-          name: round.name,
-          left: round.ties.slice(0, splitAt),
-          right: round.ties.slice(splitAt),
-        }
-      }),
-    [rounds],
-  )
-
-  if (!state.knockout.enabled) {
-    return <EmptyState text="Knockout bracket has not been generated yet." />
-  }
-
-  return (
-    <section className="space-y-4">
-      <div className="panel">
-        <h2 className="section-heading">Knockout Arena</h2>
-      </div>
-      <div className="pitch-bracket overflow-hidden rounded-xl border border-neonPurple/45 p-4 md:p-6">
-        <div className="mx-auto" style={{ width: `${scaledBracketWidth}px` }}>
-          <div
-            className="origin-top-left"
-            style={{
-              width: `${bracketWidth}px`,
-              transform: `scale(${bracketScale})`,
-            }}
-          >
-            <div className="bracket-layout grid grid-cols-[minmax(220px,1fr)_260px_minmax(220px,1fr)] gap-5 items-start lg:grid-cols-[1fr_300px_1fr] lg:gap-6">
-            <div className="bracket-side flex items-start justify-end gap-4">
-              {mirroredRounds.map((round, roundIndex) => (
-                <div
-                  key={`left-${round.id}`}
-                  className="bracket-round w-64 space-y-3"
-                  style={{ marginTop: `${roundIndex * 18}px` }}
-                >
-                  <h3 className="round-tag font-pixel text-[10px] text-neonSoft">{compactRoundLabel(round.name)}</h3>
-                  {round.left.map((tie, tieIndex) => (
-                    <BracketTieCard
-                      key={tie.id}
-                      tie={tie}
-                      playerMap={playerMap}
-                      side="left"
-                      tieIndex={tieIndex}
-                      tieCount={round.left.length}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-
-            <div className="final-podium space-y-3 rounded-xl border border-neonPink/45 bg-black/50 p-4 text-xs shadow-neon">
-              <h3 className="font-pixel text-[10px] text-neonPink">Final Arena</h3>
-              <p className="podium-cup" aria-hidden>
-                TROPHY
-              </p>
-              {state.knockout.finalSeries && (
-                <div className="rounded border border-neonPurple/45 bg-zinc-950/70 p-3 text-xs">
-                <p className="font-semibold">
-                  {(state.knockout.finalSeries.player1Id && playerMap[state.knockout.finalSeries.player1Id]?.name) || 'TBD'} vs {(state.knockout.finalSeries.player2Id && playerMap[state.knockout.finalSeries.player2Id]?.name) || 'TBD'}
-                </p>
-                <div className="mt-2 space-y-1">
-                  {state.knockout.finalSeries.games.map((game, index) => (
-                    <p key={game.id} className="text-zinc-300">
-                      Match {index + 1}: {game.void ? 'Void / Replay' : game.winnerId ? playerMap[game.winnerId]?.name : 'Pending'}
-                    </p>
-                  ))}
-                </div>
-                  <p className="mt-2 text-neonSoft">
-                    Champion: {(state.knockout.finalSeries.championId && playerMap[state.knockout.finalSeries.championId]?.name) || 'Pending'}
-                  </p>
-                </div>
-              )}
-
-              <div className="rounded-lg border border-neonPink/50 bg-neonPink/10 p-3 text-center">
-                <p className="font-pixel text-[10px] text-neonPink">Trophy Side</p>
-                <p className="mt-2 text-sm font-semibold text-white">
-                  {(state.championId && playerMap[state.championId]?.name) || 'Awaiting Champion'}
-                </p>
-              </div>
-            </div>
-
-            <div className="bracket-side flex flex-row-reverse items-start justify-start gap-4">
-              {mirroredRounds.map((round, roundIndex) => (
-                <div
-                  key={`right-${round.id}`}
-                  className="bracket-round w-64 space-y-3"
-                  style={{ marginTop: `${roundIndex * 18}px` }}
-                >
-                  <h3 className="round-tag round-tag-right font-pixel text-[10px] text-neonSoft text-right">{compactRoundLabel(round.name)}</h3>
-                  {(round.right.length ? round.right : round.left).map((tie, tieIndex, ties) => (
-                    <BracketTieCard
-                      key={tie.id}
-                      tie={tie}
-                      playerMap={playerMap}
-                      side="right"
-                      tieIndex={tieIndex}
-                      tieCount={ties.length}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-const BracketTieCard = ({
-  tie,
-  playerMap,
-  side,
-  tieIndex,
-  tieCount,
-}: {
-  tie: KnockoutTie
-  playerMap: Record<string, { name: string }>
-  side: 'left' | 'right'
-  tieIndex: number
-  tieCount: number
-}) => {
-  const hasPair = tieIndex % 2 === 0 && tieIndex + 1 < tieCount
-  const isBottomOfPair = tieIndex % 2 === 1
-  const hasStem = hasPair || isBottomOfPair
-
-  return (
-    <div className={`tie-card ${side === 'left' ? 'tie-left' : 'tie-right'}`}>
-      <span className={`lane lane-out lane-out-${side}`} aria-hidden />
-      {hasStem && (
-        <span
-          className={`lane lane-stem lane-stem-${side} ${hasPair ? 'lane-stem-down' : 'lane-stem-up'}`}
-          aria-hidden
-        />
-      )}
-      {hasPair && <span className={`lane lane-join lane-join-${side}`} aria-hidden />}
-
-      <p className="font-semibold text-zinc-100">
-        {(tie.playerAId && playerMap[tie.playerAId]?.name) || 'TBD'} vs {(tie.playerBId && playerMap[tie.playerBId]?.name) || 'TBD'}
-      </p>
-      <p className="mt-1 text-zinc-300">Leg 1: {scoreText(tie.leg1)}</p>
-      <p className="text-zinc-300">Leg 2: {scoreText(tie.leg2)}</p>
-      <p className="text-zinc-300">Decider: {scoreText(tie.decider)}</p>
-      <p className="mt-1 text-neonSoft">Winner: {(tie.winnerId && playerMap[tie.winnerId]?.name) || 'Pending'}</p>
-    </div>
-  )
-}
-
-const ChampionPage = () => {
-  const { state } = useTournament()
-  const playerMap = usePlayerMap()
-
-  if (!state.championId) {
-    return <EmptyState text="Champion will be displayed once the final best-of-3 ends." />
-  }
-
-  return (
-    <section className="relative overflow-hidden rounded-2xl border border-neonPink/70 bg-zinc-950 px-6 py-10 text-center shadow-neon">
-      <div className="pointer-events-none absolute inset-0">
-        {Array.from({ length: 40 }).map((_, index) => (
-          <span
-            key={index}
-            className="confetti-dot"
-            style={{
-              left: `${(index * 13) % 100}%`,
-              animationDelay: `${index * 0.12}s`,
-            }}
-          />
-        ))}
-      </div>
-      <h2 className="font-pixel text-lg text-neonPink">Champion Banner</h2>
-      <p className="mt-5 text-xl font-bold text-zinc-100">{playerMap[state.championId]?.name}</p>
-      <p className="mt-2 text-sm text-zinc-300">TechStorm Tournament Winner</p>
     </section>
   )
 }
@@ -1697,11 +1473,6 @@ const SettingsManagement = () => {
     </section>
   )
 }
-
-const scoreText = (match: { homeGoals: number | null; awayGoals: number | null; completed: boolean }) =>
-  match.completed && match.homeGoals !== null && match.awayGoals !== null
-    ? `${match.homeGoals}-${match.awayGoals}`
-    : 'Pending'
 
 const EmptyState = ({ text }: { text: string }) => (
   <section className="panel">
