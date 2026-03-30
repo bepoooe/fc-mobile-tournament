@@ -572,10 +572,25 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
     setState(defaultState())
   }, [])
 
+  const resetKnockout = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      knockout: {
+        enabled: false,
+        rounds: [],
+        groupStageGoalDiff: prev.knockout.groupStageGoalDiff,
+        finalSeries: null,
+      },
+      stage: 'group_stage' as const,
+      championId: null,
+    }))
+  }, [])
+
   const value = useMemo<TournamentContextType>(
     () => ({
       state,
       resetTournament,
+      resetKnockout,
       setAdminPassword,
       setSettings,
       importState,
@@ -601,6 +616,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
     [
       state,
       resetTournament,
+      resetKnockout,
       setAdminPassword,
       setSettings,
       importState,

@@ -354,10 +354,51 @@ export const KnockoutPage = () => {
 
   if (!state.knockout.enabled) {
     return (
-      <section className="panel">
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-          Knockout bracket has not been generated yet.
+      <section 
+        style={{
+          background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
+          minHeight: 'calc(100vh - 120px)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 'clamp(2rem, 4vw, 3rem)',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{
+          fontSize: 'clamp(14px, 2.5vw, 18px)',
+          letterSpacing: '8px',
+          color: 'rgba(168,85,247,0.45)',
+          marginBottom: '12px',
+        }}>✦ ✦ ✦</div>
+        <h1 style={{
+          fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+          fontSize: 'clamp(32px, 6vw, 52px)',
+          fontWeight: 800,
+          color: '#f0edf5',
+          textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+          letterSpacing: '3px',
+          lineHeight: 1.1,
+          margin: '16px 0',
+        }}>
+          Welcome to <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>KNOCKOUT ARENA</span>
+        </h1>
+        <p style={{
+          fontFamily: "'Rajdhani', sans-serif",
+          fontSize: 'clamp(14px, 2vw, 16px)',
+          letterSpacing: '2px',
+          color: 'rgba(216,180,254,0.6)',
+          margin: '16px 0 0 0',
+        }}>
+          The knockout bracket will appear here once generated in the Admin panel
         </p>
+        <div style={{
+          fontSize: 'clamp(14px, 2.5vw, 18px)',
+          letterSpacing: '8px',
+          color: 'rgba(168,85,247,0.45)',
+          marginTop: '12px',
+        }}>✦ ✦ ✦</div>
       </section>
     )
   }

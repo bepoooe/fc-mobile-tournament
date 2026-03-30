@@ -38,14 +38,6 @@ const navItems: Array<{ key: Page; label: string }> = [
   { key: 'admin', label: 'Admin' },
 ]
 
-const stageLabel: Record<string, string> = {
-  setup: 'Setup Phase',
-  group_stage: 'Group Stage Active',
-  knockout: '',
-  final: 'Final Best of 3 Active',
-  completed: 'Tournament Completed',
-}
-
 const readExcelPlayers = async (file: File): Promise<Array<{ name: string; ovr: number }>> => {
   if (!window.XLSX) {
     throw new Error('SheetJS not loaded. Refresh page and try again.')
@@ -394,7 +386,6 @@ const exportGroupsToExcel = (
 }
 
 const AppShell = () => {
-  const { state } = useTournament()
   const [page, setPage] = useState<Page>('groups')
   const isKnockoutPage = page === 'knockout'
 
@@ -520,27 +511,105 @@ const GroupsPage = () => {
   )
 
   if (!state.groups.length) {
-    return <EmptyState text="Groups have not been generated yet." />
+    return (
+      <section 
+        style={{
+          background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
+          minHeight: 'calc(100vh - 120px)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 'clamp(2rem, 4vw, 3rem)',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{
+          fontSize: 'clamp(14px, 2.5vw, 18px)',
+          letterSpacing: '8px',
+          color: 'rgba(168,85,247,0.45)',
+          marginBottom: '12px',
+        }}>✦ ✦ ✦</div>
+        <h1 style={{
+          fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+          fontSize: 'clamp(32px, 6vw, 52px)',
+          fontWeight: 800,
+          color: '#f0edf5',
+          textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+          letterSpacing: '3px',
+          lineHeight: 1.1,
+          margin: '16px 0',
+        }}>
+          Welcome to <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>GROUP STAGE</span>
+        </h1>
+        <p style={{
+          fontFamily: "'Rajdhani', sans-serif",
+          fontSize: 'clamp(14px, 2vw, 16px)',
+          letterSpacing: '2px',
+          color: 'rgba(216,180,254,0.6)',
+          margin: '16px 0 0 0',
+        }}>
+          Groups will appear here once generated in the Admin panel
+        </p>
+        <div style={{
+          fontSize: 'clamp(14px, 2.5vw, 18px)',
+          letterSpacing: '8px',
+          color: 'rgba(168,85,247,0.45)',
+          marginTop: '12px',
+        }}>✦ ✦ ✦</div>
+      </section>
+    )
   }
 
   return (
     <section className="space-y-6">
-      <div className="panel">
-        <h2
-          style={{
-            fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
-            fontSize: 'clamp(13px, 4vw, 14px)',
-            fontWeight: 700,
-            letterSpacing: '4px',
-            color: '#d8b4fe',
-            textTransform: 'uppercase' as const,
-            margin: 0,
-          }}
-        >
-          Group Stage Center
-        </h2>
-        <p className="section-lead">
-          Real-time standings and fixtures update instantly as scores are entered from admin.
+      {/* Header with arena-style title */}
+      <div 
+        className="panel text-center space-y-2"
+        style={{
+          background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
+          border: '1px solid rgba(168,85,247,0.2)',
+          padding: 'clamp(1.5rem, 3vw, 2rem)',
+        }}
+      >
+        <div style={{
+          fontSize: 'clamp(10px, 2vw, 12px)',
+          letterSpacing: '8px',
+          color: 'rgba(168,85,247,0.45)',
+          marginBottom: '4px',
+        }}>✦ ✦ ✦</div>
+        <div style={{
+          fontFamily: "'Rajdhani', sans-serif",
+          fontSize: 'clamp(9px, 1.8vw, 10px)',
+          fontWeight: 700,
+          letterSpacing: '6px',
+          color: 'rgba(216,180,254,0.65)',
+          textTransform: 'uppercase' as const,
+          marginBottom: '2px',
+        }}>
+          TechStorm Tournament
+        </div>
+        <h1 style={{
+          fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+          fontSize: 'clamp(24px, 5vw, 40px)',
+          fontWeight: 800,
+          color: '#f0edf5',
+          textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+          letterSpacing: '2px',
+          lineHeight: 1.1,
+          margin: '0.5rem 0 0 0',
+        }}>
+          GROUP <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>STAGE</span>
+        </h1>
+        <p style={{
+          fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+          fontSize: 'clamp(8px, 1.5vw, 9px)',
+          letterSpacing: '4px',
+          color: 'var(--text-muted)',
+          textTransform: 'uppercase' as const,
+          marginTop: '8px',
+        }}>
+          Real-time standings update as scores are entered
         </p>
       </div>
       {state.groups.map((group) => (
@@ -633,71 +702,183 @@ const FixturesPage = () => {
   const playerMap = usePlayerMap()
 
   if (!state.fixtures.length) {
-    return <EmptyState text="Fixtures are not available yet. Confirm groups in Admin first." />
+    return (
+      <section 
+        style={{
+          background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
+          minHeight: 'calc(100vh - 120px)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 'clamp(2rem, 4vw, 3rem)',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{
+          fontSize: 'clamp(14px, 2.5vw, 18px)',
+          letterSpacing: '8px',
+          color: 'rgba(168,85,247,0.45)',
+          marginBottom: '12px',
+        }}>✦ ✦ ✦</div>
+        <h1 style={{
+          fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+          fontSize: 'clamp(32px, 6vw, 52px)',
+          fontWeight: 800,
+          color: '#f0edf5',
+          textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+          letterSpacing: '3px',
+          lineHeight: 1.1,
+          margin: '16px 0',
+        }}>
+          Welcome to <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>MATCH FIXTURES</span>
+        </h1>
+        <p style={{
+          fontFamily: "'Rajdhani', sans-serif",
+          fontSize: 'clamp(14px, 2vw, 16px)',
+          letterSpacing: '2px',
+          color: 'rgba(216,180,254,0.6)',
+          margin: '16px 0 0 0',
+        }}>
+          Fixtures will appear here once groups are confirmed in the Admin panel
+        </p>
+        <div style={{
+          fontSize: 'clamp(14px, 2.5vw, 18px)',
+          letterSpacing: '8px',
+          color: 'rgba(168,85,247,0.45)',
+          marginTop: '12px',
+        }}>✦ ✦ ✦</div>
+      </section>
+    )
   }
 
   return (
     <section className="space-y-6">
-      <div className="panel">
-        <h2
-          style={{
-            fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
-            fontSize: 'clamp(11px, 4vw, 14px)',
-            fontWeight: 700,
-            letterSpacing: '4px',
-            color: '#d8b4fe',
-            textTransform: 'uppercase' as const,
-          }}
-        >
-          Match Fixtures
-        </h2>
-        <p className="section-lead text-xs sm:text-sm">Top 2 teams qualify from each group.</p>
+      {/* Header with arena-style title */}
+      <div 
+        className="panel text-center space-y-2"
+        style={{
+          background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
+          border: '1px solid rgba(168,85,247,0.2)',
+          padding: 'clamp(1.5rem, 3vw, 2rem)',
+        }}
+      >
+        <div style={{
+          fontSize: 'clamp(10px, 2vw, 12px)',
+          letterSpacing: '8px',
+          color: 'rgba(168,85,247,0.45)',
+          marginBottom: '4px',
+        }}>✦ ✦ ✦</div>
+        <div style={{
+          fontFamily: "'Rajdhani', sans-serif",
+          fontSize: 'clamp(9px, 1.8vw, 10px)',
+          fontWeight: 700,
+          letterSpacing: '6px',
+          color: 'rgba(216,180,254,0.65)',
+          textTransform: 'uppercase' as const,
+          marginBottom: '2px',
+        }}>
+          TechStorm Tournament
+        </div>
+        <h1 style={{
+          fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+          fontSize: 'clamp(24px, 5vw, 40px)',
+          fontWeight: 800,
+          color: '#f0edf5',
+          textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+          letterSpacing: '2px',
+          lineHeight: 1.1,
+          margin: '0.5rem 0 0 0',
+        }}>
+          MATCH <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>FIXTURES</span>
+        </h1>
+        <p style={{
+          fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+          fontSize: 'clamp(8px, 1.5vw, 9px)',
+          letterSpacing: '4px',
+          color: 'var(--text-muted)',
+          textTransform: 'uppercase' as const,
+          marginTop: '8px',
+        }}>
+          Top 2 teams qualify from each group
+        </p>
       </div>
       {state.groups.map((group) => {
         const groupFixtures = state.fixtures.filter((fixture) => fixture.groupId === group.id)
         if (!groupFixtures.length) return null
 
         return (
-          <div key={group.id} className="panel">
-            <h3
-              style={{
-                fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
-                fontSize: 'clamp(9px, 3vw, 11px)',
-                fontWeight: 700,
-                letterSpacing: '3px',
-                color: '#d8b4fe',
-                textTransform: 'uppercase' as const,
-              }}
-            >
-              {group.name}
-            </h3>
-            <div className="mt-4 space-y-2">
+          <div key={group.id} className="panel space-y-4">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              paddingBottom: '12px',
+              borderBottom: '1px solid rgba(168,85,247,0.1)',
+            }}>
+              <div style={{
+                width: '4px',
+                height: '24px',
+                background: 'linear-gradient(180deg, rgba(168,85,247,0.6), rgba(236,72,153,0.5))',
+                borderRadius: '4px',
+              }}></div>
+              <h3
+                style={{
+                  fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+                  fontSize: 'clamp(11px, 3vw, 13px)',
+                  fontWeight: 700,
+                  letterSpacing: '2px',
+                  color: '#d8b4fe',
+                  textTransform: 'uppercase' as const,
+                  margin: 0,
+                }}
+              >
+                {group.name}
+              </h3>
+              <div style={{
+                marginLeft: 'auto',
+                fontSize: '11px',
+                color: 'rgba(168,85,247,0.6)',
+                letterSpacing: '1px',
+              }}>
+                {groupFixtures.length} Match{groupFixtures.length !== 1 ? 'es' : ''}
+              </div>
+            </div>
+            <div className="space-y-2">
               {groupFixtures.map((fixture) => (
                 <div
                   key={fixture.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg px-3 sm:px-4 py-3 sm:py-3 text-xs sm:text-sm transition-all duration-200 hover:border-opacity-50"
                   style={{
-                    border: '1px solid rgba(168,85,247,0.12)',
+                    border: `1px solid ${fixture.completed ? 'rgba(16,185,129,0.3)' : 'rgba(168,85,247,0.15)'}`,
                     background: fixture.completed
-                      ? 'rgba(16,185,129,0.04)'
-                      : 'rgba(24,20,34,0.5)',
+                      ? 'linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.03) 100%)'
+                      : 'linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(24,20,34,0.8) 100%)',
+                    backdropFilter: 'blur(4px)',
                   }}
                 >
-                  <span style={{ color: '#e9d5ff', wordBreak: 'break-word' }}>
-                    {playerMap[fixture.homeId]?.name}
-                    <span style={{ color: 'rgba(168,85,247,0.4)', margin: '0 8px' }}>vs</span>
-                    {playerMap[fixture.awayId]?.name}
-                  </span>
-                  <span
-                    className="font-semibold whitespace-nowrap"
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ color: '#e9d5ff', fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)', wordBreak: 'break-word', fontWeight: 500 }}>
+                      {playerMap[fixture.homeId]?.name}
+                    </div>
+                    <div style={{ color: 'rgba(168,85,247,0.4)', fontSize: '10px', margin: '4px 0', letterSpacing: '1px' }}>vs</div>
+                    <div style={{ color: '#e9d5ff', fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)', wordBreak: 'break-word', fontWeight: 500 }}>
+                      {playerMap[fixture.awayId]?.name}
+                    </div>
+                  </div>
+                  <div
+                    className="font-semibold whitespace-nowrap px-3 py-1.5 rounded-lg"
                     style={{
-                      color: fixture.completed ? '#6ee7b7' : 'rgba(184,176,200,0.5)',
-                      fontSize: fixture.completed ? 'inherit' : '10px',
+                      background: fixture.completed ? 'rgba(16,185,129,0.12)' : 'rgba(168,85,247,0.08)',
+                      color: fixture.completed ? '#6ee7b7' : 'rgba(184,176,200,0.7)',
+                      fontSize: fixture.completed ? 'clamp(0.75rem, 1.5vw, 0.875rem)' : '10px',
                       letterSpacing: fixture.completed ? '1px' : '2px',
+                      textAlign: 'center',
+                      minWidth: '80px',
                     }}
                   >
                     {fixture.completed ? `${fixture.homeGoals} – ${fixture.awayGoals}` : 'PENDING'}
-                  </span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -802,25 +983,36 @@ const AdminPage = () => {
 
   if (!authenticated) {
     return (
-      <section className="panel max-w-md">
-        <h2 className="section-heading">Admin Login</h2>
-        <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Default password: techstorm2025</p>
-        <form onSubmit={onSubmit} className="mt-4 space-y-3">
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => {
-              setPassword(event.target.value)
-              if (authError) setAuthError('')
-            }}
-            className="input"
-            placeholder="Enter admin password"
-          />
-          {authError && <p className="text-xs text-red-300">{authError}</p>}
-          <button className="btn-primary" type="submit">
-            Login
-          </button>
-        </form>
+      <section 
+        style={{
+          minHeight: 'calc(100vh - 120px)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 'clamp(1.5rem, 3vw, 2rem)',
+        }}
+      >
+        <div className="panel max-w-md w-full">
+          <h2 className="section-heading">Admin Login</h2>
+          <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Default password: techstorm2025</p>
+          <form onSubmit={onSubmit} className="mt-4 space-y-3">
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value)
+                if (authError) setAuthError('')
+              }}
+              className="input"
+              placeholder="Enter admin password"
+            />
+            {authError && <p className="text-xs text-red-300">{authError}</p>}
+            <button className="btn-primary" type="submit">
+              Login
+            </button>
+          </form>
+        </div>
       </section>
     )
   }
@@ -1389,6 +1581,7 @@ const KnockoutManagement = () => {
   const {
     state,
     generateKnockout,
+    resetKnockout,
     setTieLegScore,
     clearTieLegScore,
     coinTossTie,
@@ -1400,15 +1593,33 @@ const KnockoutManagement = () => {
 
   return (
     <section className="space-y-4">
-      <div className="panel">
-        <button
-          className="btn-primary"
-          type="button"
-          onClick={generateKnockout}
-          disabled={!state.fixtures.length}
-        >
-          Generate Knockout Bracket
-        </button>
+      <div className="panel space-y-2">
+        <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+          <button
+            className="btn-primary flex-1 sm:flex-initial"
+            type="button"
+            onClick={generateKnockout}
+            disabled={!state.fixtures.length}
+          >
+            Generate Knockout Bracket
+          </button>
+          {state.knockout.enabled && (
+            <button
+              className="btn-danger flex-1 sm:flex-initial"
+              type="button"
+              onClick={() => {
+                const proceed = window.confirm(
+                  'Reset knockout bracket? This will clear all knockout progress.',
+                )
+                if (proceed) {
+                  resetKnockout()
+                }
+              }}
+            >
+              Reset Knockouts
+            </button>
+          )}
+        </div>
       </div>
 
       {state.knockout.rounds.map((round, roundIndex) => (

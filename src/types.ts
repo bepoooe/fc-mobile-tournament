@@ -117,6 +117,7 @@ export interface TournamentState {
 export interface TournamentContextType {
   state: TournamentState
   resetTournament: () => void
+  resetKnockout: () => void
   setAdminPassword: (password: string) => void
   setSettings: (settings: Partial<TournamentSettings>) => void
   importState: (incoming: TournamentState) => void
