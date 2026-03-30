@@ -399,15 +399,31 @@ const AppShell = () => {
   const isKnockoutPage = page === 'knockout'
 
   return (
-    <div className="min-h-screen bg-night text-white">
-      <div className="bg-grid-overlay fixed inset-0 -z-10 opacity-45" />
-      <header className="sticky top-0 z-40 border-b border-neonPink/40 bg-night/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen text-white" style={{ background: '#09090f' }}>
+      <header
+        className="sticky top-0 z-40 backdrop-blur-md"
+        style={{
+          borderBottom: '1px solid rgba(168,85,247,0.12)',
+          background: 'rgba(9,9,15,0.88)',
+        }}
+      >
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
           <div>
-            <h1 className="font-pixel text-xs uppercase tracking-wider text-neonPink sm:text-sm">
+            <h1
+              style={{
+                fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+                fontSize: '13px',
+                fontWeight: 700,
+                letterSpacing: '3px',
+                color: '#d8b4fe',
+                textTransform: 'uppercase' as const,
+              }}
+            >
               TechStorm Tournament
             </h1>
-            <p className="mt-1 text-[11px] text-zinc-300">FC Mobile Championship Console</p>
+            <p className="mt-0.5 text-[11px]" style={{ color: 'rgba(184,176,200,0.7)' }}>
+              FC Mobile Championship Console
+            </p>
           </div>
           <span className="status-chip">{stageLabel[state.stage]}</span>
           <nav className="flex flex-wrap gap-2">
@@ -416,11 +432,24 @@ const AppShell = () => {
                 key={item.key}
                 type="button"
                 onClick={() => setPage(item.key)}
-                className={`rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition ${
-                  page === item.key
-                    ? 'border-neonPink bg-neonPink/20 text-neonPink shadow-neon'
-                    : 'border-neonPurple/40 bg-zinc-950/70 text-zinc-200 hover:border-neonPink/60 hover:text-neonPink'
-                }`}
+                className="rounded-lg px-3.5 py-2 text-xs font-semibold uppercase tracking-wider transition-all duration-200"
+                style={{
+                  border: `1px solid ${
+                    page === item.key
+                      ? 'rgba(168,85,247,0.4)'
+                      : 'rgba(168,85,247,0.12)'
+                  }`,
+                  background:
+                    page === item.key
+                      ? 'rgba(168,85,247,0.12)'
+                      : 'rgba(24,20,34,0.5)',
+                  color:
+                    page === item.key ? '#d8b4fe' : 'rgba(184,176,200,0.8)',
+                  boxShadow:
+                    page === item.key
+                      ? '0 0 12px rgba(168,85,247,0.1)'
+                      : 'none',
+                }}
               >
                 {item.label}
               </button>
@@ -472,34 +501,58 @@ const GroupsPage = () => {
       </div>
       {state.groups.map((group) => (
         <div key={group.id} className="panel">
-          <h3 className="font-pixel text-xs text-neonPink">{group.name}</h3>
+          <h3
+            style={{
+              fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '3px',
+              color: '#d8b4fe',
+              textTransform: 'uppercase' as const,
+            }}
+          >
+            {group.name}
+          </h3>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[680px] text-left text-xs">
-              <thead className="text-neonPurple">
+              <thead>
                 <tr>
-                  <th className="px-2 py-2">Player</th>
-                  <th className="px-2 py-2">P</th>
-                  <th className="px-2 py-2">W</th>
-                  <th className="px-2 py-2">D</th>
-                  <th className="px-2 py-2">L</th>
-                  <th className="px-2 py-2">GF</th>
-                  <th className="px-2 py-2">GA</th>
-                  <th className="px-2 py-2">GD</th>
-                  <th className="px-2 py-2">Pts</th>
+                  {['Player', 'P', 'W', 'D', 'L', 'GF', 'GA', 'GD', 'Pts'].map((h) => (
+                    <th
+                      key={h}
+                      className="px-3 py-2.5"
+                      style={{
+                        color: 'rgba(168,85,247,0.7)',
+                        fontWeight: 600,
+                        fontSize: '10px',
+                        letterSpacing: '1px',
+                        textTransform: 'uppercase',
+                        borderBottom: '1px solid rgba(168,85,247,0.12)',
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {standingsByGroup[group.id]?.map((row) => (
-                  <tr key={row.playerId} className="border-t border-neonPurple/25">
-                    <td className="px-2 py-2">{playerMap[row.playerId]?.name}</td>
-                    <td className="px-2 py-2">{row.p}</td>
-                    <td className="px-2 py-2">{row.w}</td>
-                    <td className="px-2 py-2">{row.d}</td>
-                    <td className="px-2 py-2">{row.l}</td>
-                    <td className="px-2 py-2">{row.gf}</td>
-                    <td className="px-2 py-2">{row.ga}</td>
-                    <td className="px-2 py-2">{row.gd}</td>
-                    <td className="px-2 py-2 font-semibold text-neonPink">{row.points}</td>
+                {standingsByGroup[group.id]?.map((row, idx) => (
+                  <tr
+                    key={row.playerId}
+                    style={{
+                      borderTop: '1px solid rgba(168,85,247,0.08)',
+                      background: idx % 2 === 0 ? 'transparent' : 'rgba(168,85,247,0.03)',
+                    }}
+                  >
+                    <td className="px-3 py-2.5" style={{ color: '#e9d5ff' }}>{playerMap[row.playerId]?.name}</td>
+                    <td className="px-3 py-2.5">{row.p}</td>
+                    <td className="px-3 py-2.5">{row.w}</td>
+                    <td className="px-3 py-2.5">{row.d}</td>
+                    <td className="px-3 py-2.5">{row.l}</td>
+                    <td className="px-3 py-2.5">{row.gf}</td>
+                    <td className="px-3 py-2.5">{row.ga}</td>
+                    <td className="px-3 py-2.5">{row.gd}</td>
+                    <td className="px-3 py-2.5 font-semibold" style={{ color: '#d8b4fe' }}>{row.points}</td>
                   </tr>
                 ))}
               </tbody>
@@ -531,18 +584,44 @@ const FixturesPage = () => {
 
         return (
           <div key={group.id} className="panel">
-            <h3 className="font-pixel text-xs text-neonPink">{group.name}</h3>
+            <h3
+              style={{
+                fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+                fontSize: '11px',
+                fontWeight: 700,
+                letterSpacing: '3px',
+                color: '#d8b4fe',
+                textTransform: 'uppercase' as const,
+              }}
+            >
+              {group.name}
+            </h3>
             <div className="mt-4 space-y-2">
               {groupFixtures.map((fixture) => (
                 <div
                   key={fixture.id}
-                  className="flex items-center justify-between rounded border border-neonPurple/30 bg-zinc-950/70 px-3 py-2 text-xs"
+                  className="flex items-center justify-between rounded-lg px-4 py-2.5 text-xs transition-all duration-200"
+                  style={{
+                    border: '1px solid rgba(168,85,247,0.12)',
+                    background: fixture.completed
+                      ? 'rgba(16,185,129,0.04)'
+                      : 'rgba(24,20,34,0.5)',
+                  }}
                 >
-                  <span>
-                    {playerMap[fixture.homeId]?.name} vs {playerMap[fixture.awayId]?.name}
+                  <span style={{ color: '#e9d5ff' }}>
+                    {playerMap[fixture.homeId]?.name}
+                    <span style={{ color: 'rgba(168,85,247,0.4)', margin: '0 8px' }}>vs</span>
+                    {playerMap[fixture.awayId]?.name}
                   </span>
-                  <span className="font-semibold text-neonPink">
-                    {fixture.completed ? `${fixture.homeGoals} - ${fixture.awayGoals}` : 'Pending'}
+                  <span
+                    className="font-semibold"
+                    style={{
+                      color: fixture.completed ? '#6ee7b7' : 'rgba(184,176,200,0.5)',
+                      fontSize: fixture.completed ? '12px' : '10px',
+                      letterSpacing: fixture.completed ? '1px' : '2px',
+                    }}
+                  >
+                    {fixture.completed ? `${fixture.homeGoals} – ${fixture.awayGoals}` : 'PENDING'}
                   </span>
                 </div>
               ))}
@@ -554,23 +633,51 @@ const FixturesPage = () => {
   )
 }
 
-const RulesPage = () => (
-  <section className="panel space-y-3 text-sm text-zinc-200">
-    <h2 className="font-pixel text-xs text-neonPink">Tournament Rules</h2>
-    <RuleLine text="Match Format: 1 vs 1" />
-    <RuleLine text="Controls: Any in-game control mode (Buttons/Gestures)" />
-    <RuleLine text="No cross spamming — max 1 cross-to-header attempt per half" />
-    <RuleLine text="Disconnection within 2 in-game minutes = Full rematch" />
-    <RuleLine text="Disconnection after 2 in-game minutes = Score stands; organizers decide rematch" />
-    <RuleLine text="Draws allowed in League Stage; Knockout = rematch until winner" />
-    <RuleLine text="Device issues are player's responsibility; no automatic rematch without organizer approval" />
-    <RuleLine text="Substitutions and tactics allowed before match start only" />
-    <RuleLine text="Final Authority: TechStorm Tournament Management Team's decision is final and binding" />
-  </section>
-)
+const RULES = [
+  'Match Format: 1 vs 1',
+  'Controls: Any in-game control mode (Buttons/Gestures)',
+  'No cross spamming — max 1 cross-to-header attempt per half',
+  'Disconnection within 2 in-game minutes = Full rematch',
+  'Disconnection after 2 in-game minutes = Score stands; organizers decide rematch',
+  'Draws allowed in League Stage; Knockout = rematch until winner',
+  "Device issues are player's responsibility; no automatic rematch without organizer approval",
+  'Substitutions and tactics allowed before match start only',
+  "Final Authority: TechStorm Tournament Management Team's decision is final and binding",
+]
 
-const RuleLine = ({ text }: { text: string }) => (
-  <p className="rounded border border-neonPurple/25 bg-zinc-900/70 px-3 py-2">{text}</p>
+const RulesPage = () => (
+  <section className="panel space-y-4 text-sm">
+    <h2 className="section-heading">Tournament Rules</h2>
+    <p className="text-xs" style={{ color: 'var(--text-muted)', letterSpacing: '1px' }}>
+      {RULES.length} rules govern all matches
+    </p>
+    <div className="space-y-2">
+      {RULES.map((text, i) => (
+        <div
+          key={i}
+          className="flex items-start gap-3 rounded-lg px-4 py-3 transition-all duration-200"
+          style={{
+            border: '1px solid rgba(168,85,247,0.1)',
+            background: i % 2 === 0 ? 'rgba(24,20,34,0.4)' : 'rgba(24,20,34,0.2)',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "'Orbitron', sans-serif",
+              fontSize: '9px',
+              fontWeight: 700,
+              color: 'rgba(168,85,247,0.5)',
+              minWidth: '20px',
+              paddingTop: '2px',
+            }}
+          >
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <span style={{ color: 'var(--text-secondary)' }}>{text}</span>
+        </div>
+      ))}
+    </div>
+  </section>
 )
 
 const AdminPage = () => {
@@ -594,8 +701,8 @@ const AdminPage = () => {
   if (!authenticated) {
     return (
       <section className="panel max-w-md">
-        <h2 className="font-pixel text-xs text-neonPink">Admin Login</h2>
-        <p className="mt-2 text-xs text-zinc-300">Default password: techstorm2025</p>
+        <h2 className="section-heading">Admin Login</h2>
+        <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Default password: techstorm2025</p>
         <form onSubmit={onSubmit} className="mt-4 space-y-3">
           <input
             type="password"
@@ -624,13 +731,16 @@ const AdminPage = () => {
             key={tab}
             type="button"
             onClick={() => setAdminTab(tab)}
-            className={`rounded border px-3 py-2 text-xs uppercase tracking-wide ${
-              adminTab === tab
-                ? 'border-neonPink bg-neonPink/20 text-neonPink'
-                : 'border-neonPurple/30 bg-zinc-950/70 text-zinc-300'
-            }`}
+            className="rounded-lg px-3 py-2 text-xs uppercase tracking-wider transition-all duration-200"
+            style={{
+              border: `1px solid ${
+                adminTab === tab ? 'rgba(168,85,247,0.35)' : 'rgba(168,85,247,0.12)'
+              }`,
+              background: adminTab === tab ? 'rgba(168,85,247,0.1)' : 'rgba(24,20,34,0.4)',
+              color: adminTab === tab ? '#d8b4fe' : 'rgba(184,176,200,0.7)',
+            }}
           >
-            {tab}
+            {tab.replace('_', ' ')}
           </button>
         ))}
       </div>
@@ -746,7 +856,7 @@ const PlayerManagement = () => {
   return (
     <section className="space-y-4">
       <div className="panel space-y-3">
-        <h3 className="font-pixel text-xs text-neonPink">Player Management</h3>
+        <h3 className="section-heading">Player Management</h3>
         <p className="text-xs text-zinc-300">{state.players.length}/{MAX_PLAYERS} players configured.</p>
         {feedback && (
           <p className={`rounded border px-3 py-2 text-xs ${feedback.tone === 'ok' ? 'border-emerald-300/50 bg-emerald-500/10 text-emerald-100' : 'border-red-300/50 bg-red-500/10 text-red-100'}`}>
@@ -868,7 +978,7 @@ const GroupManagement = () => {
   return (
     <section className="space-y-4">
       <div className="panel space-y-3">
-        <h3 className="font-pixel text-xs text-neonPink">Group Generator</h3>
+        <h3 className="section-heading">Group Generator</h3>
         <p className="text-xs text-zinc-300">
           Configure groups for {state.players.length} players. Minimum {MIN_PLAYERS}, maximum {MAX_PLAYERS}.
         </p>
@@ -939,7 +1049,7 @@ const GroupManagement = () => {
       <div className="grid gap-4 lg:grid-cols-2">
         {state.groups.map((group) => (
           <div key={group.id} className="panel">
-            <h4 className="font-pixel text-xs text-neonPurple">{group.name}</h4>
+            <h4 className="section-heading">{group.name}</h4>
             <div className="mt-3 space-y-2">
               {group.playerIds.map((playerId) => {
                 const player = state.players.find((item) => item.id === playerId)
@@ -1028,7 +1138,7 @@ const ScoreEntryManagement = () => {
 
   return (
     <section className="panel overflow-x-auto">
-      <h3 className="font-pixel text-xs text-neonPink">Score Entry</h3>
+      <h3 className="section-heading">Score Entry</h3>
       <p className="mt-2 text-xs text-zinc-300">Enter scores using the keyboard and confirm each fixture.</p>
       <div className="mt-3 space-y-2">
         {state.fixtures.map((fixture) => (
@@ -1062,7 +1172,7 @@ const GroupFixtureCard = ({
 
   return (
     <div className="panel">
-      <h3 className="font-pixel text-xs text-neonPink">{group.name} Standings</h3>
+      <h3 className="section-heading">{group.name} Standings</h3>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[680px] text-left text-xs">
           <thead className="text-neonPurple">
@@ -1200,7 +1310,7 @@ const KnockoutManagement = () => {
 
       {state.knockout.rounds.map((round, roundIndex) => (
         <div key={round.id} className="panel space-y-3">
-          <h3 className="font-pixel text-xs text-neonPink">{round.name}</h3>
+          <h3 className="section-heading">{round.name}</h3>
           {round.ties.map((tie) => (
             <div key={tie.id} className="rounded border border-neonPurple/30 bg-zinc-950/70 p-3 text-xs">
               <p className="font-semibold text-zinc-100">
@@ -1243,7 +1353,7 @@ const KnockoutManagement = () => {
 
       {finalSeries && (
         <div className="panel space-y-3">
-          <h3 className="font-pixel text-xs text-neonPink">Final Match - Best of 3</h3>
+          <h3 className="section-heading">Final Match - Best of 3</h3>
           <p className="text-xs text-zinc-300">
             {(finalSeries.player1Id && playerMap[finalSeries.player1Id]?.name) || 'TBD'} vs {(finalSeries.player2Id && playerMap[finalSeries.player2Id]?.name) || 'TBD'}
           </p>
@@ -1412,7 +1522,7 @@ const SettingsManagement = () => {
   return (
     <section className="space-y-4">
       <div className="panel space-y-3">
-        <h3 className="font-pixel text-xs text-neonPink">Settings</h3>
+        <h3 className="section-heading">Settings</h3>
         {feedback && (
           <p className={`rounded border px-3 py-2 text-xs ${feedback.tone === 'ok' ? 'border-emerald-300/50 bg-emerald-500/10 text-emerald-100' : 'border-red-300/50 bg-red-500/10 text-red-100'}`}>
             {feedback.text}
