@@ -406,23 +406,25 @@ export const KnockoutPage = () => {
       </div>
 
       {/* ── Bracket ── */}
-      <div className="bk-bracket">
-        <BracketHalf r0={leftR16}  r1={leftQF}  r2={leftSF}  side="left" finalY={sharedFinalY} />
+      <div className="overflow-x-auto w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="bk-bracket" style={{ minWidth: 'min-content' }}>
+          <BracketHalf r0={leftR16}  r1={leftQF}  r2={leftSF}  side="left" finalY={sharedFinalY} />
 
-        {/* Center: final card is the anchor; trophy/label are absolutely placed above */}
-        <div className="bk-center" style={{ marginTop: centerCardTop }}>
-          <div className="bk-center-head" aria-hidden>
-            <div className="bk-trophy">🏆</div>
-            <div className="bk-label" style={{ color: '#d8b4fe', letterSpacing: '5px' }}>FINAL</div>
+          {/* Center: final card is the anchor; trophy/label are absolutely placed above */}
+          <div className="bk-center" style={{ marginTop: centerCardTop }}>
+            <div className="bk-center-head" aria-hidden>
+              <div className="bk-trophy">🏆</div>
+              <div className="bk-label" style={{ color: '#d8b4fe', letterSpacing: '5px' }}>FINAL</div>
+            </div>
+            <div className="bk-card bk-card--final">
+              <TeamRow team={finalMatch.team1} isWinner={won(finalMatch.team1)} />
+              <div className="bk-divider" />
+              <TeamRow team={finalMatch.team2} isWinner={won(finalMatch.team2)} />
+            </div>
           </div>
-          <div className="bk-card bk-card--final">
-            <TeamRow team={finalMatch.team1} isWinner={won(finalMatch.team1)} />
-            <div className="bk-divider" />
-            <TeamRow team={finalMatch.team2} isWinner={won(finalMatch.team2)} />
-          </div>
+
+          <BracketHalf r0={rightR16} r1={rightQF} r2={rightSF} side="right" finalY={sharedFinalY} />
         </div>
-
-        <BracketHalf r0={rightR16} r1={rightQF} r2={rightSF} side="right" finalY={sharedFinalY} />
       </div>
 
       {/* ── Champion ── */}

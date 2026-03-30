@@ -13,20 +13,33 @@
   --text-primary: #f0edf5;
   --text-secondary: #b8b0c8;
   --text-muted: #8a8096;
+  
+  /* Touch-friendly sizing */
+  --touch-target-min: 44px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  font-size: 16px;
+}
+
 html,
 body,
 #root {
   min-height: 100%;
+  min-height: 100dvh;
 }
 
 body {
   margin: 0;
+  padding: 0;
   font-family: 'Rajdhani', 'Segoe UI', sans-serif;
   color: var(--text-primary);
   overflow-x: hidden;
@@ -36,12 +49,25 @@ body {
     radial-gradient(ellipse at 50% 85%, rgba(16, 185, 129, 0.04), transparent 45%),
     #09090f;
   line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
   background: rgba(168, 85, 247, 0.3);
   color: #fff;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Scrollbar ─── */
 
 * {
   scrollbar-width: thin;
@@ -65,9 +91,16 @@ body {
 /* ─── Panels ─── */
 
 .panel {
-  @apply rounded-xl border bg-zinc-900/70 p-5 backdrop-blur-sm transition-all duration-300;
+  @apply rounded-xl border bg-zinc-900/70 backdrop-blur-sm transition-all duration-300;
   border-color: var(--border-muted);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(168, 85, 247, 0.05);
+  padding: var(--spacing-md);
+}
+
+@media (min-width: 640px) {
+  .panel {
+    padding: var(--spacing-lg);
+  }
 }
 
 .panel:hover {
@@ -78,9 +111,18 @@ body {
 /* ─── Inputs ─── */
 
 .input {
-  @apply w-full rounded-lg border bg-zinc-950/80 px-3 py-2.5 text-sm outline-none transition-all duration-200;
+  @apply w-full rounded-lg border bg-zinc-950/80 outline-none transition-all duration-200;
   border-color: var(--border-muted);
   color: var(--text-primary);
+  padding: var(--spacing-md) var(--spacing-md);
+  font-size: 1rem;
+  min-height: var(--touch-target-min);
+}
+
+@media (max-width: 640px) {
+  .input {
+    font-size: 16px;
+  }
 }
 
 .input::placeholder {
@@ -94,8 +136,26 @@ body {
 
 /* ─── Buttons ─── */
 
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  @apply rounded-lg border font-semibold uppercase tracking-wider transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40;
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  font-size: 0.75rem;
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+@media (max-width: 640px) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    font-size: 0.8125rem;
+    padding: var(--spacing-md) var(--spacing-md);
+  }
+}
+
 .btn-primary {
-  @apply rounded-lg border px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40;
   border-color: rgba(236, 72, 153, 0.45);
   background: rgba(236, 72, 153, 0.1);
   color: #f9a8d4;
@@ -108,8 +168,11 @@ body {
   box-shadow: 0 4px 14px rgba(236, 72, 153, 0.12);
 }
 
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
 .btn-secondary {
-  @apply rounded-lg border px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200;
   border-color: var(--border-muted);
   background: rgba(168, 85, 247, 0.06);
   color: var(--text-secondary);
@@ -122,8 +185,11 @@ body {
   box-shadow: 0 4px 14px rgba(168, 85, 247, 0.08);
 }
 
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
 .btn-danger {
-  @apply rounded-lg border px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200;
   border-color: rgba(239, 68, 68, 0.3);
   background: rgba(239, 68, 68, 0.06);
   color: #fca5a5;
@@ -133,14 +199,6 @@ body {
   background: rgba(239, 68, 68, 0.12);
   border-color: rgba(239, 68, 68, 0.45);
   transform: translateY(-1px);
-}
-
-/* ─── Layout ─── */
-
-.content-shell {
-  display: grid;
-  gap: 1.25rem;
-  align-content: start;
 }
 
 /* ─── Focus ─── */
@@ -156,26 +214,35 @@ select:focus-visible {
 
 .section-heading {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
-  font-size: 13px;
+  font-size: clamp(13px, 4vw, 16px);
   font-weight: 700;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: #d8b4fe;
+  margin: 0;
 }
 
 .section-lead {
-  @apply mt-2 text-sm;
+  @apply mt-2;
+  font-size: clamp(0.875rem, 2.5vw, 1rem);
   color: var(--text-secondary);
 }
 
 /* ─── Status Chip ─── */
 
 .status-chip {
-  @apply inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wider;
+  @apply inline-flex items-center rounded-full border font-semibold uppercase tracking-wider;
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
   border-color: rgba(16, 185, 129, 0.3);
   background: rgba(16, 185, 129, 0.08);
   color: #6ee7b7;
+  font-size: clamp(0.6rem, 1.5vw, 0.6875rem);
+  padding: clamp(0.15rem, 0.5vw, 0.25rem) clamp(0.5rem, 1.5vw, 0.75rem);
+  min-height: clamp(28px, 5vw, 32px);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  letter-spacing: clamp(1px, 0.5vw, 1.5px);
 }
 
 /* ─── Animations ─── */
@@ -195,11 +262,8 @@ select:focus-visible {
   }
 }
 
-/* ═══════════════════════════════════════════════════
-   KNOCKOUT BRACKET — UCL-style bk-* system
-   ═══════════════════════════════════════════════════ */
+/* ────────── KNOCKOUT BRACKET — DESKTOP FIRST ──────────*/
 
-/* ── Page container ── */
 .bk-page {
   position: relative;
   min-height: calc(100vh - 180px);
@@ -217,7 +281,13 @@ select:focus-visible {
   box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.05), 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
-/* ── Header / Title ── */
+@media (min-width: 768px) {
+  .bk-page {
+    padding: 36px 12px 48px;
+    border-radius: 20px;
+  }
+}
+
 .bk-header {
   text-align: center;
   margin-bottom: 36px;
@@ -248,6 +318,7 @@ select:focus-visible {
   text-shadow: 0 0 28px rgba(168, 85, 247, 0.18);
   letter-spacing: 3px;
   line-height: 1.1;
+  margin: 0;
 }
 
 .bk-title span {
@@ -265,10 +336,11 @@ select:focus-visible {
 }
 
 /* ── Main bracket row ── */
+
 .bk-bracket {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;   /* ← must be flex-start: SVG Y coords are from top */
+  align-items: flex-start;
   justify-content: center;
   gap: 0;
   width: max-content;
@@ -276,23 +348,19 @@ select:focus-visible {
   margin: 0 auto;
 }
 
-/* ── Each half (left / right) ── */
 .bk-half {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;   /* ← must be flex-start: columns anchor to top */
+  align-items: flex-start;
   flex: 0 0 auto;
   min-width: 0;
-  /* No background — open bracket like UCL */
 }
 
-/* ── Round column ── */
 .bk-col {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   flex: 0 0 auto;
-  /* height set inline via JS geometry */
 }
 
 .bk-col--md { width: 168px; }
@@ -509,44 +577,244 @@ select:focus-visible {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
 }
 
-/* ── Responsive ── */
-@media (max-width: 900px) {
-  .bk-col--md { width: 148px; }
-  .bk-col--sm { width: 132px; }
-  .bk-col--lg { width: 160px; }
-  .bk-card--md { width: 130px; }
-  .bk-card--sm { width: 116px; }
-  .bk-card--lg { width: 140px; }
-  .bk-card--final { width: 154px; }
+/* ────────── ADDITIONAL MOBILE OPTIMIZATIONS ──────────*/
+
+/* Touch-friendly tap targets */
+button, a, input[type="checkbox"], input[type="radio"] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Better form inputs on mobile */
+input, textarea, select {
+  font-size: 16px;
+  max-width: 100%;
 }
 
 @media (max-width: 640px) {
-  .bk-page {
-    padding: 20px 6px 32px;
-    border-radius: 14px;
+  input, textarea, select {
+    font-size: 16px;
+  }
+}
+
+/* Better table scrolling on mobile */
+table {
+  border-collapse: collapse;
+}
+
+/* Responsive grid layout for admin sections */
+@media (max-width: 768px) {
+  .content-shell {
+    gap: 1rem;
+  }
+}
+
+/* Better spacing for small screens */
+@media (max-width: 640px) {
+  .content-shell {
+    gap: 0.75rem;
   }
 
-  .bk-col--md { width: 124px; }
-  .bk-col--sm { width: 112px; }
-  .bk-col--lg { width: 136px; }
-  .bk-card--md { width: 116px; }
-  .bk-card--sm { width: 104px; }
-  .bk-card--lg { width: 124px; }
-  .bk-card--final { width: 132px; }
+  .panel {
+    border-radius: 10px;
+  }
+}
 
-  .bk-title {
-    font-size: clamp(18px, 5vw, 28px);
+/* Improved header responsiveness */
+@media (max-width: 768px) {
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+}
+
+/* Improved dark mode for mobile */
+@media (prefers-color-scheme: dark) {
+  input, textarea, select {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: var(--text-primary);
+  }
+}
+
+/* Touch-friendly spacing adjustments */
+@supports (padding: max(0px)) {
+  main {
+    padding-left: max(var(--spacing-md), env(safe-area-inset-left));
+    padding-right: max(var(--spacing-md), env(safe-area-inset-right));
+  }
+}
+
+/* Optimized for landscape mode on smaller devices */
+@media (max-height: 500px) and (orientation: landscape) {
+  header {
+    padding: 0.5rem 0;
+  }
+
+  main {
+    padding: 0.5rem var(--spacing-md);
+  }
+
+  .bk-header {
+    margin-bottom: 1rem;
+  }
+}
+
+/* ────────── MOBILE OPTIMIZATIONS FOR KNOCKOUT BRACKET ──────────*/
+
+@media (max-width: 1024px) {
+  .bk-col--md { width: 140px; }
+  .bk-col--sm { width: 125px; }
+  .bk-col--lg { width: 150px; }
+
+  .bk-card--md { width: 120px; }
+  .bk-card--sm { width: 110px; }
+  .bk-card--lg { width: 130px; }
+
+  .bk-card--final {
+    width: 145px;
+  }
+
+  .bk-name {
+    font-size: 9.5px;
   }
 
   .bk-trophy {
     font-size: 36px;
   }
+}
 
-  .btn-primary,
-  .btn-secondary,
-  .btn-danger {
-    font-size: 11px;
-    padding: 0.55rem 0.75rem;
-    min-height: 38px;
+@media (max-width: 768px) {
+  .bk-page {
+    padding: 24px 8px 32px;
+    min-height: calc(100vh - 160px);
+    border-radius: 16px;
+  }
+
+  .bk-col--md { width: 110px; }
+  .bk-col--sm { width: 100px; }
+  .bk-col--lg { width: 120px; }
+
+  .bk-card--md { width: 100px; }
+  .bk-card--sm { width: 90px; }
+  .bk-card--lg { width: 110px; }
+
+  .bk-card--final {
+    width: 120px;
+  }
+
+  .bk-name {
+    font-size: 8px;
+    letter-spacing: 0.2px;
+  }
+
+  .bk-logo {
+    font-size: 10px;
+    width: 10px;
+  }
+
+  .bk-check {
+    font-size: 8px;
+    width: 8px;
+  }
+
+  .bk-row {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 7px;
+    gap: 4px;
+  }
+
+  .bk-trophy {
+    font-size: 28px;
+  }
+
+  .bk-header {
+    margin-bottom: 24px;
+  }
+
+  .bk-title {
+    font-size: clamp(18px, 3.5vw, 32px);
+  }
+
+  .bk-eyebrow {
+    font-size: 9px;
+    letter-spacing: 6px;
+  }
+
+  .bk-bracket {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bk-page {
+    padding: 16px 4px 24px;
+    border-radius: 12px;
+  }
+
+  .bk-col--md { width: 90px; }
+  .bk-col--sm { width: 80px; }
+  .bk-col--lg { width: 100px; }
+
+  .bk-card--md { width: 85px; }
+  .bk-card--sm { width: 75px; }
+  .bk-card--lg { width: 95px; }
+
+  .bk-card--final {
+    width: 100px;
+  }
+
+  .bk-name {
+    font-size: 7px;
+    letter-spacing: 0.1px;
+  }
+
+  .bk-row {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 5px;
+    gap: 3px;
+  }
+
+  .bk-trophy {
+    font-size: 20px;
+  }
+
+  .bk-title {
+    font-size: clamp(14px, 2.5vw, 24px);
+  }
+
+  .bk-header {
+    margin-bottom: 16px;
+  }
+
+  .bk-bracket {
+    gap: 4px;
+  }
+
+  .bk-label {
+    font-size: 7px;
+    height: 24px;
+    line-height: 24px;
+    letter-spacing: 2px;
+  }
+
+  .bk-champion__name {
+    font-size: clamp(14px, 2.5vw, 20px);
+  }
+}
+
+/* ────────── MOBILE OPTIMIZATIONS FOR HEADER/NAVBAR ──────────*/
+
+@media (max-width: 640px) {
+  header {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  header div:first-child {
+    gap: 0.5rem !important;
   }
 }

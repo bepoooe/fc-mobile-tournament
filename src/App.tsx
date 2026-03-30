@@ -41,7 +41,7 @@ const navItems: Array<{ key: Page; label: string }> = [
 const stageLabel: Record<string, string> = {
   setup: 'Setup Phase',
   group_stage: 'Group Stage Active',
-  knockout: 'Knockout Phase Active',
+  knockout: '',
   final: 'Final Best of 3 Active',
   completed: 'Tournament Completed',
 }
@@ -399,42 +399,64 @@ const AppShell = () => {
   const isKnockoutPage = page === 'knockout'
 
   return (
-    <div className="min-h-screen text-white" style={{ background: '#09090f' }}>
+    <div 
+      className="min-h-screen text-white" 
+      style={{ 
+        background: '#09090f',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <header
         className="sticky top-0 z-40 backdrop-blur-md"
         style={{
           borderBottom: '1px solid rgba(168,85,247,0.12)',
           background: 'rgba(9,9,15,0.88)',
+          paddingTop: 'env(safe-area-inset-top)',
         }}
       >
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
-          <div>
+        <div className="mx-auto flex max-w-full flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4 px-2 py-2 sm:px-3 sm:py-2.5 md:px-4 md:py-3.5 lg:px-8">
+          <div className="flex-shrink-0">
             <h1
               style={{
                 fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
-                fontSize: '13px',
+                fontSize: 'clamp(10px, 3vw, 13px)',
                 fontWeight: 700,
-                letterSpacing: '3px',
+                letterSpacing: '2px',
                 color: '#d8b4fe',
                 textTransform: 'uppercase' as const,
+                margin: 0,
+                lineHeight: 1.2,
               }}
             >
               TechStorm Tournament
             </h1>
-            <p className="mt-0.5 text-[11px]" style={{ color: 'rgba(184,176,200,0.7)' }}>
+            <p 
+              className="mt-0.5" 
+              style={{ 
+                fontSize: 'clamp(8px, 1.8vw, 10px)',
+                color: 'rgba(184,176,200,0.7)',
+                margin: 0,
+                lineHeight: 1.2,
+                letterSpacing: '0.5px',
+              }}
+            >
               FC Mobile Championship Console
             </p>
           </div>
-          <span className="status-chip">{stageLabel[state.stage]}</span>
-          <nav className="flex flex-wrap gap-2">
+          <nav 
+            className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2 justify-start md:justify-end"
+            role="navigation"
+          >
             {navItems.map((item) => (
               <button
                 key={item.key}
                 type="button"
                 onClick={() => setPage(item.key)}
-                className="rounded-lg px-3.5 py-2 text-xs font-semibold uppercase tracking-wider transition-all duration-200"
+                className="rounded-lg px-1.5 sm:px-2.5 md:px-3.5 py-1.5 sm:py-2 font-semibold uppercase tracking-wider transition-all duration-200 touch-manipulation text-xs flex-1 sm:flex-initial min-h-[40px] sm:min-h-[44px] flex items-center justify-center"
                 style={{
                   fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+                  fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)',
                   border: `1px solid ${
                     page === item.key
                       ? 'rgba(168,85,247,0.4)'
@@ -450,6 +472,10 @@ const AppShell = () => {
                     page === item.key
                       ? '0 0 12px rgba(168,85,247,0.1)'
                       : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 'clamp(4px, 1vw, 8px) clamp(8px, 1.5vw, 14px)',
                 }}
               >
                 {item.label}
@@ -460,9 +486,14 @@ const AppShell = () => {
       </header>
 
       <main
-        className={`fade-in w-full px-4 py-6 sm:px-6 lg:px-8 ${
+        className={`fade-in w-full px-3 py-4 sm:px-4 md:px-6 lg:px-8 flex-1 ${
           isKnockoutPage ? '' : 'mx-auto max-w-7xl'
         }`}
+        style={{
+          paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))',
+          paddingLeft: 'max(var(--spacing-md), env(safe-area-inset-left))',
+          paddingRight: 'max(var(--spacing-md), env(safe-area-inset-right))',
+        }}
       >
         <div
           className={`content-shell w-full space-y-6 ${
@@ -498,11 +529,12 @@ const GroupsPage = () => {
         <h2
           style={{
             fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
-            fontSize: '14px',
+            fontSize: 'clamp(13px, 4vw, 14px)',
             fontWeight: 700,
             letterSpacing: '4px',
             color: '#d8b4fe',
             textTransform: 'uppercase' as const,
+            margin: 0,
           }}
         >
           Group Stage Center
@@ -516,30 +548,32 @@ const GroupsPage = () => {
           <h3
             style={{
               fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
-              fontSize: '11px',
+              fontSize: 'clamp(11px, 3vw, 11px)',
               fontWeight: 700,
               letterSpacing: '3px',
               color: '#d8b4fe',
               textTransform: 'uppercase' as const,
+              margin: 0,
             }}
           >
             {group.name}
           </h3>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[680px] text-left text-xs">
+          <div className="mt-4 w-full overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
+            <table className="w-full text-left text-xs md:text-sm" style={{ minWidth: '400px' }}>
               <thead>
                 <tr>
                   {['Player', 'P', 'W', 'D', 'L', 'GF', 'GA', 'GD', 'Pts'].map((h) => (
                     <th
                       key={h}
-                      className="px-3 py-2.5"
+                      className="px-1.5 sm:px-3 py-1.5 sm:py-2.5"
                       style={{
                         color: 'rgba(168,85,247,0.7)',
                         fontWeight: 600,
-                        fontSize: '10px',
-                        letterSpacing: '1px',
+                        fontSize: 'clamp(7px, 2vw, 10px)',
+                        letterSpacing: '0.5px',
                         textTransform: 'uppercase',
                         borderBottom: '1px solid rgba(168,85,247,0.12)',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {h}
@@ -556,15 +590,33 @@ const GroupsPage = () => {
                       background: idx % 2 === 0 ? 'transparent' : 'rgba(168,85,247,0.03)',
                     }}
                   >
-                    <td className="px-3 py-2.5" style={{ color: '#e9d5ff' }}>{playerMap[row.playerId]?.name}</td>
-                    <td className="px-3 py-2.5">{row.p}</td>
-                    <td className="px-3 py-2.5">{row.w}</td>
-                    <td className="px-3 py-2.5">{row.d}</td>
-                    <td className="px-3 py-2.5">{row.l}</td>
-                    <td className="px-3 py-2.5">{row.gf}</td>
-                    <td className="px-3 py-2.5">{row.ga}</td>
-                    <td className="px-3 py-2.5">{row.gd}</td>
-                    <td className="px-3 py-2.5 font-semibold" style={{ color: '#d8b4fe' }}>{row.points}</td>
+                    <td 
+                      className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-medium" 
+                      style={{ 
+                        color: '#e9d5ff',
+                        maxWidth: '80px',
+                        fontSize: 'clamp(7px, 2vw, 0.875rem)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title={playerMap[row.playerId]?.name}
+                    >
+                      {playerMap[row.playerId]?.name}
+                    </td>
+                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.p}</td>
+                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.w}</td>
+                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.d}</td>
+                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.l}</td>
+                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.gf}</td>
+                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.ga}</td>
+                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.gd}</td>
+                    <td 
+                      className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-semibold text-center text-xs sm:text-sm" 
+                      style={{ color: '#d8b4fe' }}
+                    >
+                      {row.points}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -590,7 +642,7 @@ const FixturesPage = () => {
         <h2
           style={{
             fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
-            fontSize: '14px',
+            fontSize: 'clamp(11px, 4vw, 14px)',
             fontWeight: 700,
             letterSpacing: '4px',
             color: '#d8b4fe',
@@ -599,7 +651,7 @@ const FixturesPage = () => {
         >
           Match Fixtures
         </h2>
-        <p className="section-lead">Top 2 teams qualify from each group.</p>
+        <p className="section-lead text-xs sm:text-sm">Top 2 teams qualify from each group.</p>
       </div>
       {state.groups.map((group) => {
         const groupFixtures = state.fixtures.filter((fixture) => fixture.groupId === group.id)
@@ -610,7 +662,7 @@ const FixturesPage = () => {
             <h3
               style={{
                 fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
-                fontSize: '11px',
+                fontSize: 'clamp(9px, 3vw, 11px)',
                 fontWeight: 700,
                 letterSpacing: '3px',
                 color: '#d8b4fe',
@@ -623,7 +675,7 @@ const FixturesPage = () => {
               {groupFixtures.map((fixture) => (
                 <div
                   key={fixture.id}
-                  className="flex items-center justify-between rounded-lg px-4 py-2.5 text-xs transition-all duration-200"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200"
                   style={{
                     border: '1px solid rgba(168,85,247,0.12)',
                     background: fixture.completed
@@ -631,16 +683,16 @@ const FixturesPage = () => {
                       : 'rgba(24,20,34,0.5)',
                   }}
                 >
-                  <span style={{ color: '#e9d5ff' }}>
+                  <span style={{ color: '#e9d5ff', wordBreak: 'break-word' }}>
                     {playerMap[fixture.homeId]?.name}
                     <span style={{ color: 'rgba(168,85,247,0.4)', margin: '0 8px' }}>vs</span>
                     {playerMap[fixture.awayId]?.name}
                   </span>
                   <span
-                    className="font-semibold"
+                    className="font-semibold whitespace-nowrap"
                     style={{
                       color: fixture.completed ? '#6ee7b7' : 'rgba(184,176,200,0.5)',
-                      fontSize: fixture.completed ? '12px' : '10px',
+                      fontSize: fixture.completed ? 'inherit' : '10px',
                       letterSpacing: fixture.completed ? '1px' : '2px',
                     }}
                   >
@@ -669,27 +721,35 @@ const RULES = [
 ]
 
 const RulesPage = () => (
-  <section className="panel space-y-4 text-sm">
+  <section className="panel space-y-3 sm:space-y-4 text-sm">
     <h2
       style={{
         fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
-        fontSize: '14px',
+        fontSize: 'clamp(13px, 4vw, 14px)',
         fontWeight: 700,
         letterSpacing: '4px',
         color: '#d8b4fe',
         textTransform: 'uppercase' as const,
+        margin: 0,
       }}
     >
       Tournament Rules
     </h2>
-    <p className="text-xs" style={{ color: 'var(--text-muted)', letterSpacing: '1px' }}>
+    <p 
+      className="text-xs" 
+      style={{ 
+        color: 'var(--text-muted)', 
+        letterSpacing: '1px',
+        margin: '0.5rem 0 0 0',
+      }}
+    >
       {RULES.length} rules govern all matches
     </p>
     <div className="space-y-2">
       {RULES.map((text, i) => (
         <div
           key={i}
-          className="flex items-start gap-3 rounded-lg px-4 py-3 transition-all duration-200"
+          className="flex items-start gap-2 sm:gap-3 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-200"
           style={{
             border: '1px solid rgba(168,85,247,0.1)',
             background: i % 2 === 0 ? 'rgba(24,20,34,0.4)' : 'rgba(24,20,34,0.2)',
@@ -698,16 +758,24 @@ const RulesPage = () => (
           <span
             style={{
               fontFamily: "'Orbitron', sans-serif",
-              fontSize: '9px',
+              fontSize: 'clamp(8px, 2vw, 9px)',
               fontWeight: 700,
               color: 'rgba(168,85,247,0.5)',
-              minWidth: '20px',
-              paddingTop: '2px',
+              minWidth: '24px',
+              paddingTop: '1px',
+              flexShrink: 0,
             }}
           >
             {String(i + 1).padStart(2, '0')}
           </span>
-          <span style={{ color: 'var(--text-secondary)' }}>{text}</span>
+          <span 
+            style={{ 
+              color: 'var(--text-secondary)',
+              fontSize: 'clamp(0.8125rem, 2.5vw, 0.875rem)',
+            }}
+          >
+            {text}
+          </span>
         </div>
       ))}
     </div>
@@ -759,19 +827,20 @@ const AdminPage = () => {
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1 sm:gap-2">
         {(['players', 'groups', 'fixtures', 'score_entry', 'knockout', 'settings'] as AdminTab[]).map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => setAdminTab(tab)}
-            className="rounded-lg px-3 py-2 text-xs uppercase tracking-wider transition-all duration-200"
+            className="rounded-lg px-2 sm:px-3 py-2 text-xs uppercase tracking-wider transition-all duration-200 touch-manipulation flex-1 min-w-fit sm:flex-initial min-h-[44px] flex items-center justify-center"
             style={{
               border: `1px solid ${
                 adminTab === tab ? 'rgba(168,85,247,0.35)' : 'rgba(168,85,247,0.12)'
               }`,
               background: adminTab === tab ? 'rgba(168,85,247,0.1)' : 'rgba(24,20,34,0.4)',
               color: adminTab === tab ? '#d8b4fe' : 'rgba(184,176,200,0.7)',
+              fontSize: 'clamp(0.65rem, 2vw, 0.75rem)',
             }}
           >
             {tab.replace('_', ' ')}
@@ -914,7 +983,7 @@ const PlayerManagement = () => {
             Required columns: Player Name | OVR Rating {excelLoading ? '(processing...)' : ''}
           </span>
         </div>
-        <form className="grid gap-2 md:grid-cols-3" onSubmit={submitPlayer}>
+        <form className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" onSubmit={submitPlayer}>
           <input
             className="input"
             placeholder="Player Name"
@@ -933,7 +1002,7 @@ const PlayerManagement = () => {
           </button>
           {editId && !state.groupsLocked && (
             <button
-              className="btn-secondary"
+              className="btn-secondary sm:col-span-2 lg:col-span-1"
               type="button"
               onClick={() => {
                 setEditId(null)
@@ -948,25 +1017,25 @@ const PlayerManagement = () => {
       </div>
 
       <div className="panel overflow-x-auto">
-        <table className="w-full min-w-[720px] text-left text-xs">
+        <table className="w-full text-left text-xs sm:text-sm">
           <thead className="text-neonPurple">
             <tr>
-              <th className="px-2 py-2">Name</th>
-              <th className="px-2 py-2">OVR</th>
-              <th className="px-2 py-2">Group</th>
-              <th className="px-2 py-2">Actions</th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">Name</th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">OVR</th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">Group</th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">Actions</th>
             </tr>
           </thead>
           <tbody>
             {state.players.map((player) => (
               <tr key={player.id} className="border-t border-neonPurple/20">
-                <td className="px-2 py-2">{player.name}</td>
-                <td className="px-2 py-2">{player.ovr}</td>
-                <td className="px-2 py-2">{state.groups.find((group) => group.id === player.groupId)?.name || '-'}</td>
-                <td className="px-2 py-2">
-                  <div className="flex gap-2">
+                <td className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm truncate">{player.name}</td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">{player.ovr}</td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">{state.groups.find((group) => group.id === player.groupId)?.name || '-'}</td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3">
+                  <div className="flex gap-1 sm:gap-2 flex-wrap">
                     <button
-                      className="btn-secondary px-2 py-1"
+                      className="btn-secondary px-1.5 sm:px-2 py-1 text-xs"
                       type="button"
                       onClick={() => {
                         setEditId(player.id)
@@ -977,7 +1046,7 @@ const PlayerManagement = () => {
                       Edit
                     </button>
                     <button
-                      className="btn-danger px-2 py-1"
+                      className="btn-danger px-1.5 sm:px-2 py-1 text-xs"
                       type="button"
                       onClick={() => confirmDeletePlayer(player.id, player.name)}
                     >
@@ -1016,7 +1085,7 @@ const GroupManagement = () => {
         <p className="text-xs text-zinc-300">
           Configure groups for {state.players.length} players. Minimum {MIN_PLAYERS}, maximum {MAX_PLAYERS}.
         </p>
-        <div className="grid gap-2 md:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <label className="text-xs text-zinc-300">
             Group Size
             <select
@@ -1048,7 +1117,7 @@ const GroupManagement = () => {
               <option value="manual">Manual Order</option>
             </select>
           </label>
-          <button type="button" className="btn-primary" onClick={generateGroups} disabled={!canGenerate}>
+          <button type="button" className="btn-primary mt-auto" onClick={generateGroups} disabled={!canGenerate}>
             {state.settings.seedingMode === 'ovr_snake'
               ? 'Generate OVR Snake Groups'
               : state.settings.seedingMode === 'random'
@@ -1057,7 +1126,7 @@ const GroupManagement = () => {
           </button>
           <button
             type="button"
-            className="btn-secondary"
+            className="btn-secondary mt-auto"
             onClick={lockGroups}
             disabled={!state.groups.length}
           >
@@ -1065,13 +1134,13 @@ const GroupManagement = () => {
           </button>
           <button
             type="button"
-            className="btn-secondary"
+            className="btn-secondary sm:col-span-2 lg:col-span-1 mt-auto"
             onClick={onExportGroups}
             disabled={!state.groups.length}
           >
             Export Groups (.xlsx)
           </button>
-          {!canGenerate && <p className="text-xs text-amber-300 md:col-span-4">Add at least two players before generating groups.</p>}
+          {!canGenerate && <p className="text-xs text-amber-300 sm:col-span-2 lg:col-span-4">Add at least two players before generating groups.</p>}
         </div>
         {feedback && (
           <p className={`rounded border px-3 py-2 text-xs ${feedback.tone === 'ok' ? 'border-emerald-300/50 bg-emerald-500/10 text-emerald-100' : 'border-red-300/50 bg-red-500/10 text-red-100'}`}>
@@ -1080,22 +1149,22 @@ const GroupManagement = () => {
         )}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {state.groups.map((group) => (
           <div key={group.id} className="panel">
-            <h4 className="section-heading">{group.name}</h4>
+            <h4 className="section-heading text-xs sm:text-sm">{group.name}</h4>
             <div className="mt-3 space-y-2">
               {group.playerIds.map((playerId) => {
                 const player = state.players.find((item) => item.id === playerId)
                 if (!player) return null
                 return (
-                  <div key={player.id} className="flex items-center justify-between rounded border border-neonPurple/25 bg-zinc-950/80 p-2 text-xs">
-                    <span>
+                  <div key={player.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 rounded border border-neonPurple/25 bg-zinc-950/80 p-2 text-xs">
+                    <span className="truncate">
                       {player.name} ({player.ovr})
                     </span>
                     {!state.groupsLocked && (
                       <select
-                        className="input w-32 px-2 py-1 text-xs"
+                        className="input w-full sm:w-32 px-2 py-1 text-xs"
                         value={group.id}
                         onChange={(event) => movePlayerToGroup(player.id, event.target.value)}
                       >
@@ -1128,14 +1197,14 @@ const FixturesManagement = () => {
 
   return (
     <section className="space-y-4">
-      <div className="panel flex flex-wrap items-center gap-3">
+      <div className="panel flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
         <p className="rounded border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
           Top 2 teams qualify from each group.
         </p>
         <label className="text-xs text-zinc-200">
           Primary Tiebreaker
           <select
-            className="input mt-1 w-48"
+            className="input mt-1 w-full sm:w-48"
             value={state.settings.tiebreakers[0] ?? 'points'}
             onChange={(event) =>
               setSettings({
@@ -1206,34 +1275,34 @@ const GroupFixtureCard = ({
 
   return (
     <div className="panel">
-      <h3 className="section-heading">{group.name} Standings</h3>
-      <div className="mt-3 overflow-x-auto">
-        <table className="w-full min-w-[680px] text-left text-xs">
+      <h3 className="section-heading text-xs sm:text-sm">{group.name} Standings</h3>
+      <div className="mt-3 overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
+        <table className="w-full text-left text-xs sm:text-sm" style={{ minWidth: '500px' }}>
           <thead className="text-neonPurple">
             <tr>
-              <th className="px-2 py-2">Player</th>
-              <th className="px-2 py-2">P</th>
-              <th className="px-2 py-2">W</th>
-              <th className="px-2 py-2">D</th>
-              <th className="px-2 py-2">L</th>
-              <th className="px-2 py-2">GF</th>
-              <th className="px-2 py-2">GA</th>
-              <th className="px-2 py-2">GD</th>
-              <th className="px-2 py-2">Pts</th>
+              <th className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm">Player</th>
+              <th className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">P</th>
+              <th className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">W</th>
+              <th className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">D</th>
+              <th className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">L</th>
+              <th className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">GF</th>
+              <th className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">GA</th>
+              <th className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">GD</th>
+              <th className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">Pts</th>
             </tr>
           </thead>
           <tbody>
             {standings.map((row) => (
               <tr key={row.playerId} className="border-t border-neonPurple/20">
-                <td className="px-2 py-2">{playerMap[row.playerId]?.name || '-'}</td>
-                <td className="px-2 py-2">{row.p}</td>
-                <td className="px-2 py-2">{row.w}</td>
-                <td className="px-2 py-2">{row.d}</td>
-                <td className="px-2 py-2">{row.l}</td>
-                <td className="px-2 py-2">{row.gf}</td>
-                <td className="px-2 py-2">{row.ga}</td>
-                <td className="px-2 py-2">{row.gd}</td>
-                <td className="px-2 py-2 font-semibold text-neonPink">{row.points}</td>
+                <td className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm truncate">{playerMap[row.playerId]?.name || '-'}</td>
+                <td className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">{row.p}</td>
+                <td className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">{row.w}</td>
+                <td className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">{row.d}</td>
+                <td className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">{row.l}</td>
+                <td className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">{row.gf}</td>
+                <td className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">{row.ga}</td>
+                <td className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center">{row.gd}</td>
+                <td className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm text-center font-semibold text-neonPink">{row.points}</td>
               </tr>
             ))}
           </tbody>
@@ -1271,12 +1340,12 @@ const FixtureEditor = ({
   const canConfirm = Number.isInteger(parsedHome) && Number.isInteger(parsedAway)
 
   return (
-    <div className="grid gap-2 rounded border border-neonPurple/30 bg-zinc-950/70 p-3 text-xs md:grid-cols-[1fr_auto_auto_auto_auto] md:items-center">
-      <p>
+    <div className="grid gap-2 rounded border border-neonPurple/30 bg-zinc-950/70 p-2 text-xs sm:grid-cols-[1fr_60px_60px_auto] sm:items-center md:grid-cols-[1fr_auto_auto_auto_auto] md:gap-2">
+      <p className="sm:col-span-4 md:col-span-1">
         {homeName} vs {awayName}
       </p>
       <input
-        className="input input-score w-20"
+        className="input input-score w-full sm:w-[60px]"
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"
@@ -1285,7 +1354,7 @@ const FixtureEditor = ({
         onChange={(event) => setHome(typedNumber(event.target.value))}
       />
       <input
-        className="input input-score w-20"
+        className="input input-score w-full sm:w-[60px]"
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"
@@ -1295,7 +1364,7 @@ const FixtureEditor = ({
       />
       <button
         type="button"
-        className="btn-primary"
+        className="btn-primary col-span-1 sm:col-span-2 md:col-span-1"
         disabled={!canConfirm}
         onClick={() => onConfirm(parsedHome, parsedAway)}
       >
@@ -1303,7 +1372,7 @@ const FixtureEditor = ({
       </button>
       <button
         type="button"
-        className="btn-secondary"
+        className="btn-secondary col-span-1 sm:col-span-2 md:col-span-1"
         onClick={() => {
           setHome('')
           setAway('')
@@ -1344,10 +1413,10 @@ const KnockoutManagement = () => {
 
       {state.knockout.rounds.map((round, roundIndex) => (
         <div key={round.id} className="panel space-y-3">
-          <h3 className="section-heading">{round.name}</h3>
+          <h3 className="section-heading text-xs sm:text-sm">{round.name}</h3>
           {round.ties.map((tie) => (
-            <div key={tie.id} className="rounded border border-neonPurple/30 bg-zinc-950/70 p-3 text-xs">
-              <p className="font-semibold text-zinc-100">
+            <div key={tie.id} className="rounded border border-neonPurple/30 bg-zinc-950/70 p-2 sm:p-3 text-xs">
+              <p className="font-semibold text-zinc-100 text-xs sm:text-sm">
                 {(tie.playerAId && playerMap[tie.playerAId]?.name) || 'TBD'} vs {(tie.playerBId && playerMap[tie.playerBId]?.name) || 'TBD'}
               </p>
               <ScoreLegInput
@@ -1364,11 +1433,11 @@ const KnockoutManagement = () => {
                 onSave={(home, away) => setTieLegScore(roundIndex, tie.id, 'leg2', home, away)}
                 onClear={() => clearTieLegScore(roundIndex, tie.id, 'leg2')}
               />
-              <div className="mt-2 rounded border border-neonPink/20 p-2">
-                <button type="button" className="btn-secondary" onClick={() => coinTossTie(roundIndex, tie.id)}>
+              <div className="mt-2 rounded border border-neonPink/20 p-2 sm:p-3">
+                <button type="button" className="btn-secondary text-xs sm:text-sm" onClick={() => coinTossTie(roundIndex, tie.id)}>
                   Coin Toss for Decider Home
                 </button>
-                <p className="mt-1 text-zinc-400">
+                <p className="mt-1 text-zinc-400 text-xs">
                   Decider home: {(tie.coinTossWinnerId && playerMap[tie.coinTossWinnerId]?.name) || 'Not decided'}
                 </p>
                 <ScoreLegInput
@@ -1379,7 +1448,7 @@ const KnockoutManagement = () => {
                   onClear={() => clearTieLegScore(roundIndex, tie.id, 'decider')}
                 />
               </div>
-              <p className="mt-2 text-neonPink">Winner: {(tie.winnerId && playerMap[tie.winnerId]?.name) || 'Pending'}</p>
+              <p className="mt-2 text-neonPink text-xs sm:text-sm">Winner: {(tie.winnerId && playerMap[tie.winnerId]?.name) || 'Pending'}</p>
             </div>
           ))}
         </div>
@@ -1387,13 +1456,13 @@ const KnockoutManagement = () => {
 
       {finalSeries && (
         <div className="panel space-y-3">
-          <h3 className="section-heading">Final Match - Best of 3</h3>
-          <p className="text-xs text-zinc-300">
+          <h3 className="section-heading text-xs sm:text-sm">Final Match - Best of 3</h3>
+          <p className="text-xs sm:text-sm text-zinc-300">
             {(finalSeries.player1Id && playerMap[finalSeries.player1Id]?.name) || 'TBD'} vs {(finalSeries.player2Id && playerMap[finalSeries.player2Id]?.name) || 'TBD'}
           </p>
           {finalSeries.games.map((game, index) => (
-            <div key={game.id} className="grid gap-2 rounded border border-neonPurple/25 bg-zinc-950/70 p-2 text-xs md:grid-cols-[1fr_auto_auto_auto] md:items-center">
-              <span>Match {index + 1}</span>
+            <div key={game.id} className="grid gap-2 rounded border border-neonPurple/25 bg-zinc-950/70 p-2 text-xs sm:grid-cols-[auto_auto_auto_auto] sm:items-center md:gap-2">
+              <span className="text-xs sm:text-sm">Match {index + 1}</span>
               <select
                 className="input"
                 value={game.winnerId ?? ''}
@@ -1414,20 +1483,20 @@ const KnockoutManagement = () => {
                 )}
               </select>
               <button
-                className="btn-secondary"
+                className="btn-secondary text-xs"
                 type="button"
                 onClick={() => setFinalGameResult(game.id, null, true)}
               >
                 Mark Void
               </button>
               <button
-                className="btn-secondary"
+                className="btn-secondary text-xs"
                 type="button"
                 onClick={() => clearFinalGameResult(game.id)}
               >
                 Clear
               </button>
-              <span className="text-zinc-400">{game.void ? 'Replay Required' : 'Recorded'}</span>
+              <span className="col-span-full sm:col-span-1 text-zinc-400 text-xs">{game.void ? 'Replay Required' : 'Recorded'}</span>
             </div>
           ))}
           <p className="text-sm text-neonPink">
@@ -1466,8 +1535,8 @@ const ScoreLegInput = ({
   const canSave = Number.isInteger(parsedHome) && Number.isInteger(parsedAway)
 
   return (
-    <div className="mt-2 grid gap-2 md:grid-cols-[100px_80px_80px_auto_auto] md:items-center">
-      <span>{label}</span>
+    <div className="mt-2 grid gap-2 sm:grid-cols-[80px_60px_60px_auto_auto] sm:items-center md:grid-cols-[100px_80px_80px_auto_auto]">
+      <span className="text-xs sm:text-sm">{label}</span>
       <input
         className="input input-score"
         type="text"
@@ -1486,11 +1555,11 @@ const ScoreLegInput = ({
         value={away}
         onChange={(event) => setAway(typedNumber(event.target.value))}
       />
-      <button className="btn-primary" type="button" disabled={!canSave} onClick={() => onSave(parsedHome, parsedAway)}>
+      <button className="btn-primary text-xs" type="button" disabled={!canSave} onClick={() => onSave(parsedHome, parsedAway)}>
         Save
       </button>
       <button
-        className="btn-secondary"
+        className="btn-secondary text-xs"
         type="button"
         onClick={() => {
           setHome('')
@@ -1570,18 +1639,18 @@ const SettingsManagement = () => {
             onChange={(event) => setSettings({ tournamentName: event.target.value })}
           />
         </label>
-        <label className="text-xs text-zinc-300">
+        <label className="text-xs text-zinc-300 w-full">
           Admin Password
-          <div className="mt-1 flex gap-2">
+          <div className="mt-1 flex flex-col sm:flex-row gap-2">
             <input
-              className="input"
+              className="input flex-1"
               type="text"
               value={newPassword}
               onChange={(event) => setNewPassword(event.target.value)}
             />
             <button
               type="button"
-              className="btn-primary"
+              className="btn-primary text-xs sm:text-sm whitespace-nowrap"
               onClick={() => {
                 if (!newPassword.trim()) {
                   setFeedback({ tone: 'error', text: 'Admin password cannot be empty.' })
@@ -1598,13 +1667,13 @@ const SettingsManagement = () => {
       </div>
 
       <div className="panel flex flex-wrap gap-2">
-        <button type="button" className="btn-secondary" onClick={exportData}>
+        <button type="button" className="btn-secondary text-xs sm:text-sm" onClick={exportData}>
           Export Data
         </button>
-        <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()}>
+        <button type="button" className="btn-secondary text-xs sm:text-sm" onClick={() => fileRef.current?.click()}>
           Import Data
         </button>
-        <button type="button" className="btn-danger" onClick={warnAndReset}>
+        <button type="button" className="btn-danger text-xs sm:text-sm" onClick={warnAndReset}>
           Clear Tournament Data
         </button>
         <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={importData} />
