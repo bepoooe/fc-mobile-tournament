@@ -20,6 +20,7 @@ body {
   margin: 0;
   font-family: 'Rajdhani', 'Segoe UI', sans-serif;
   color: #f4f4f5;
+  overflow-x: hidden;
   background:
     radial-gradient(circle at 8% 12%, rgba(236, 72, 153, 0.18), transparent 22%),
     radial-gradient(circle at 88% 18%, rgba(167, 139, 250, 0.16), transparent 24%),
@@ -135,32 +136,110 @@ select:focus-visible {
     );
 }
 
+.bracket-layout {
+  align-items: start;
+}
+
+.bracket-side {
+  min-height: 100%;
+}
+
+.bracket-round {
+  position: relative;
+}
+
+.round-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 86px;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(216, 180, 254, 0.5);
+  background: rgba(10, 10, 20, 0.88);
+  letter-spacing: 0.08em;
+}
+
+.round-tag-right {
+  margin-left: auto;
+}
+
+.final-podium {
+  position: relative;
+}
+
+.podium-cup {
+  margin: 2px 0 4px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: rgba(255, 120, 255, 0.95);
+}
+
 .tie-card {
   position: relative;
   border: 1px solid rgba(216, 180, 254, 0.45);
   border-radius: 0.65rem;
   background: rgba(17, 17, 27, 0.9);
   padding: 0.65rem;
+  min-height: 5.75rem;
   font-size: 0.75rem;
   box-shadow: 0 0 12px rgba(236, 72, 153, 0.25);
 }
 
-.tie-left::after,
-.tie-right::after {
-  content: '';
+.lane {
   position: absolute;
+}
+
+.lane-out {
   top: 50%;
-  width: 22px;
+  transform: translateY(-50%);
+  width: 28px;
   height: 2px;
   background: rgba(255, 77, 255, 0.85);
 }
 
-.tie-left::after {
-  right: -22px;
+.lane-stem {
+  width: 0;
+  border-left: 2px dotted rgba(255, 141, 255, 0.9);
+  height: 67px;
 }
 
-.tie-right::after {
-  left: -22px;
+.lane-stem-down {
+  top: 50%;
+}
+
+.lane-stem-up {
+  top: calc(50% - 67px);
+}
+
+.lane-join {
+  width: 22px;
+  height: 2px;
+  background: rgba(255, 77, 255, 0.85);
+  top: calc(50% + 67px);
+}
+
+.lane-out-left,
+.lane-stem-left,
+.lane-join-left {
+  right: -28px;
+}
+
+.lane-join-left {
+  right: -50px;
+}
+
+.lane-out-right,
+.lane-stem-right,
+.lane-join-right {
+  left: -28px;
+}
+
+.lane-join-right {
+  left: -50px;
 }
 
 @keyframes fadeIn {

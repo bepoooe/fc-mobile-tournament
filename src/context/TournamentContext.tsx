@@ -56,7 +56,7 @@ const parseState = (): TournamentState => {
         groupSize: [4, 5, 6, 8].includes(mergedSettings.groupSize)
           ? mergedSettings.groupSize
           : fallback.settings.groupSize,
-        qualifiersPerGroup: Math.max(1, Math.floor(mergedSettings.qualifiersPerGroup || 1)),
+        qualifiersPerGroup: 2,
         tiebreakers:
           mergedSettings.tiebreakers && mergedSettings.tiebreakers.length
             ? mergedSettings.tiebreakers
@@ -123,7 +123,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
         settings: {
           ...merged,
           groupSize: [4, 5, 6, 8].includes(merged.groupSize) ? merged.groupSize : 4,
-          qualifiersPerGroup: Math.max(1, Math.floor(merged.qualifiersPerGroup || 1)),
+          qualifiersPerGroup: 2,
           tiebreakers:
             merged.tiebreakers && merged.tiebreakers.length
               ? merged.tiebreakers
@@ -561,10 +561,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
         groupSize: [4, 5, 6, 8].includes(incoming.settings?.groupSize)
           ? incoming.settings.groupSize
           : fallback.settings.groupSize,
-        qualifiersPerGroup: Math.max(
-          1,
-          Math.floor(incoming.settings?.qualifiersPerGroup ?? fallback.settings.qualifiersPerGroup),
-        ),
+        qualifiersPerGroup: 2,
       },
     })
   }, [])

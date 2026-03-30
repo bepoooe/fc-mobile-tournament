@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { TournamentProvider, useGroupFixtures, usePlayerMap, useTournament } from './context/TournamentContext'
 import { calculateStandings } from './utils/tournament'
 import { MAX_PLAYERS, MIN_PLAYERS } from './utils/tournament'
@@ -26,12 +26,12 @@ declare global {
   }
 }
 
-type Page = 'home' | 'groups' | 'knockout' | 'champion' | 'rules' | 'admin'
-type AdminTab = 'players' | 'groups' | 'fixtures' | 'knockout' | 'settings'
+type Page = 'groups' | 'fixtures' | 'knockout' | 'champion' | 'rules' | 'admin'
+type AdminTab = 'players' | 'groups' | 'fixtures' | 'score_entry' | 'knockout' | 'settings'
 
 const navItems: Array<{ key: Page; label: string }> = [
-  { key: 'home', label: 'Home' },
   { key: 'groups', label: 'Groups' },
+  { key: 'fixtures', label: 'Fixtures' },
   { key: 'knockout', label: 'Knockout' },
   { key: 'champion', label: 'Champion' },
   { key: 'rules', label: 'Rules' },
@@ -265,6 +265,15 @@ const groupStandingsMap = (
   return map
 }
 
+const compactRoundLabel = (name: string) => {
+  const normalized = name.toLowerCase()
+  if (normalized.includes('round of 16')) return 'Round 16'
+  if (normalized.includes('round of 32')) return 'Round 32'
+  if (normalized.includes('quarter')) return 'QF'
+  if (normalized.includes('semi')) return 'SF'
+  return name
+}
+
 const exportGroupsToExcel = (
   groups: Group[],
   players: TournamentState['players'],
@@ -395,7 +404,8 @@ const exportGroupsToExcel = (
 
 const AppShell = () => {
   const { state } = useTournament()
-  const [page, setPage] = useState<Page>('home')
+  const [page, setPage] = useState<Page>('groups')
+  const isKnockoutPage = page === 'knockout'
 
   return (
     <div className="min-h-screen bg-night text-white">
@@ -428,10 +438,18 @@ const AppShell = () => {
         </div>
       </header>
 
-      <main className="fade-in mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="content-shell mx-auto w-full max-w-6xl space-y-6">
-          {page === 'home' && <HomePage />}
+      <main
+        className={`fade-in w-full px-4 py-6 sm:px-6 lg:px-8 ${
+          isKnockoutPage ? '' : 'mx-auto max-w-7xl'
+        }`}
+      >
+        <div
+          className={`content-shell w-full space-y-6 ${
+            isKnockoutPage ? '' : 'mx-auto max-w-6xl'
+          }`}
+        >
           {page === 'groups' && <GroupsPage />}
+          {page === 'fixtures' && <FixturesPage />}
           {page === 'knockout' && <KnockoutPage />}
           {page === 'champion' && <ChampionPage />}
           {page === 'rules' && <RulesPage />}
@@ -441,47 +459,6 @@ const AppShell = () => {
     </div>
   )
 }
-
-const HomePage = () => {
-  const { state } = useTournament()
-  const playerCount = state.players.length
-  const completedFixtures = state.fixtures.filter((fixture) => fixture.completed).length
-  const totalFixtures = state.fixtures.length
-
-  return (
-    <section className="space-y-6">
-      <div className="panel">
-        <h2 className="font-pixel text-sm leading-relaxed text-neonPink sm:text-base">{state.settings.tournamentName}</h2>
-        <p className="section-lead">
-          FC Mobile 1v1 format with OVR-balanced groups, two-leg knockouts, and best-of-3 final.
-        </p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          <div className="rounded border border-emerald-300/40 bg-emerald-500/10 p-2 text-xs text-emerald-100">League Stage Live</div>
-          <div className="rounded border border-neonPurple/40 bg-neonPurple/10 p-2 text-xs text-zinc-100">Two-Leg Knockout Path</div>
-          <div className="rounded border border-amber-300/45 bg-amber-200/10 p-2 text-xs text-amber-100">Best-of-3 Grand Final</div>
-        </div>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Players" value={String(playerCount)} />
-        <StatCard label="Groups" value={String(state.groups.length)} />
-        <StatCard label="League Fixtures" value={`${completedFixtures}/${totalFixtures}`} />
-        <StatCard label="Stage" value={stageLabel[state.stage]} />
-      </div>
-      <div className="panel">
-        <p className="text-sm text-zinc-300">
-          Status: {state.stage === 'completed' ? 'Tournament finished with a crowned champion.' : 'Tournament in progress.'}
-        </p>
-      </div>
-    </section>
-  )
-}
-
-const StatCard = ({ label, value }: { label: string; value: string }) => (
-  <div className="panel">
-    <p className="text-xs uppercase tracking-wide text-neonPurple">{label}</p>
-    <p className="mt-2 text-sm font-semibold text-zinc-100">{value}</p>
-  </div>
-)
 
 const GroupsPage = () => {
   const { state } = useTournament()
@@ -538,11 +515,39 @@ const GroupsPage = () => {
               </tbody>
             </table>
           </div>
-          <div className="mt-4 space-y-2">
-            {state.fixtures
-              .filter((fixture) => fixture.groupId === group.id)
-              .map((fixture) => (
-                <div key={fixture.id} className="flex items-center justify-between rounded border border-neonPurple/30 bg-zinc-950/70 px-3 py-2 text-xs">
+        </div>
+      ))}
+    </section>
+  )
+}
+
+const FixturesPage = () => {
+  const { state } = useTournament()
+  const playerMap = usePlayerMap()
+
+  if (!state.fixtures.length) {
+    return <EmptyState text="Fixtures are not available yet. Confirm groups in Admin first." />
+  }
+
+  return (
+    <section className="space-y-6">
+      <div className="panel">
+        <h2 className="section-heading">Match Fixtures</h2>
+        <p className="section-lead">Top 2 teams qualify from each group.</p>
+      </div>
+      {state.groups.map((group) => {
+        const groupFixtures = state.fixtures.filter((fixture) => fixture.groupId === group.id)
+        if (!groupFixtures.length) return null
+
+        return (
+          <div key={group.id} className="panel">
+            <h3 className="font-pixel text-xs text-neonPink">{group.name}</h3>
+            <div className="mt-4 space-y-2">
+              {groupFixtures.map((fixture) => (
+                <div
+                  key={fixture.id}
+                  className="flex items-center justify-between rounded border border-neonPurple/30 bg-zinc-950/70 px-3 py-2 text-xs"
+                >
                   <span>
                     {playerMap[fixture.homeId]?.name} vs {playerMap[fixture.awayId]?.name}
                   </span>
@@ -551,9 +556,10 @@ const GroupsPage = () => {
                   </span>
                 </div>
               ))}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </section>
   )
 }
@@ -561,8 +567,33 @@ const GroupsPage = () => {
 const KnockoutPage = () => {
   const { state } = useTournament()
   const playerMap = usePlayerMap()
-  const [zoom, setZoom] = useState(100)
   const rounds = state.knockout.rounds
+  const [viewportWidth, setViewportWidth] = useState<number>(() =>
+    typeof window === 'undefined' ? 1920 : window.innerWidth,
+  )
+
+  useEffect(() => {
+    const onResize = () => setViewportWidth(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  const bracketWidth = useMemo(() => {
+    const roundsCount = Math.max(1, rounds.length)
+    const sideWidth = roundsCount * 256 + Math.max(0, roundsCount - 1) * 16
+    return sideWidth * 2 + 300 + 48
+  }, [rounds.length])
+
+  const bracketScale = useMemo(() => {
+    const availableWidth = Math.max(320, viewportWidth - 72)
+    const autoFitScale = availableWidth / bracketWidth
+    return Math.min(0.7, Math.max(0.42, autoFitScale))
+  }, [viewportWidth, bracketWidth])
+
+  const scaledBracketWidth = useMemo(
+    () => Math.max(320, Math.floor(bracketWidth * bracketScale)),
+    [bracketWidth, bracketScale],
+  )
 
   const mirroredRounds = useMemo(
     () =>
@@ -586,36 +617,44 @@ const KnockoutPage = () => {
     <section className="space-y-4">
       <div className="panel">
         <h2 className="section-heading">Knockout Arena</h2>
-        <p className="section-lead">Symmetric tournament tree from both flanks into the final arena.</p>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <label className="text-xs text-zinc-300">Bracket zoom: {zoom}%</label>
-          <p className="text-xs text-zinc-400">Tip: swipe/scroll horizontally to navigate the full bracket.</p>
-        </div>
-        <input
-          type="range"
-          min={70}
-          max={140}
-          value={zoom}
-          onChange={(event) => setZoom(Number(event.target.value))}
-          className="mt-2 w-full"
-        />
       </div>
-      <div className="pitch-bracket overflow-x-auto rounded-xl border border-neonPurple/45 p-4">
-        <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top left' }} className="min-w-[1080px] lg:min-w-[1240px]">
-          <div className="grid grid-cols-[minmax(220px,1fr)_260px_minmax(220px,1fr)] gap-5 items-start lg:grid-cols-[1fr_300px_1fr] lg:gap-6">
-            <div className="flex items-start justify-end gap-4">
+      <div className="pitch-bracket overflow-hidden rounded-xl border border-neonPurple/45 p-4 md:p-6">
+        <div className="mx-auto" style={{ width: `${scaledBracketWidth}px` }}>
+          <div
+            className="origin-top-left"
+            style={{
+              width: `${bracketWidth}px`,
+              transform: `scale(${bracketScale})`,
+            }}
+          >
+            <div className="bracket-layout grid grid-cols-[minmax(220px,1fr)_260px_minmax(220px,1fr)] gap-5 items-start lg:grid-cols-[1fr_300px_1fr] lg:gap-6">
+            <div className="bracket-side flex items-start justify-end gap-4">
               {mirroredRounds.map((round, roundIndex) => (
-                <div key={`left-${round.id}`} className="w-64 space-y-3" style={{ marginTop: `${roundIndex * 18}px` }}>
-                  <h3 className="font-pixel text-[10px] text-neonSoft">{round.name}</h3>
-                  {round.left.map((tie) => (
-                    <BracketTieCard key={tie.id} tie={tie} playerMap={playerMap} side="left" />
+                <div
+                  key={`left-${round.id}`}
+                  className="bracket-round w-64 space-y-3"
+                  style={{ marginTop: `${roundIndex * 18}px` }}
+                >
+                  <h3 className="round-tag font-pixel text-[10px] text-neonSoft">{compactRoundLabel(round.name)}</h3>
+                  {round.left.map((tie, tieIndex) => (
+                    <BracketTieCard
+                      key={tie.id}
+                      tie={tie}
+                      playerMap={playerMap}
+                      side="left"
+                      tieIndex={tieIndex}
+                      tieCount={round.left.length}
+                    />
                   ))}
                 </div>
               ))}
             </div>
 
-            <div className="space-y-3 rounded-xl border border-neonPink/45 bg-black/50 p-4 text-xs shadow-neon">
+            <div className="final-podium space-y-3 rounded-xl border border-neonPink/45 bg-black/50 p-4 text-xs shadow-neon">
               <h3 className="font-pixel text-[10px] text-neonPink">Final Arena</h3>
+              <p className="podium-cup" aria-hidden>
+                TROPHY
+              </p>
               {state.knockout.finalSeries && (
                 <div className="rounded border border-neonPurple/45 bg-zinc-950/70 p-3 text-xs">
                 <p className="font-semibold">
@@ -642,15 +681,27 @@ const KnockoutPage = () => {
               </div>
             </div>
 
-            <div className="flex flex-row-reverse items-start justify-start gap-4">
+            <div className="bracket-side flex flex-row-reverse items-start justify-start gap-4">
               {mirroredRounds.map((round, roundIndex) => (
-                <div key={`right-${round.id}`} className="w-64 space-y-3" style={{ marginTop: `${roundIndex * 18}px` }}>
-                  <h3 className="font-pixel text-[10px] text-neonSoft text-right">{round.name}</h3>
-                  {(round.right.length ? round.right : round.left).map((tie) => (
-                    <BracketTieCard key={tie.id} tie={tie} playerMap={playerMap} side="right" />
+                <div
+                  key={`right-${round.id}`}
+                  className="bracket-round w-64 space-y-3"
+                  style={{ marginTop: `${roundIndex * 18}px` }}
+                >
+                  <h3 className="round-tag round-tag-right font-pixel text-[10px] text-neonSoft text-right">{compactRoundLabel(round.name)}</h3>
+                  {(round.right.length ? round.right : round.left).map((tie, tieIndex, ties) => (
+                    <BracketTieCard
+                      key={tie.id}
+                      tie={tie}
+                      playerMap={playerMap}
+                      side="right"
+                      tieIndex={tieIndex}
+                      tieCount={ties.length}
+                    />
                   ))}
                 </div>
               ))}
+            </div>
             </div>
           </div>
         </div>
@@ -663,21 +714,40 @@ const BracketTieCard = ({
   tie,
   playerMap,
   side,
+  tieIndex,
+  tieCount,
 }: {
   tie: KnockoutTie
   playerMap: Record<string, { name: string }>
   side: 'left' | 'right'
-}) => (
-  <div className={`tie-card ${side === 'left' ? 'tie-left' : 'tie-right'}`}>
-    <p className="font-semibold text-zinc-100">
-      {(tie.playerAId && playerMap[tie.playerAId]?.name) || 'TBD'} vs {(tie.playerBId && playerMap[tie.playerBId]?.name) || 'TBD'}
-    </p>
-    <p className="mt-1 text-zinc-300">Leg 1: {scoreText(tie.leg1)}</p>
-    <p className="text-zinc-300">Leg 2: {scoreText(tie.leg2)}</p>
-    <p className="text-zinc-300">Decider: {scoreText(tie.decider)}</p>
-    <p className="mt-1 text-neonSoft">Winner: {(tie.winnerId && playerMap[tie.winnerId]?.name) || 'Pending'}</p>
-  </div>
-)
+  tieIndex: number
+  tieCount: number
+}) => {
+  const hasPair = tieIndex % 2 === 0 && tieIndex + 1 < tieCount
+  const isBottomOfPair = tieIndex % 2 === 1
+  const hasStem = hasPair || isBottomOfPair
+
+  return (
+    <div className={`tie-card ${side === 'left' ? 'tie-left' : 'tie-right'}`}>
+      <span className={`lane lane-out lane-out-${side}`} aria-hidden />
+      {hasStem && (
+        <span
+          className={`lane lane-stem lane-stem-${side} ${hasPair ? 'lane-stem-down' : 'lane-stem-up'}`}
+          aria-hidden
+        />
+      )}
+      {hasPair && <span className={`lane lane-join lane-join-${side}`} aria-hidden />}
+
+      <p className="font-semibold text-zinc-100">
+        {(tie.playerAId && playerMap[tie.playerAId]?.name) || 'TBD'} vs {(tie.playerBId && playerMap[tie.playerBId]?.name) || 'TBD'}
+      </p>
+      <p className="mt-1 text-zinc-300">Leg 1: {scoreText(tie.leg1)}</p>
+      <p className="text-zinc-300">Leg 2: {scoreText(tie.leg2)}</p>
+      <p className="text-zinc-300">Decider: {scoreText(tie.decider)}</p>
+      <p className="mt-1 text-neonSoft">Winner: {(tie.winnerId && playerMap[tie.winnerId]?.name) || 'Pending'}</p>
+    </div>
+  )
+}
 
 const ChampionPage = () => {
   const { state } = useTournament()
@@ -773,7 +843,7 @@ const AdminPage = () => {
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        {(['players', 'groups', 'fixtures', 'knockout', 'settings'] as AdminTab[]).map((tab) => (
+        {(['players', 'groups', 'fixtures', 'score_entry', 'knockout', 'settings'] as AdminTab[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -791,6 +861,7 @@ const AdminPage = () => {
       {adminTab === 'players' && <PlayerManagement />}
       {adminTab === 'groups' && <GroupManagement />}
       {adminTab === 'fixtures' && <FixturesManagement />}
+      {adminTab === 'score_entry' && <ScoreEntryManagement />}
       {adminTab === 'knockout' && <KnockoutManagement />}
       {adminTab === 'settings' && <SettingsManagement />}
     </section>
@@ -1128,7 +1199,7 @@ const GroupManagement = () => {
 }
 
 const FixturesManagement = () => {
-  const { state, setFixtureScore, clearFixtureScore, setSettings } = useTournament()
+  const { state, setSettings } = useTournament()
   const playerMap = usePlayerMap()
 
   if (!state.fixtures.length) {
@@ -1138,20 +1209,9 @@ const FixturesManagement = () => {
   return (
     <section className="space-y-4">
       <div className="panel flex flex-wrap items-center gap-3">
-        <label className="text-xs text-zinc-200">
-          Top N qualify per group
-          <input
-            className="input mt-1 w-28"
-            type="number"
-            min={1}
-            value={state.settings.qualifiersPerGroup}
-            onChange={(event) =>
-              setSettings({
-                qualifiersPerGroup: Math.max(1, Number(event.target.value)),
-              })
-            }
-          />
-        </label>
+        <p className="rounded border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
+          Top 2 teams qualify from each group.
+        </p>
         <label className="text-xs text-zinc-200">
           Primary Tiebreaker
           <select
@@ -1178,20 +1238,33 @@ const FixturesManagement = () => {
       {state.groups.map((group) => (
         <GroupFixtureCard key={group.id} group={group} playerMap={playerMap} />
       ))}
-      <div className="panel overflow-x-auto">
-        <h3 className="font-pixel text-xs text-neonPink">Score Entry</h3>
-        <div className="mt-3 space-y-2">
-          {state.fixtures.map((fixture) => (
-            <FixtureEditor
-              key={fixture.id}
-              fixture={fixture}
-              homeName={playerMap[fixture.homeId]?.name || 'Player A'}
-              awayName={playerMap[fixture.awayId]?.name || 'Player B'}
-              onConfirm={(home, away) => setFixtureScore(fixture.id, home, away)}
-              onClear={() => clearFixtureScore(fixture.id)}
-            />
-          ))}
-        </div>
+    </section>
+  )
+}
+
+const ScoreEntryManagement = () => {
+  const { state, setFixtureScore, clearFixtureScore } = useTournament()
+  const playerMap = usePlayerMap()
+
+  if (!state.fixtures.length) {
+    return <EmptyState text="No fixtures available for score entry yet." />
+  }
+
+  return (
+    <section className="panel overflow-x-auto">
+      <h3 className="font-pixel text-xs text-neonPink">Score Entry</h3>
+      <p className="mt-2 text-xs text-zinc-300">Enter scores using the keyboard and confirm each fixture.</p>
+      <div className="mt-3 space-y-2">
+        {state.fixtures.map((fixture) => (
+          <FixtureEditor
+            key={fixture.id}
+            fixture={fixture}
+            homeName={playerMap[fixture.homeId]?.name || 'Player A'}
+            awayName={playerMap[fixture.awayId]?.name || 'Player B'}
+            onConfirm={(home, away) => setFixtureScore(fixture.id, home, away)}
+            onClear={() => clearFixtureScore(fixture.id)}
+          />
+        ))}
       </div>
     </section>
   )
@@ -1263,20 +1336,60 @@ const FixtureEditor = ({
   onConfirm: (home: number, away: number) => void
   onClear: () => void
 }) => {
-  const [home, setHome] = useState<number>(fixture.homeGoals ?? 0)
-  const [away, setAway] = useState<number>(fixture.awayGoals ?? 0)
+  const [home, setHome] = useState<string>(fixture.homeGoals?.toString() ?? '')
+  const [away, setAway] = useState<string>(fixture.awayGoals?.toString() ?? '')
+
+  useEffect(() => {
+    setHome(fixture.homeGoals?.toString() ?? '')
+    setAway(fixture.awayGoals?.toString() ?? '')
+  }, [fixture.homeGoals, fixture.awayGoals])
+
+  const typedNumber = (value: string) => value.replace(/[^0-9]/g, '')
+
+  const parsedHome = home === '' ? NaN : Number(home)
+  const parsedAway = away === '' ? NaN : Number(away)
+  const canConfirm = Number.isInteger(parsedHome) && Number.isInteger(parsedAway)
 
   return (
     <div className="grid gap-2 rounded border border-neonPurple/30 bg-zinc-950/70 p-3 text-xs md:grid-cols-[1fr_auto_auto_auto_auto] md:items-center">
       <p>
         {homeName} vs {awayName}
       </p>
-      <input className="input w-20" type="number" min={0} value={home} onChange={(event) => setHome(Number(event.target.value))} />
-      <input className="input w-20" type="number" min={0} value={away} onChange={(event) => setAway(Number(event.target.value))} />
-      <button type="button" className="btn-primary" onClick={() => onConfirm(home, away)}>
+      <input
+        className="input input-score w-20"
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        placeholder="0"
+        value={home}
+        onChange={(event) => setHome(typedNumber(event.target.value))}
+      />
+      <input
+        className="input input-score w-20"
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        placeholder="0"
+        value={away}
+        onChange={(event) => setAway(typedNumber(event.target.value))}
+      />
+      <button
+        type="button"
+        className="btn-primary"
+        disabled={!canConfirm}
+        onClick={() => onConfirm(parsedHome, parsedAway)}
+      >
         Confirm
       </button>
-      <button type="button" className="btn-secondary" onClick={onClear}>
+      <button
+        type="button"
+        className="btn-secondary"
+        onClick={() => {
+          setHome('')
+          setAway('')
+          onClear()
+        }}
+      >
         Reset
       </button>
     </div>
@@ -1419,18 +1532,52 @@ const ScoreLegInput = ({
   onSave: (home: number, away: number) => void
   onClear: () => void
 }) => {
-  const [home, setHome] = useState<number>(defaultHome ?? 0)
-  const [away, setAway] = useState<number>(defaultAway ?? 0)
+  const [home, setHome] = useState<string>(defaultHome?.toString() ?? '')
+  const [away, setAway] = useState<string>(defaultAway?.toString() ?? '')
+
+  useEffect(() => {
+    setHome(defaultHome?.toString() ?? '')
+    setAway(defaultAway?.toString() ?? '')
+  }, [defaultHome, defaultAway])
+
+  const typedNumber = (value: string) => value.replace(/[^0-9]/g, '')
+  const parsedHome = home === '' ? NaN : Number(home)
+  const parsedAway = away === '' ? NaN : Number(away)
+  const canSave = Number.isInteger(parsedHome) && Number.isInteger(parsedAway)
 
   return (
     <div className="mt-2 grid gap-2 md:grid-cols-[100px_80px_80px_auto_auto] md:items-center">
       <span>{label}</span>
-      <input className="input" type="number" min={0} value={home} onChange={(event) => setHome(Number(event.target.value))} />
-      <input className="input" type="number" min={0} value={away} onChange={(event) => setAway(Number(event.target.value))} />
-      <button className="btn-primary" type="button" onClick={() => onSave(home, away)}>
+      <input
+        className="input input-score"
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        placeholder="0"
+        value={home}
+        onChange={(event) => setHome(typedNumber(event.target.value))}
+      />
+      <input
+        className="input input-score"
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        placeholder="0"
+        value={away}
+        onChange={(event) => setAway(typedNumber(event.target.value))}
+      />
+      <button className="btn-primary" type="button" disabled={!canSave} onClick={() => onSave(parsedHome, parsedAway)}>
         Save
       </button>
-      <button className="btn-secondary" type="button" onClick={onClear}>
+      <button
+        className="btn-secondary"
+        type="button"
+        onClick={() => {
+          setHome('')
+          setAway('')
+          onClear()
+        }}
+      >
         Reset
       </button>
     </div>
