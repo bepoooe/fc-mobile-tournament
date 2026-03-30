@@ -26,6 +26,39 @@ describe('snakeDraftGroups', () => {
     expect(result.groups).toHaveLength(10)
     expect(result.groups.every((group) => group.playerIds.length === 8)).toBe(true)
   })
+
+  it('keeps OVR ranges grouped together in ovr_snake mode', () => {
+    const players: Player[] = [
+      { id: 'p1', name: 'A', ovr: 121, groupId: null, joinedLate: false },
+      { id: 'p2', name: 'B', ovr: 120, groupId: null, joinedLate: false },
+      { id: 'p9', name: 'I', ovr: 122, groupId: null, joinedLate: false },
+      { id: 'p10', name: 'J', ovr: 123, groupId: null, joinedLate: false },
+      { id: 'p3', name: 'C', ovr: 118, groupId: null, joinedLate: false },
+      { id: 'p4', name: 'D', ovr: 115, groupId: null, joinedLate: false },
+      { id: 'p11', name: 'K', ovr: 117, groupId: null, joinedLate: false },
+      { id: 'p12', name: 'L', ovr: 116, groupId: null, joinedLate: false },
+      { id: 'p5', name: 'E', ovr: 114, groupId: null, joinedLate: false },
+      { id: 'p6', name: 'F', ovr: 110, groupId: null, joinedLate: false },
+      { id: 'p13', name: 'M', ovr: 113, groupId: null, joinedLate: false },
+      { id: 'p14', name: 'N', ovr: 112, groupId: null, joinedLate: false },
+      { id: 'p7', name: 'G', ovr: 109, groupId: null, joinedLate: false },
+      { id: 'p8', name: 'H', ovr: 100, groupId: null, joinedLate: false },
+      { id: 'p15', name: 'O', ovr: 108, groupId: null, joinedLate: false },
+      { id: 'p16', name: 'P', ovr: 101, groupId: null, joinedLate: false },
+    ]
+
+    const result = snakeDraftGroups(players, 4, 'ovr_snake')
+    const groupedOvrs = result.groups.map((group) =>
+      group.playerIds.map((id) => players.find((player) => player.id === id)?.ovr ?? 0),
+    )
+
+    expect(groupedOvrs).toEqual([
+      [123, 122, 121, 120],
+      [118, 117, 116, 115],
+      [114, 113, 112, 110],
+      [109, 108, 101, 100],
+    ])
+  })
 })
 
 describe('standings and qualifiers', () => {

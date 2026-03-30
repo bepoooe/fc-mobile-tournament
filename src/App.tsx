@@ -72,6 +72,21 @@ const readExcelPlayers = async (file: File): Promise<Array<{ name: string; ovr: 
     return cleaned
   }
 
+  const parseUsername = (value: string | number | undefined) =>
+    String(value ?? '')
+      .replace(/^\s*"|"\s*$/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+  const getFirstName = (value: string) => {
+    const cleaned = value
+      .replace(/\([^)]*\)/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+    if (!cleaned) return ''
+    return cleaned.split(' ')[0]
+  }
+
   const parseOvr = (value: string | number | undefined) => {
     if (typeof value === 'number') {
       return Number.isFinite(value) ? Math.round(value) : NaN
@@ -103,6 +118,17 @@ const readExcelPlayers = async (file: File): Promise<Array<{ name: string; ovr: 
     text.includes('rating') ||
     text.includes('overall')
 
+  const isUsernameHeader = (text: string) =>
+    text === 'ign' ||
+    text === 'username' ||
+    text === 'user name' ||
+    text.includes('fifa username') ||
+    text.includes('fifa user name') ||
+    text.includes('fifa id') ||
+    text.includes('in game name') ||
+    text.includes('in-game name') ||
+    text.includes('gamertag')
+
   const headerRowIndex = rows.findIndex((row) => {
     const normalized = row.map((cell) => normalize(cell))
     const hasName = normalized.some((cell) => isNameHeader(cell))
@@ -115,8 +141,10 @@ const readExcelPlayers = async (file: File): Promise<Array<{ name: string; ovr: 
 
   let nameColumn = 0
   let ovrColumn = 1
+  let usernameColumn: number | null = null
   let explicitNameColumn = false
   let explicitOvrColumn = false
+  let explicitUsernameColumn = false
 
   if (header) {
     header.forEach((value, index) => {
@@ -128,6 +156,10 @@ const readExcelPlayers = async (file: File): Promise<Array<{ name: string; ovr: 
       if (isOvrHeader(text)) {
         ovrColumn = index
         explicitOvrColumn = true
+      }
+      if (isUsernameHeader(text)) {
+        usernameColumn = index
+        explicitUsernameColumn = true
       }
     })
   }
@@ -179,13 +211,37 @@ const readExcelPlayers = async (file: File): Promise<Array<{ name: string; ovr: 
         nameColumn = alternativeName.colIndex
       }
     }
+
+    if (!explicitUsernameColumn) {
+      const inferredUsername = [...columnStats]
+        .filter((stat) => stat.nonEmpty > 0 && stat.colIndex !== nameColumn && stat.colIndex !== ovrColumn)
+        .sort((a, b) => {
+          if (b.alphaCount !== a.alphaCount) return b.alphaCount - a.alphaCount
+          return b.nonEmpty - a.nonEmpty
+        })[0]
+
+      if (inferredUsername && inferredUsername.alphaCount > 0) {
+        usernameColumn = inferredUsername.colIndex
+      }
+    }
   }
 
   return rows.slice(startIndex).reduce<Array<{ name: string; ovr: number }>>((acc, row) => {
-    const name = parseName(row[nameColumn])
+    const rawName = parseName(row[nameColumn])
     const ovr = parseOvr(row[ovrColumn])
-    if (name && Number.isFinite(ovr) && ovr > 0) {
-      acc.push({ name, ovr: Math.round(ovr) })
+
+    const usernameFromColumn = usernameColumn === null ? '' : parseUsername(row[usernameColumn])
+    const usernameFromName = rawName.match(/\(([^)]+)\)/)?.[1]?.trim() ?? ''
+    const fifaUsername = usernameFromColumn || usernameFromName
+    const firstName = getFirstName(rawName)
+
+    if (rawName && Number.isFinite(ovr) && ovr > 0) {
+      const roundedOvr = Math.round(ovr)
+      const name =
+        firstName && fifaUsername
+          ? `${firstName}(${fifaUsername})${roundedOvr}`
+          : rawName
+      acc.push({ name, ovr: roundedOvr })
     }
     return acc
   }, [])

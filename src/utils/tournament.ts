@@ -61,7 +61,19 @@ const orderedBySeedingMode = (players: Player[], seedingMode: SeedingMode) => {
     return [...players]
   }
 
-  return [...players].sort((a, b) => b.ovr - a.ovr)
+  const ovrBand = (ovr: number) => {
+    if (ovr > 119) return 0
+    if (ovr >= 115) return 1
+    if (ovr >= 110) return 2
+    return 3
+  }
+
+  return [...players].sort((a, b) => {
+    const bandDiff = ovrBand(a.ovr) - ovrBand(b.ovr)
+    if (bandDiff !== 0) return bandDiff
+    if (b.ovr !== a.ovr) return b.ovr - a.ovr
+    return a.name.localeCompare(b.name)
+  })
 }
 
 export const snakeDraftGroups = (
@@ -77,11 +89,24 @@ export const snakeDraftGroups = (
     playerIds: [],
   }))
 
-  for (let i = 0; i < ordered.length; i += 1) {
-    const row = Math.floor(i / groupCount)
-    const col = i % groupCount
-    const targetIndex = row % 2 === 0 ? col : groupCount - 1 - col
-    groups[targetIndex].playerIds.push(ordered[i].id)
+  if (seedingMode === 'ovr_snake') {
+    let targetIndex = 0
+    for (const player of ordered) {
+      while (targetIndex < groups.length && groups[targetIndex].playerIds.length >= groupSize) {
+        targetIndex += 1
+      }
+      if (targetIndex >= groups.length) {
+        break
+      }
+      groups[targetIndex].playerIds.push(player.id)
+    }
+  } else {
+    for (let i = 0; i < ordered.length; i += 1) {
+      const row = Math.floor(i / groupCount)
+      const col = i % groupCount
+      const targetIndex = row % 2 === 0 ? col : groupCount - 1 - col
+      groups[targetIndex].playerIds.push(ordered[i].id)
+    }
   }
 
   const byPlayer = new Map<string, string>()
