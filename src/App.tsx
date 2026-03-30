@@ -434,6 +434,7 @@ const AppShell = () => {
                 onClick={() => setPage(item.key)}
                 className="rounded-lg px-3.5 py-2 text-xs font-semibold uppercase tracking-wider transition-all duration-200"
                 style={{
+                  fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
                   border: `1px solid ${
                     page === item.key
                       ? 'rgba(168,85,247,0.4)'
@@ -494,7 +495,18 @@ const GroupsPage = () => {
   return (
     <section className="space-y-6">
       <div className="panel">
-        <h2 className="section-heading">Group Stage Center</h2>
+        <h2
+          style={{
+            fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+            fontSize: '14px',
+            fontWeight: 700,
+            letterSpacing: '4px',
+            color: '#d8b4fe',
+            textTransform: 'uppercase' as const,
+          }}
+        >
+          Group Stage Center
+        </h2>
         <p className="section-lead">
           Real-time standings and fixtures update instantly as scores are entered from admin.
         </p>
@@ -575,7 +587,18 @@ const FixturesPage = () => {
   return (
     <section className="space-y-6">
       <div className="panel">
-        <h2 className="section-heading">Match Fixtures</h2>
+        <h2
+          style={{
+            fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+            fontSize: '14px',
+            fontWeight: 700,
+            letterSpacing: '4px',
+            color: '#d8b4fe',
+            textTransform: 'uppercase' as const,
+          }}
+        >
+          Match Fixtures
+        </h2>
         <p className="section-lead">Top 2 teams qualify from each group.</p>
       </div>
       {state.groups.map((group) => {
@@ -647,7 +670,18 @@ const RULES = [
 
 const RulesPage = () => (
   <section className="panel space-y-4 text-sm">
-    <h2 className="section-heading">Tournament Rules</h2>
+    <h2
+      style={{
+        fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+        fontSize: '14px',
+        fontWeight: 700,
+        letterSpacing: '4px',
+        color: '#d8b4fe',
+        textTransform: 'uppercase' as const,
+      }}
+    >
+      Tournament Rules
+    </h2>
     <p className="text-xs" style={{ color: 'var(--text-muted)', letterSpacing: '1px' }}>
       {RULES.length} rules govern all matches
     </p>

@@ -156,7 +156,7 @@ select:focus-visible {
 
 .section-heading {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 3px;
   text-transform: uppercase;
@@ -172,6 +172,7 @@ select:focus-visible {
 
 .status-chip {
   @apply inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wider;
+  font-family: 'Orbitron', 'Rajdhani', sans-serif;
   border-color: rgba(16, 185, 129, 0.3);
   background: rgba(16, 185, 129, 0.08);
   color: #6ee7b7;
@@ -195,417 +196,298 @@ select:focus-visible {
 }
 
 /* ═══════════════════════════════════════════════════
-   KNOCKOUT BRACKET – Complete Rewrite
+   KNOCKOUT BRACKET — UCL-style bk-* system
    ═══════════════════════════════════════════════════ */
 
-.ucl-bracket-page {
+/* ── Page container ── */
+.bk-page {
   position: relative;
   min-height: calc(100vh - 180px);
-  padding: 32px 16px 48px;
+  padding: 36px 12px 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
   border: 1px solid rgba(168, 85, 247, 0.15);
   border-radius: 20px;
   background:
     radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.1) 0%, transparent 55%),
     radial-gradient(ellipse at 80% 90%, rgba(236, 72, 153, 0.06) 0%, transparent 50%),
-    linear-gradient(180deg, rgba(12, 8, 20, 0.96) 0%, rgba(8, 6, 16, 0.98) 100%);
-  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.05), 0 16px 48px rgba(0, 0, 0, 0.3);
+    linear-gradient(180deg, rgba(12, 8, 20, 0.97) 0%, rgba(8, 6, 16, 0.99) 100%);
+  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.05), 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
-/* Title block */
-.ucl-title-block {
+/* ── Header / Title ── */
+.bk-header {
   text-align: center;
   margin-bottom: 36px;
 }
 
-.ucl-stars {
-  font-size: 14px;
+.bk-stars {
+  font-size: 13px;
   letter-spacing: 10px;
-  color: rgba(168, 85, 247, 0.5);
-  margin-bottom: 8px;
+  color: rgba(168, 85, 247, 0.45);
+  margin-bottom: 6px;
 }
 
-.ucl-road-to {
+.bk-eyebrow {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 8px;
-  color: rgba(216, 180, 254, 0.7);
+  color: rgba(216, 180, 254, 0.65);
   text-transform: uppercase;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
-.ucl-city-name {
+.bk-title {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
-  font-size: clamp(26px, 5vw, 46px);
+  font-size: clamp(24px, 4.5vw, 44px);
   font-weight: 800;
   color: #f0edf5;
-  text-shadow: 0 0 30px rgba(168, 85, 247, 0.2);
+  text-shadow: 0 0 28px rgba(168, 85, 247, 0.18);
   letter-spacing: 3px;
   line-height: 1.1;
 }
 
-.ucl-city-name span {
+.bk-title span {
   color: #d8b4fe;
-  text-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
+  text-shadow: 0 0 18px rgba(168, 85, 247, 0.3);
 }
 
-.ucl-subtitle {
-  font-size: 10px;
+.bk-subtitle {
+  font-family: 'Orbitron', 'Rajdhani', sans-serif;
+  font-size: 9px;
   letter-spacing: 5px;
   color: var(--text-muted);
   text-transform: uppercase;
   margin-top: 8px;
 }
 
-/* ─── Bracket wrapper ─── */
-
-.ucl-bracket-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  max-width: 1300px;
-  justify-content: center;
-  min-height: 320px;
-}
-
-/* ─── Side shells ─── */
-
-.ucl-side-shell {
-  border: 1px solid rgba(168, 85, 247, 0.12);
-  border-radius: 16px;
-  background: rgba(16, 12, 26, 0.6);
-  backdrop-filter: blur(4px);
-  padding: 14px;
-  flex: 0 0 auto;
-  min-width: 0;
-  overflow: visible;
-}
-
-.ucl-side {
+/* ── Main bracket row ── */
+.bk-bracket {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
-  justify-content: flex-start;
-}
-
-.ucl-side.right {
-  flex-direction: row-reverse;
-}
-
-/* ─── Connector lanes ─── */
-
-.ucl-connector-lane {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: stretch;
   justify-content: center;
-  margin: 0;
+  gap: 0;
+  width: 100%;
 }
 
-/* ─── Round columns ─── */
+/* ── Each half (left / right) ── */
+.bk-half {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  /* No background — open bracket like UCL */
+}
 
-.ucl-round-col {
+/* ── Round column ── */
+.bk-col {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  align-items: center;
+  align-items: stretch;
   flex: 0 0 auto;
+  /* gap and paddingTop set inline */
 }
 
-.ucl-qf-col,
-.ucl-sf-col {
-  justify-content: flex-start;
-}
-
-/* ─── Round labels ─── */
-
-.ucl-round-label {
+/* ── Round label ── */
+.bk-label {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
   font-size: 8px;
   letter-spacing: 3px;
   color: var(--text-muted);
   text-transform: uppercase;
-  margin: 0;
-  height: 22px;
-  line-height: 22px;
+  height: 28px;
+  line-height: 28px;
   text-align: center;
+  white-space: nowrap;
 }
 
-.ucl-round-col > .ucl-round-label {
-  margin-bottom: 4px;
+/* ── Match cards ── */
+.bk-card {
+  background: linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 7px;
+  overflow: hidden;
+  flex: 0 0 auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s;
 }
 
-.ucl-final-label {
-  color: #d8b4fe;
+.bk-card:hover {
+  border-color: rgba(168, 85, 247, 0.38);
+}
+
+.bk-card--md { width: 148px; }
+.bk-card--sm { width: 132px; }
+.bk-card--lg { width: 156px; }
+
+.bk-card--final {
+  background: linear-gradient(145deg, rgba(40, 22, 62, 0.97) 0%, rgba(18, 10, 32, 0.99) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.32);
+  border-radius: 9px;
+  width: 162px;
+  box-shadow: 0 0 22px rgba(168, 85, 247, 0.1), 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Match divider ── */
+.bk-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.25), transparent);
+}
+
+/* ── Team rows ── */
+.bk-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  min-height: 37px;
+  transition: background 0.18s;
+}
+
+.bk-row--win {
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.14), transparent);
+}
+
+.bk-row--win .bk-name {
+  color: #e9d5ff;
+}
+
+.bk-row--empty {
+  opacity: 0.45;
+}
+
+.bk-logo {
+  font-size: 12px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.bk-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(240, 237, 245, 0.88);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bk-name--tbd {
+  font-style: italic;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.bk-check {
   font-size: 9px;
-  letter-spacing: 4px;
+  color: #a78bfa;
+  flex-shrink: 0;
 }
 
-/* ─── Center block (trophy + final) ─── */
-
-.ucl-center-block {
+/* ── Center block ── */
+.bk-center {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 4px 12px 0;
-  min-width: 120px;
+  padding: 0 8px;
   flex: 0 0 auto;
 }
 
-.ucl-trophy-wrap {
-  font-size: 52px;
-  filter: drop-shadow(0 0 16px rgba(255, 200, 50, 0.35));
+.bk-trophy {
+  font-size: 48px;
+  filter: drop-shadow(0 0 14px rgba(255, 200, 50, 0.4));
   animation: trophy-pulse 4s ease-in-out infinite;
 }
 
 @keyframes trophy-pulse {
   0%, 100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 16px rgba(255, 200, 50, 0.35));
+    filter: drop-shadow(0 0 14px rgba(255, 200, 50, 0.4));
   }
   50% {
-    transform: scale(1.04);
-    filter: drop-shadow(0 0 24px rgba(255, 200, 50, 0.55));
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 22px rgba(255, 200, 50, 0.6));
   }
 }
 
-/* ─── Match cards ─── */
-
-.ucl-match-card,
-.ucl-final-match-card {
-  background: linear-gradient(145deg, rgba(22, 16, 36, 0.95) 0%, rgba(12, 8, 22, 0.98) 100%);
-  border: 1px solid rgba(168, 85, 247, 0.2);
-  border-radius: 8px;
-  width: 162px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
-  flex: 0 0 auto;
-  transition: border-color 0.25s, box-shadow 0.25s;
-}
-
-.ucl-match-card:hover {
-  border-color: rgba(168, 85, 247, 0.35);
-  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.1);
-}
-
-.ucl-match-card.small {
-  width: 140px;
-}
-
-.ucl-final-match-card {
-  background: linear-gradient(145deg, rgba(38, 20, 58, 0.96) 0%, rgba(16, 10, 30, 0.98) 100%);
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  border-radius: 10px;
-  width: 170px;
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.08), 0 4px 24px rgba(0, 0, 0, 0.3);
-}
-
-/* ─── Match divider ─── */
-
-.ucl-match-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.3), transparent);
-}
-
-/* ─── Team rows ─── */
-
-.ucl-team-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  min-height: 33px;
-  width: 100%;
-  transition: background 0.2s;
-  position: relative;
-}
-
-.ucl-team-row.winner {
-  background: linear-gradient(90deg, rgba(168, 85, 247, 0.12), rgba(236, 72, 153, 0.06));
-}
-
-.ucl-team-row.winner .ucl-team-name {
-  color: #e9d5ff;
-}
-
-.ucl-team-row.empty {
-  opacity: 0.5;
-}
-
-.ucl-team-logo {
-  font-size: 13px;
-  line-height: 1;
-  min-width: 18px;
-}
-
-.ucl-team-name {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 10.5px;
-  font-weight: 700;
-  color: rgba(240, 237, 245, 0.85);
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  flex: 1;
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ucl-team-name.tbd {
-  color: var(--text-muted);
-  font-style: italic;
-  font-weight: 500;
-}
-
-.ucl-check {
-  font-size: 10px;
-  color: #a78bfa;
-  margin-left: 2px;
-}
-
-/* ─── Final arms (arrows) ─── */
-
-.ucl-final-arm {
-  width: 20px;
-  flex: 0 0 20px;
-  display: flex;
-  align-self: stretch;
-  align-items: flex-start;
-  color: rgba(168, 85, 247, 0.5);
-  margin: 0 2px;
-}
-
-/* ─── Champion banner ─── */
-
-.ucl-champion-banner {
-  margin-top: 24px;
+/* ── Champion banner ── */
+.bk-champion {
+  margin-top: 22px;
   text-align: center;
   animation: champion-in 0.6s ease-out;
 }
 
 @keyframes champion-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.ucl-champion-label {
+.bk-champion__label {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
-  font-size: 9px;
+  font-size: 8px;
   letter-spacing: 6px;
   color: var(--text-muted);
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
-.ucl-champion-name {
+.bk-champion__name {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
-  font-size: clamp(18px, 3.5vw, 28px);
+  font-size: clamp(16px, 3vw, 26px);
   font-weight: 800;
   color: #d8b4fe;
-  text-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
+  text-shadow: 0 0 18px rgba(168, 85, 247, 0.4);
   letter-spacing: 3px;
 }
 
-/* ─── Note tag ─── */
-
-.ucl-note-tag {
+/* ── Footer note ── */
+.bk-note {
   font-size: 9px;
   color: var(--text-muted);
-  letter-spacing: 2.5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  margin-top: 24px;
+  margin-top: 22px;
   border: 1px solid var(--border-muted);
   border-radius: 20px;
-  padding: 5px 16px;
+  padding: 5px 14px;
   display: inline-block;
+  font-family: 'Orbitron', 'Rajdhani', sans-serif;
 }
 
-/* ─── Confetti (kept for champion) ─── */
-
-.confetti-dot {
-  position: absolute;
-  top: -2rem;
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, #a78bfa, #ec4899);
-  animation: confetti 3.2s linear infinite;
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .bk-card--md { width: 130px; }
+  .bk-card--sm { width: 116px; }
+  .bk-card--lg { width: 140px; }
+  .bk-card--final { width: 144px; }
 }
-
-@keyframes confetti {
-  0% { transform: translateY(-30px) rotate(0deg); opacity: 0; }
-  10% { opacity: 1; }
-  100% { transform: translateY(480px) rotate(360deg); opacity: 0; }
-}
-
-/* ═══════════════════════════════════════════════════
-   RESPONSIVE
-   ═══════════════════════════════════════════════════ */
 
 @media (max-width: 640px) {
-  .ucl-bracket-page {
-    padding: 20px 8px 32px;
+  .bk-page {
+    padding: 20px 6px 32px;
     border-radius: 14px;
   }
 
-  .ucl-bracket-wrapper {
-    min-width: 0;
-    gap: 6px;
+  .bk-card--md { width: 116px; }
+  .bk-card--sm { width: 104px; }
+  .bk-card--lg { width: 124px; }
+  .bk-card--final { width: 128px; }
+
+  .bk-title {
+    font-size: clamp(18px, 5vw, 28px);
   }
 
-  .ucl-side-shell {
-    padding: 8px 6px;
-  }
-
-  .ucl-side {
-    gap: 4px;
-  }
-
-  .ucl-round-col {
-    gap: 10px;
-  }
-
-  .ucl-match-card,
-  .ucl-final-match-card {
-    width: 138px;
-  }
-
-  .ucl-match-card.small {
-    width: 124px;
-  }
-
-  .ucl-center-block {
-    min-width: 90px;
-  }
-
-  .ucl-stars {
-    font-size: 12px;
-    letter-spacing: 6px;
-  }
-
-  .ucl-road-to,
-  .ucl-subtitle {
-    letter-spacing: 3px;
-  }
-
-  .ucl-city-name {
-    font-size: clamp(20px, 6vw, 30px);
+  .bk-trophy {
+    font-size: 36px;
   }
 
   .btn-primary,

@@ -2,166 +2,107 @@ import { useMemo } from 'react'
 import { usePlayerMap, useTournament } from '../context/TournamentContext'
 import type { KnockoutTie } from '../types'
 
-type Team = {
-  name: string
-  logo: string
+/* ─── Types ─── */
+type Team = { name: string; logo: string }
+type Match = { id: string; team1: Team | null; team2: Team | null; winner: Team | null }
+
+const LOGOS: Record<string, string> = {
+  PARIS: '🔵', CHELSEA: '🔵', LIVERPOOL: '🔴', 'REAL MADRID': '⚪',
+  'MAN CITY': '🔵', ATALANTA: '⚫', 'BAYERN MÜNCHEN': '🔴', NEWCASTLE: '⚫',
+  BARCELONA: '🔴', ATLETI: '🔴', TOTTENHAM: '⚪', ARSENAL: '🔴',
+  JUVENTUS: '⚫', GALATASARAY: '🟡', 'SPORTING CP': '🟢', LEVERKUSEN: '🔴',
 }
 
-type Match = {
-  id: string
-  team1: Team | null
-  team2: Team | null
-  winner: Team | null
+const logoFor = (n: string) => LOGOS[n.toUpperCase()] ?? '⚽'
+const toTeam = (id: string | null, pm: Record<string, { name: string }>): Team | null => {
+  if (!id) return null
+  const name = pm[id]?.name ?? 'TBD'
+  return { name, logo: logoFor(name) }
 }
-
-const TEAM_LOGOS: Record<string, string> = {
-  PARIS: '🔵',
-  CHELSEA: '🔵',
-  GALATASARAY: '🟡',
-  LIVERPOOL: '🔴',
-  'REAL MADRID': '⚪',
-  'MAN CITY': '🔵',
-  ATALANTA: '⚫',
-  'BAYERN MÜNCHEN': '🔴',
-  NEWCASTLE: '⚫',
-  BARCELONA: '🔴',
-  ATLETI: '🔴',
-  TOTTENHAM: '⚪',
-  'BODØ/GLIMT': '🟡',
-  'SPORTING CP': '🟢',
-  LEVERKUSEN: '🔴',
-  ARSENAL: '🔴',
-}
-
-const logoForName = (name: string) => TEAM_LOGOS[name.toUpperCase()] ?? '⚽'
-
-const toTeam = (playerId: string | null, playerMap: Record<string, { name: string }>): Team | null => {
-  if (!playerId) return null
-  const name = playerMap[playerId]?.name ?? 'TBD'
-  return { name, logo: logoForName(name) }
-}
-
-const toMatch = (tie: KnockoutTie, playerMap: Record<string, { name: string }>): Match => ({
+const toMatch = (tie: KnockoutTie, pm: Record<string, { name: string }>): Match => ({
   id: tie.id,
-  team1: toTeam(tie.playerAId, playerMap),
-  team2: toTeam(tie.playerBId, playerMap),
-  winner: toTeam(tie.winnerId, playerMap),
+  team1: toTeam(tie.playerAId, pm),
+  team2: toTeam(tie.playerBId, pm),
+  winner: toTeam(tie.winnerId, pm),
 })
+const splitHalf = (ties: KnockoutTie[]) => {
+  const mid = Math.ceil(ties.length / 2)
+  return { left: ties.slice(0, mid), right: ties.slice(mid) }
+}
 
-const splitRound = (ties: KnockoutTie[]) => {
-  const splitAt = Math.ceil(ties.length / 2)
-  return {
-    left: ties.slice(0, splitAt),
-    right: ties.slice(splitAt),
+/* ─── Geometry ─── */
+const CARD_H = 76   // height of a match card (two 37px rows + 2px divider)
+const ROW_H = 37    // each team row height
+const GAP = 18      // gap between cards in same round
+const LABEL_H = 28  // round label height (above cards)
+
+const centers = (n: number, pt: number, gap: number) =>
+  Array.from({ length: Math.max(0, n) }, (_, i) => LABEL_H + pt + ROW_H + i * (CARD_H + gap))
+
+const pairMids = (cs: number[]) => {
+  const out: number[] = []
+  for (let i = 0; i < cs.length; i += 2) {
+    const b = cs[i + 1]
+    out.push(b !== undefined ? (cs[i] + b) / 2 : cs[i])
   }
+  return out
 }
 
-/* ────────────────────────────────────────────
-   Geometry engine — calculates vertical positions
-   for match cards and SVG connectors.
-   Card height = 69px (two 33px rows + 1px divider + 2px padding)
-   ──────────────────────────────────────────── */
-
-const CARD_H = 69 // actual rendered height of .ucl-match-card
-const GAP = 14 // gap between cards in a round column
-const LABEL_H = 26 // round-label height + margin
-
-/** Compute vertical centers for N cards stacked with a given gap, offset by paddingTop */
-const cardCenters = (count: number, paddingTop: number, gap: number): number[] =>
-  Array.from({ length: Math.max(0, count) }, (_, i) =>
-    LABEL_H + paddingTop + CARD_H / 2 + i * (CARD_H + gap),
-  )
-
-/** Find the midpoint of each pair of source centers (for next-round alignment) */
-const pairMids = (centers: number[]): number[] => {
-  const mids: number[] = []
-  for (let i = 0; i < centers.length; i += 2) {
-    const a = centers[i]
-    const b = centers[i + 1]
-    mids.push(b !== undefined ? (a + b) / 2 : a)
-  }
-  return mids
+const alignTo = (targets: number[], n: number) => {
+  if (n <= 0) return { pt: 0, gap: GAP, cs: [] as number[] }
+  const pt = Math.max(0, Math.round((targets[0] ?? LABEL_H + ROW_H) - (LABEL_H + ROW_H)))
+  const gap = n > 1 && targets[1] !== undefined
+    ? Math.max(8, Math.round(targets[1] - targets[0] - CARD_H))
+    : GAP
+  return { pt, gap, cs: centers(n, pt, gap) }
 }
 
-/** Derive paddingTop + gap required to align `count` cards to the given target centers */
-const alignToTargets = (targets: number[], count: number) => {
-  if (count <= 0) return { pt: 0, gap: GAP, centers: [] as number[] }
-
-  const first = targets[0] ?? LABEL_H + CARD_H / 2
-  const pt = Math.max(0, Math.round(first - (LABEL_H + CARD_H / 2)))
-
-  const gap =
-    count > 1 && targets[1] !== undefined
-      ? Math.max(8, Math.round(targets[1] - targets[0] - CARD_H))
-      : GAP
-
-  return { pt, gap, centers: cardCenters(count, pt, gap) }
+const buildSide = (n0: number, n1: number, n2: number) => {
+  const r0 = centers(n0, 0, GAP)
+  const r1 = alignTo(pairMids(r0), n1)
+  const r2 = alignTo(pairMids(r1.cs), n2)
+  return { r0, r1, r2 }
 }
 
-/** Build geometry for an entire bracket side (R16 → QF → SF) */
-const buildSide = (r16n: number, qfn: number, sfn: number) => {
-  const r16 = cardCenters(r16n, 0, GAP)
-  const qf = alignToTargets(pairMids(r16), qfn)
-  const sf = alignToTargets(pairMids(qf.centers), sfn)
-  return { r16, qf, sf }
-}
+/* ─── Bracket Connector SVG ───
+   Classic tournament bracket tree: horizontal-in → vertical bar → horizontal-out
+   No arrowheads — just clean bracket lines like UCL.
+*/
+const LINE = 'rgba(168,85,247,0.6)'
+const CONN_W = 30
 
-/* ────────────────────────────────────────────
-   SVG Connector
-   Draws bracket lines between rounds
-   ──────────────────────────────────────────── */
+function BracketConnector({ srcs, flip }: { srcs: number[]; flip?: boolean }) {
+  if (!srcs.length) return <div style={{ width: CONN_W, flexShrink: 0 }} aria-hidden />
 
-const CONN_W = 28
-const CONN_COLOR = 'rgba(168,85,247,0.35)'
-
-function SVGConnector({ sourceCenters, flip }: { sourceCenters: number[]; flip?: boolean }) {
-  if (!sourceCenters.length)
-    return <div style={{ width: CONN_W, flexShrink: 0 }} aria-hidden />
-
-  const maxY = sourceCenters[sourceCenters.length - 1] + CARD_H / 2 + 8
-  const svgH = Math.max(120, Math.ceil(maxY))
+  const maxY = srcs[srcs.length - 1] + ROW_H + 8
+  const h = Math.max(100, Math.ceil(maxY))
   const w = CONN_W
-
-  const pairs = Math.max(1, Math.ceil(sourceCenters.length / 2))
+  const pairs = Math.ceil(srcs.length / 2)
 
   return (
     <div style={{ width: w, flexShrink: 0 }} aria-hidden>
-      <svg width={w} height={svgH} style={{ overflow: 'visible' }}>
+      <svg width={w} height={h} overflow="visible">
         {Array.from({ length: pairs }).map((_, p) => {
-          const a = sourceCenters[p * 2]
+          const a = srcs[p * 2]
           if (a === undefined) return null
-          const b = sourceCenters[p * 2 + 1]
+          const b = srcs[p * 2 + 1]
           const hasB = b !== undefined
-          const bClamped = hasB ? Math.min(svgH - 4, b as number) : a
-          const mid = (a + bClamped) / 2
-
-          const x1 = flip ? w : 0
-          const x2 = flip ? 0 : w
+          const bC = hasB ? Math.min(h - 4, b) : a
+          const mid = (a + bC) / 2
+          const xIn = flip ? w : 0   // inbound side (where cards are)
+          const xOut = flip ? 0 : w  // outbound side (to next round)
+          const xBar = w / 2
 
           return (
-            <g key={p}>
-              {/* horizontal from source card */}
-              <line x1={x1} y1={a} x2={w / 2} y2={a} stroke={CONN_COLOR} strokeWidth="1.5" />
-              {hasB && (
-                <line x1={x1} y1={bClamped} x2={w / 2} y2={bClamped} stroke={CONN_COLOR} strokeWidth="1.5" />
-              )}
-              {/* vertical stem */}
-              {hasB && (
-                <line x1={w / 2} y1={a} x2={w / 2} y2={bClamped} stroke={CONN_COLOR} strokeWidth="1.5" />
-              )}
-              {/* horizontal to target card */}
-              <line x1={w / 2} y1={mid} x2={x2} y2={mid} stroke={CONN_COLOR} strokeWidth="1.5" />
-              {/* arrowhead */}
-              <polyline
-                points={
-                  flip
-                    ? `4,${mid - 3} 1,${mid} 4,${mid + 3}`
-                    : `${w - 4},${mid - 3} ${w - 1},${mid} ${w - 4},${mid + 3}`
-                }
-                fill="none"
-                stroke={CONN_COLOR}
-                strokeWidth="1.5"
-              />
+            <g key={p} strokeLinecap="square">
+              {/* horizontal in from card 1 */}
+              <line x1={xIn} y1={a}   x2={xBar} y2={a}   stroke={LINE} strokeWidth="1.5" />
+              {/* horizontal in from card 2 */}
+              {hasB && <line x1={xIn} y1={bC}  x2={xBar} y2={bC}  stroke={LINE} strokeWidth="1.5" />}
+              {/* vertical bar connecting them */}
+              {hasB && <line x1={xBar} y1={a}  x2={xBar} y2={bC}  stroke={LINE} strokeWidth="1.5" />}
+              {/* horizontal out from midpoint to next round */}
+              <line x1={xBar} y1={mid} x2={xOut} y2={mid} stroke={LINE} strokeWidth="1.5" />
             </g>
           )
         })}
@@ -170,210 +111,152 @@ function SVGConnector({ sourceCenters, flip }: { sourceCenters: number[]; flip?:
   )
 }
 
-/* ────────────────────────────────────────────
-   Component: Team Row
-   ──────────────────────────────────────────── */
+/* ─── Final bridge: simple horizontal line from SF to Final ─── */
+function FinalBridge({ srcs, flip }: { srcs: number[]; flip?: boolean }) {
+  const y = srcs[0] ?? LABEL_H + ROW_H
+  const h = Math.max(60, Math.ceil(y + ROW_H + 10))
+  const w = 32
 
+  return (
+    <div style={{ width: w, flexShrink: 0 }} aria-hidden>
+      <svg width={w} height={h} overflow="visible">
+        <line
+          x1={flip ? w : 0} y1={y}
+          x2={flip ? 0 : w} y2={y}
+          stroke={LINE} strokeWidth="1.5" strokeLinecap="square"
+        />
+      </svg>
+    </div>
+  )
+}
+
+/* ─── Team Row ─── */
 function TeamRow({ team, isWinner }: { team: Team | null; isWinner: boolean }) {
   if (!team) {
     return (
-      <div className="ucl-team-row empty">
-        <span className="ucl-team-name tbd">TBD</span>
+      <div className="bk-row bk-row--empty">
+        <span className="bk-name bk-name--tbd">TBD</span>
       </div>
     )
   }
-
-  // dynamic sizing for long names
-  const over = Math.max(0, team.name.length - 14)
-  const fontSize = Math.max(7, 10.5 - over * 0.25)
-  const ls = fontSize <= 8.2 ? 0 : 0.3
+  const over = Math.max(0, team.name.length - 16)
+  const fs = Math.max(7.5, 10 - over * 0.2)
 
   return (
-    <div className={`ucl-team-row${isWinner ? ' winner' : ''}`}>
-      <span className="ucl-team-logo">{team.logo}</span>
-      <span
-        className="ucl-team-name"
-        style={{ fontSize: `${fontSize}px`, letterSpacing: `${ls}px` }}
-        title={team.name}
-      >
+    <div className={`bk-row${isWinner ? ' bk-row--win' : ''}`}>
+      <span className="bk-logo">{team.logo}</span>
+      <span className="bk-name" style={{ fontSize: `${fs}px` }} title={team.name}>
         {team.name}
       </span>
-      {isWinner && <span className="ucl-check">✓</span>}
+      {isWinner && <span className="bk-check">✓</span>}
     </div>
   )
 }
 
-/* ────────────────────────────────────────────
-   Component: Match Card
-   ──────────────────────────────────────────── */
-
-function MatchCard({ match, small }: { match: Match; small?: boolean }) {
+/* ─── Match Card ─── */
+function Card({ match, size = 'md' }: { match: Match; size?: 'sm' | 'md' | 'lg' }) {
+  const won = (t: Team | null) => !!match.winner && !!t && match.winner.name === t.name
   return (
-    <div className={`ucl-match-card${small ? ' small' : ''}`}>
-      <TeamRow
-        team={match.team1}
-        isWinner={!!match.winner && match.winner.name === match.team1?.name}
-      />
-      <div className="ucl-match-divider" />
-      <TeamRow
-        team={match.team2}
-        isWinner={!!match.winner && match.winner.name === match.team2?.name}
-      />
+    <div className={`bk-card bk-card--${size}`}>
+      <TeamRow team={match.team1} isWinner={won(match.team1)} />
+      <div className="bk-divider" />
+      <TeamRow team={match.team2} isWinner={won(match.team2)} />
     </div>
   )
 }
 
-/* ────────────────────────────────────────────
-   Component: RoundColumn
-   Renders a round label + stacked match cards
-   ──────────────────────────────────────────── */
-
-function RoundColumn({
-  label,
-  matches,
-  small,
-  paddingTop = 0,
-  gap = GAP,
-  className = '',
+/* ─── Round Column ─── */
+function RoundCol({
+  label, matches, size = 'md', pt = 0, gap = GAP,
 }: {
-  label: string
-  matches: Match[]
-  small?: boolean
-  paddingTop?: number
-  gap?: number
-  className?: string
+  label: string; matches: Match[]; size?: 'sm' | 'md' | 'lg'; pt?: number; gap?: number
 }) {
   return (
-    <div
-      className={`ucl-round-col ${className}`}
-      style={{ paddingTop: `${paddingTop}px`, gap: `${gap}px` }}
-    >
-      <div className="ucl-round-label">{label}</div>
-      {matches.map((m) => (
-        <MatchCard key={m.id} match={m} small={small} />
-      ))}
+    <div className="bk-col" style={{ paddingTop: pt, gap }}>
+      <div className="bk-label">{label}</div>
+      {matches.map(m => <Card key={m.id} match={m} size={size} />)}
     </div>
   )
 }
 
-/* ────────────────────────────────────────────
-   Component: BracketSide
-   One side of the bracket (left or right)
-   ──────────────────────────────────────────── */
+/* ─── One half of the bracket ─── */
+function BracketHalf({
+  r0, r1, r2, side,
+}: { r0: Match[]; r1: Match[]; r2: Match[]; side: 'left' | 'right' }) {
+  const geo = useMemo(() => buildSide(r0.length, r1.length, r2.length), [r0.length, r1.length, r2.length])
+  const flip = side === 'right'
 
-function BracketSide({
-  r16,
-  qf,
-  sf,
-  side,
-}: {
-  r16: Match[]
-  qf: Match[]
-  sf: Match[]
-  side: 'left' | 'right'
-}) {
-  const geo = useMemo(() => buildSide(r16.length, qf.length, sf.length), [r16.length, qf.length, sf.length])
-  const isRight = side === 'right'
+  const bridgeSrc = r2.length > 0
+    ? geo.r2.cs
+    : r1.length > 0
+    ? pairMids(geo.r1.cs)
+    : pairMids(geo.r0)
 
-  // The final arm arrow points inward
-  const arrowTop = Math.max(0, Math.round((geo.sf.centers[0] ?? 100) - 20))
+  const cols: React.ReactNode[] = []
 
-  const columns = [
-    // R16 column
-    r16.length > 0 && (
-      <RoundColumn key="r16" label="Round of 16" matches={r16} gap={GAP} />
-    ),
-    // R16→QF connector
-    r16.length > 0 && (
-      <SVGConnector key="r16-qf" sourceCenters={geo.r16} flip={isRight} />
-    ),
-    // QF column
-    qf.length > 0 && (
-      <RoundColumn key="qf" label="QF" matches={qf} small paddingTop={geo.qf.pt} gap={geo.qf.gap} />
-    ),
-    // QF→SF connector
-    qf.length > 0 && (
-      <SVGConnector key="qf-sf" sourceCenters={geo.qf.centers} flip={isRight} />
-    ),
-    // SF column
-    sf.length > 0 && (
-      <RoundColumn key="sf" label="SF" matches={sf} small paddingTop={geo.sf.pt} gap={geo.sf.gap} />
-    ),
-    // Final arm
-    <div key="arm" className="ucl-final-arm" aria-hidden style={{ paddingTop: `${arrowTop}px` }}>
-      <svg width="22" height="40">
-        {isRight ? (
-          <>
-            <line x1="6" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1.5" />
-            <polyline points="10,15 3,20 10,25" fill="none" stroke="currentColor" strokeWidth="1.5" />
-          </>
-        ) : (
-          <>
-            <line x1="0" y1="20" x2="16" y2="20" stroke="currentColor" strokeWidth="1.5" />
-            <polyline points="12,15 19,20 12,25" fill="none" stroke="currentColor" strokeWidth="1.5" />
-          </>
-        )}
-      </svg>
-    </div>,
-  ]
+  if (r0.length > 0) {
+    cols.push(
+      <RoundCol key="r0" label={r0.length > 2 ? 'R16' : 'SF'}
+        matches={r0} size="md" gap={GAP} />
+    )
+    if (r1.length > 0 || r2.length > 0) {
+      cols.push(<BracketConnector key="c0" srcs={geo.r0} flip={flip} />)
+    }
+  }
+  if (r1.length > 0) {
+    cols.push(
+      <RoundCol key="r1" label="QF" matches={r1} size="sm" pt={geo.r1.pt} gap={geo.r1.gap} />
+    )
+    if (r2.length > 0) {
+      cols.push(<BracketConnector key="c1" srcs={geo.r1.cs} flip={flip} />)
+    }
+  }
+  if (r2.length > 0) {
+    cols.push(
+      <RoundCol key="r2" label="SF" matches={r2} size="sm" pt={geo.r2.pt} gap={geo.r2.gap} />
+    )
+  }
+
+  cols.push(<FinalBridge key="arm" srcs={bridgeSrc} flip={flip} />)
 
   return (
-    <div className={`ucl-side-shell ${side}`}>
-      <div className={`ucl-side ${side}`}>
-        {isRight ? columns.filter(Boolean).reverse() : columns.filter(Boolean)}
-      </div>
+    <div className="bk-half">
+      {flip ? [...cols].reverse() : cols}
     </div>
   )
 }
 
-/* ────────────────────────────────────────────
-   Main component
-   ──────────────────────────────────────────── */
 
+/* ─── Main Page ─── */
 export const KnockoutPage = () => {
   const { state } = useTournament()
   const playerMap = usePlayerMap()
   const tournamentName = state.settings.tournamentName?.trim() || 'TechStorm Tournament'
 
-  // ─── Identify rounds ───
   const roundMap = useMemo(() => {
-    const r16 = state.knockout.rounds.find((r) => /round of 16|r16/i.test(r.name))
-    const qf = state.knockout.rounds.find((r) => /quarter|qf/i.test(r.name))
-    const sf = state.knockout.rounds.find((r) => /semi|sf/i.test(r.name))
+    const r16 = state.knockout.rounds.find(r => /round of 16|r16/i.test(r.name))
+    const qf  = state.knockout.rounds.find(r => /quarter|qf/i.test(r.name))
+    const sf  = state.knockout.rounds.find(r => /semi|sf/i.test(r.name))
     return {
       r16: r16 ?? state.knockout.rounds[0],
-      qf: qf ?? state.knockout.rounds[1],
-      sf: sf ?? state.knockout.rounds[2],
+      qf:  qf  ?? state.knockout.rounds[1],
+      sf:  sf  ?? state.knockout.rounds[2],
     }
   }, [state.knockout.rounds])
 
-  // ─── Split each round into left/right halves ───
-  const leftR16 = useMemo(
-    () => (roundMap.r16 ? splitRound(roundMap.r16.ties).left.map((t) => toMatch(t, playerMap)) : []),
-    [roundMap.r16, playerMap],
-  )
-  const rightR16 = useMemo(
-    () => (roundMap.r16 ? splitRound(roundMap.r16.ties).right.map((t) => toMatch(t, playerMap)) : []),
-    [roundMap.r16, playerMap],
-  )
-  const leftQF = useMemo(
-    () => (roundMap.qf ? splitRound(roundMap.qf.ties).left.map((t) => toMatch(t, playerMap)) : []),
-    [roundMap.qf, playerMap],
-  )
-  const rightQF = useMemo(
-    () => (roundMap.qf ? splitRound(roundMap.qf.ties).right.map((t) => toMatch(t, playerMap)) : []),
-    [roundMap.qf, playerMap],
-  )
-  const leftSF = useMemo(
-    () => (roundMap.sf ? splitRound(roundMap.sf.ties).left.map((t) => toMatch(t, playerMap)) : []),
-    [roundMap.sf, playerMap],
-  )
-  const rightSF = useMemo(
-    () => (roundMap.sf ? splitRound(roundMap.sf.ties).right.map((t) => toMatch(t, playerMap)) : []),
-    [roundMap.sf, playerMap],
-  )
+  const mk = (round: typeof roundMap.r16, half: 'left' | 'right'): Match[] => {
+    if (!round) return []
+    const { left, right } = splitHalf(round.ties)
+    return (half === 'left' ? left : right).map(t => toMatch(t, playerMap))
+  }
 
-  // ─── Final match ───
+  const leftR16  = useMemo(() => mk(roundMap.r16, 'left'),  [roundMap.r16, playerMap])
+  const rightR16 = useMemo(() => mk(roundMap.r16, 'right'), [roundMap.r16, playerMap])
+  const leftQF   = useMemo(() => mk(roundMap.qf,  'left'),  [roundMap.qf,  playerMap])
+  const rightQF  = useMemo(() => mk(roundMap.qf,  'right'), [roundMap.qf,  playerMap])
+  const leftSF   = useMemo(() => mk(roundMap.sf,  'left'),  [roundMap.sf,  playerMap])
+  const rightSF  = useMemo(() => mk(roundMap.sf,  'right'), [roundMap.sf,  playerMap])
+
   const finalMatch = useMemo<Match>(() => {
     const fs = state.knockout.finalSeries
     if (!fs) return { id: 'final', team1: null, team2: null, winner: null }
@@ -387,7 +270,6 @@ export const KnockoutPage = () => {
 
   const champion = useMemo(() => toTeam(state.championId, playerMap), [state.championId, playerMap])
 
-  // ─── Empty state ───
   if (!state.knockout.enabled) {
     return (
       <section className="panel">
@@ -398,50 +280,46 @@ export const KnockoutPage = () => {
     )
   }
 
+  const won = (t: Team | null) =>
+    !!finalMatch.winner && !!t && finalMatch.winner.name === t.name
+
   return (
-    <section className="ucl-bracket-page">
-      {/* Title */}
-      <div className="ucl-title-block">
-        <div className="ucl-stars">✦ ✦ ✦ ✦ ✦</div>
-        <div className="ucl-road-to">{tournamentName}</div>
-        <div className="ucl-city-name">
-          KNOCKOUT <span>ARENA</span>
-        </div>
-        <div className="ucl-subtitle">FC Mobile Elimination Bracket</div>
+    <section className="bk-page">
+      {/* ── Title ── */}
+      <div className="bk-header">
+        <div className="bk-stars">✦ ✦ ✦ ✦ ✦</div>
+        <div className="bk-eyebrow">{tournamentName}</div>
+        <div className="bk-title">KNOCKOUT <span>ARENA</span></div>
+        <div className="bk-subtitle">FC Mobile Elimination Bracket</div>
       </div>
 
-      {/* Bracket */}
-      <div className="ucl-bracket-wrapper">
-        <BracketSide r16={leftR16} qf={leftQF} sf={leftSF} side="left" />
+      {/* ── Bracket ── */}
+      <div className="bk-bracket">
+        <BracketHalf r0={leftR16}  r1={leftQF}  r2={leftSF}  side="left" />
 
-        <div className="ucl-center-block">
-          <div className="ucl-round-label ucl-final-label">Final</div>
-          <div className="ucl-trophy-wrap" aria-hidden>🏆</div>
-          <div className="ucl-final-match-card">
-            <TeamRow
-              team={finalMatch.team1}
-              isWinner={!!finalMatch.winner && finalMatch.winner.name === finalMatch.team1?.name}
-            />
-            <div className="ucl-match-divider" />
-            <TeamRow
-              team={finalMatch.team2}
-              isWinner={!!finalMatch.winner && finalMatch.winner.name === finalMatch.team2?.name}
-            />
+        {/* Center: trophy + final */}
+        <div className="bk-center">
+          <div className="bk-label" style={{ color: '#d8b4fe', letterSpacing: '5px' }}>FINAL</div>
+          <div className="bk-trophy">🏆</div>
+          <div className="bk-card bk-card--final">
+            <TeamRow team={finalMatch.team1} isWinner={won(finalMatch.team1)} />
+            <div className="bk-divider" />
+            <TeamRow team={finalMatch.team2} isWinner={won(finalMatch.team2)} />
           </div>
         </div>
 
-        <BracketSide r16={rightR16} qf={rightQF} sf={rightSF} side="right" />
+        <BracketHalf r0={rightR16} r1={rightQF} r2={rightSF} side="right" />
       </div>
 
-      {/* Champion banner */}
+      {/* ── Champion ── */}
       {champion && (
-        <div className="ucl-champion-banner">
-          <div className="ucl-champion-label">TechStorm Champion</div>
-          <div className="ucl-champion-name">{champion.name}</div>
+        <div className="bk-champion">
+          <div className="bk-champion__label">TechStorm Champion</div>
+          <div className="bk-champion__name">{champion.name}</div>
         </div>
       )}
 
-      <div className="ucl-note-tag">Home and Away Legs • Decider if required</div>
+      <div className="bk-note">Home and Away Legs · Decider if required</div>
     </section>
   )
 }
