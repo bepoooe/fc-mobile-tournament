@@ -420,7 +420,7 @@ const AppShell = () => {
                 lineHeight: 1.2,
               }}
             >
-              TechStorm Tournament
+              TechStorm EA FC Mobile Tournament
             </h1>
             <p 
               className="mt-0.5" 
@@ -587,7 +587,7 @@ const GroupsPage = () => {
           textTransform: 'uppercase' as const,
           marginBottom: '2px',
         }}>
-          TechStorm Tournament
+          TechStorm EA FC Mobile Tournament
         </div>
         <h1 style={{
           fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
@@ -795,7 +795,7 @@ const FixturesPage = () => {
           textTransform: 'uppercase' as const,
           marginBottom: '2px',
         }}>
-          TechStorm Tournament
+          TechStorm EA FC Mobile Tournament
         </div>
         <h1 style={{
           fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
@@ -966,7 +966,7 @@ const RULES_SECTIONS = [
   {
     title: 'Final Authority',
     rules: [
-      'The decision of the TechStorm Tournament Management Team will be final and binding in all matters, including but not limited to match outcomes, rule interpretations, disputes, and unforeseen situations',
+      'The decision of the TechStorm EA FC Mobile Tournament Management Team will be final and binding in all matters, including but not limited to match outcomes, rule interpretations, disputes, and unforeseen situations',
     ]
   },
 ];

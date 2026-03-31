@@ -25,9 +25,11 @@ dist-ssr
 
 # Local secrets
 .env
+.env.vercel.production
 
 # Firebase local cache
 .firebase/
 
 # TypeScript incremental build cache
 *.tsbuildinfo
+.vercel

@@ -2,7 +2,7 @@ import { getApp, getApps, initializeApp, type FirebaseOptions } from 'firebase/a
 import {
   doc,
   getDoc,
-  getFirestore,
+  initializeFirestore,
   onSnapshot,
   serverTimestamp,
   setDoc,
@@ -33,7 +33,12 @@ const app = hasFirebaseConfig
     : initializeApp(firebaseConfig)
   : null
 
-const db = app ? getFirestore(app) : null
+const db = app
+  ? initializeFirestore(app, {
+      experimentalAutoDetectLongPolling: true,
+      ignoreUndefinedProperties: true,
+    })
+  : null
 
 const getTournamentDocRef = () => {
   if (!db) return null
@@ -59,13 +64,19 @@ export const subscribeRemoteTournamentState = (
   const ref = getTournamentDocRef()
   if (!ref) return () => {}
 
-  return onSnapshot(ref, (snapshot) => {
-    if (!snapshot.exists()) return
-    const data = snapshot.data() as { payload?: TournamentState }
-    if (data.payload) {
-      onState(data.payload)
-    }
-  })
+  return onSnapshot(
+    ref,
+    (snapshot) => {
+      if (!snapshot.exists()) return
+      const data = snapshot.data() as { payload?: TournamentState }
+      if (data.payload) {
+        onState(data.payload)
+      }
+    },
+    (error) => {
+      console.error('Firestore subscription error:', error)
+    },
+  )
 }
 
 export const saveRemoteTournamentState = async (state: TournamentState): Promise<void> => {

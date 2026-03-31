@@ -438,7 +438,7 @@ function BracketHalf({
 export const KnockoutPage = () => {
   const { state } = useTournament()
   const playerMap = usePlayerMap()
-  const tournamentName = state.settings.tournamentName?.trim() || 'TechStorm Tournament'
+  const tournamentName = state.settings.tournamentName?.trim() || 'TechStorm EA FC Mobile Tournament'
 
   const roundMap = useMemo(() => {
     const r32 = state.knockout.rounds.find(r => /round of 32|r32/i.test(r.name))

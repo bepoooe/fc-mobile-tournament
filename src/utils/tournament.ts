@@ -29,7 +29,7 @@ export const defaultState = (): TournamentState => ({
     finalSeries: null,
   },
   settings: {
-    tournamentName: 'TechStorm Tournament',
+    tournamentName: 'TechStorm EA FC Mobile Tournament',
     groupSize: 4,
     qualifiersPerGroup: 2,
     seedingMode: 'ovr_snake',

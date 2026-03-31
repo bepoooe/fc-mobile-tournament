@@ -124,6 +124,9 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!isFirebaseSyncEnabled) {
+      console.warn(
+        'Firebase sync is disabled. Missing one or more VITE_FIREBASE_* environment variables in this deployment.',
+      )
       setIsRemoteReady(true)
       return
     }
