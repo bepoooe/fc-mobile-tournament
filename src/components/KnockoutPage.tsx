@@ -575,8 +575,9 @@ export const KnockoutPage = () => {
       </div>
 
       {/* ── Bracket ── */}
-      <div className="w-full" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'visible' }}>
-        <div className="bk-bracket" style={{ minWidth: 'auto', position: 'relative' }}>
+      <div className="bk-scroll-wrap">
+        <div className="bk-scroll-hint">← swipe to explore →</div>
+        <div className="bk-bracket" style={{ minWidth: 'max-content', margin: '0 auto', position: 'relative' }}>
           <BracketHalf 
             r0={leftR32.length > 0 ? leftR32 : leftR16}  
             r1={leftR32.length > 0 ? leftR16 : leftQF}  

@@ -1175,24 +1175,24 @@ const PlayerManagement = () => {
             {feedback.text}
           </p>
         )}
-        <div className="flex flex-wrap gap-2">
-          <label className="btn-secondary cursor-pointer">
+        <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
+          <label className="btn-secondary cursor-pointer flex-1 sm:flex-initial text-center">
             Upload Excel (.xlsx)
             <input type="file" accept=".xlsx" onChange={onExcelUpload} className="hidden" />
           </label>
           <button
             type="button"
-            className="btn-danger"
+            className="btn-danger flex-1 sm:flex-initial"
             onClick={confirmDeleteAllPlayers}
             disabled={!state.players.length}
           >
             Delete All Players
           </button>
-          <span className="text-xs text-zinc-400">
+          <span className="text-xs text-zinc-400 self-center">
             Required columns: Player Name | OVR Rating {excelLoading ? '(processing...)' : ''}
           </span>
         </div>
-        <form className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" onSubmit={submitPlayer}>
+        <form className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" onSubmit={submitPlayer}>
           <input
             className="input"
             placeholder="Player Name"
@@ -1211,7 +1211,7 @@ const PlayerManagement = () => {
           </button>
           {editId && !state.groupsLocked && (
             <button
-              className="btn-secondary sm:col-span-2 lg:col-span-1"
+              className="btn-secondary col-span-1 sm:col-span-2 lg:col-span-1"
               type="button"
               onClick={() => {
                 setEditId(null)
@@ -1226,47 +1226,93 @@ const PlayerManagement = () => {
       </div>
 
       <div className="panel overflow-x-auto">
-        <table className="w-full text-left text-xs sm:text-sm">
-          <thead className="text-neonPurple">
-            <tr>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">Name</th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">OVR</th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">Group</th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {state.players.map((player) => (
-              <tr key={player.id} className="border-t border-neonPurple/20">
-                <td className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm truncate">{player.name}</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">{player.ovr}</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">{state.groups.find((group) => group.id === player.groupId)?.name || '-'}</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3">
-                  <div className="flex gap-1 sm:gap-2 flex-wrap">
-                    <button
-                      className="btn-secondary px-1.5 sm:px-2 py-1 text-xs"
-                      type="button"
-                      onClick={() => {
-                        setEditId(player.id)
-                        setName(player.name)
-                        setOvr(player.ovr)
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn-danger px-1.5 sm:px-2 py-1 text-xs"
-                      type="button"
-                      onClick={() => confirmDeletePlayer(player.id, player.name)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
+        <div className="hidden sm:block">
+          <table className="w-full text-left text-xs sm:text-sm">
+            <thead className="text-neonPurple">
+              <tr>
+                <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">Name</th>
+                <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">OVR</th>
+                <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">Group</th>
+                <th className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {state.players.map((player) => (
+                <tr key={player.id} className="border-t border-neonPurple/20">
+                  <td className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm truncate">{player.name}</td>
+                  <td className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">{player.ovr}</td>
+                  <td className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">{state.groups.find((group) => group.id === player.groupId)?.name || '-'}</td>
+                  <td className="px-2 sm:px-3 py-2 sm:py-3">
+                    <div className="flex gap-1 sm:gap-2 flex-wrap">
+                      <button
+                        className="btn-secondary px-1.5 sm:px-2 py-1 text-xs"
+                        type="button"
+                        onClick={() => {
+                          setEditId(player.id)
+                          setName(player.name)
+                          setOvr(player.ovr)
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn-danger px-1.5 sm:px-2 py-1 text-xs"
+                        type="button"
+                        onClick={() => confirmDeletePlayer(player.id, player.name)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile card view */}
+        <div className="sm:hidden space-y-2 p-2">
+          {state.players.map((player) => (
+            <div key={player.id} className="rounded border border-neonPurple/30 bg-zinc-950/70 p-3 space-y-2">
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-neonPurple font-semibold uppercase tracking-wider mb-1">Name</p>
+                  <p className="text-sm font-semibold text-zinc-100 truncate">{player.name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-neonPurple font-semibold uppercase tracking-wider mb-1">OVR</p>
+                  <p className="text-sm font-semibold text-zinc-100">{player.ovr}</p>
+                </div>
+              </div>
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex-1">
+                  <p className="text-xs text-neonPurple font-semibold uppercase tracking-wider mb-1">Group</p>
+                  <p className="text-sm text-zinc-300">{state.groups.find((group) => group.id === player.groupId)?.name || '-'}</p>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2 border-t border-neonPurple/20">
+                <button
+                  className="btn-secondary flex-1 py-2 text-xs"
+                  type="button"
+                  onClick={() => {
+                    setEditId(player.id)
+                    setName(player.name)
+                    setOvr(player.ovr)
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn-danger flex-1 py-2 text-xs"
+                  type="button"
+                  onClick={() => confirmDeletePlayer(player.id, player.name)}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   )
@@ -1711,8 +1757,8 @@ const KnockoutManagement = () => {
                   onClear={() => clearTieLegScore(roundIndex, tie.id, 'leg2')}
                 />
                 <div className="rounded border border-neonPink/20 p-2 sm:p-3 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button type="button" className="btn-secondary text-xs sm:text-sm" onClick={() => coinTossTie(roundIndex, tie.id)}>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <button type="button" className="btn-secondary text-xs flex-1 sm:flex-initial" onClick={() => coinTossTie(roundIndex, tie.id)}>
                       Coin Toss for Decider Home
                     </button>
                     <p className="text-zinc-400 text-xs">
@@ -1743,42 +1789,46 @@ const KnockoutManagement = () => {
             {(finalSeries.player1Id && playerMap[finalSeries.player1Id]?.name) || 'TBD'} vs {(finalSeries.player2Id && playerMap[finalSeries.player2Id]?.name) || 'TBD'}
           </p>
           {finalSeries.games.map((game, index) => (
-            <div key={game.id} className="grid gap-2 rounded border border-neonPurple/25 bg-zinc-950/70 p-2 text-xs sm:grid-cols-[auto_auto_auto_auto] sm:items-center md:gap-2">
-              <span className="text-xs sm:text-sm">Match {index + 1}</span>
-              <select
-                className="input"
-                value={game.winnerId ?? ''}
-                onChange={(event) =>
-                  setFinalGameResult(game.id, event.target.value || null, false)
-                }
-              >
-                <option value="">Pending</option>
-                {finalSeries.player1Id && (
-                  <option value={finalSeries.player1Id}>
-                    {playerMap[finalSeries.player1Id]?.name}
-                  </option>
-                )}
-                {finalSeries.player2Id && (
-                  <option value={finalSeries.player2Id}>
-                    {playerMap[finalSeries.player2Id]?.name}
-                  </option>
-                )}
-              </select>
-              <button
-                className="btn-secondary text-xs"
-                type="button"
-                onClick={() => setFinalGameResult(game.id, null, true)}
-              >
-                Mark Void
-              </button>
-              <button
-                className="btn-secondary text-xs"
-                type="button"
-                onClick={() => clearFinalGameResult(game.id)}
-              >
-                Clear
-              </button>
-              <span className="col-span-full sm:col-span-1 text-zinc-400 text-xs">{game.void ? 'Replay Required' : 'Recorded'}</span>
+            <div key={game.id} className="rounded border border-neonPurple/25 bg-zinc-950/70 p-2 sm:p-3 text-xs space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <span className="text-xs sm:text-sm font-semibold">Match {index + 1}</span>
+                <select
+                  className="input flex-1 sm:flex-initial"
+                  value={game.winnerId ?? ''}
+                  onChange={(event) =>
+                    setFinalGameResult(game.id, event.target.value || null, false)
+                  }
+                >
+                  <option value="">Pending</option>
+                  {finalSeries.player1Id && (
+                    <option value={finalSeries.player1Id}>
+                      {playerMap[finalSeries.player1Id]?.name}
+                    </option>
+                  )}
+                  {finalSeries.player2Id && (
+                    <option value={finalSeries.player2Id}>
+                      {playerMap[finalSeries.player2Id]?.name}
+                    </option>
+                  )}
+                </select>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  className="btn-secondary text-xs flex-1 sm:flex-initial"
+                  type="button"
+                  onClick={() => setFinalGameResult(game.id, null, true)}
+                >
+                  Mark Void
+                </button>
+                <button
+                  className="btn-secondary text-xs flex-1 sm:flex-initial"
+                  type="button"
+                  onClick={() => clearFinalGameResult(game.id)}
+                >
+                  Clear
+                </button>
+                <span className="text-zinc-400 text-xs self-center sm:ml-auto">{game.void ? 'Replay Required' : 'Recorded'}</span>
+              </div>
             </div>
           ))}
           <p className="text-sm text-neonPink">
@@ -1841,29 +1891,29 @@ const ScoreLegInput = ({
 
   return (
     <div
-      className="rounded border p-2 text-xs"
+      className="rounded border p-2 sm:p-3 text-xs space-y-2"
       style={{
         borderColor: isSaved ? 'rgba(34,197,94,0.45)' : 'rgba(168,85,247,0.2)',
         background: isSaved ? 'rgba(34,197,94,0.07)' : 'rgba(9,9,15,0.4)',
       }}
     >
       {/* Label row */}
-      <p className="text-[10px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'rgba(168,85,247,0.7)' }}>
+      <p className="text-[10px] font-semibold tracking-widest uppercase" style={{ color: 'rgba(168,85,247,0.7)' }}>
         {label}
       </p>
       {/* Score entry row */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-2 sm:gap-3">
         {/* Home player */}
-        <div className="flex flex-col items-center gap-1 min-w-[60px]">
+        <div className="flex flex-col items-center gap-1 flex-1 sm:flex-initial">
           <span
-            className="text-[10px] text-center leading-tight max-w-[80px] truncate"
+            className="text-[10px] text-center leading-tight truncate w-full"
             style={{ color: isSaved ? 'rgba(134,239,172,0.9)' : 'rgba(216,180,254,0.8)' }}
             title={homePlayerName}
           >
             {homePlayerName}
           </span>
           <input
-            className="input input-score w-[52px] text-center"
+            className="input input-score w-full sm:w-[52px] text-center"
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
@@ -1875,18 +1925,18 @@ const ScoreLegInput = ({
           />
         </div>
         {/* Divider */}
-        <span className="text-zinc-500 font-bold text-sm">—</span>
+        <span className="text-zinc-500 font-bold text-sm hidden sm:block">—</span>
         {/* Away player */}
-        <div className="flex flex-col items-center gap-1 min-w-[60px]">
+        <div className="flex flex-col items-center gap-1 flex-1 sm:flex-initial">
           <span
-            className="text-[10px] text-center leading-tight max-w-[80px] truncate"
+            className="text-[10px] text-center leading-tight truncate w-full"
             style={{ color: isSaved ? 'rgba(134,239,172,0.9)' : 'rgba(216,180,254,0.8)' }}
             title={awayPlayerName}
           >
             {awayPlayerName}
           </span>
           <input
-            className="input input-score w-[52px] text-center"
+            className="input input-score w-full sm:w-[52px] text-center"
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
@@ -1898,9 +1948,9 @@ const ScoreLegInput = ({
           />
         </div>
         {/* Action buttons */}
-        <div className="flex gap-1.5 ml-auto">
+        <div className="flex gap-1.5 w-full sm:w-auto">
           <button
-            className={`btn-primary text-xs ${isSaved ? 'opacity-80' : ''}`}
+            className={`btn-primary text-xs flex-1 sm:flex-initial ${isSaved ? 'opacity-80' : ''}`}
             type="button"
             disabled={!canSave}
             onClick={handleSave}
@@ -1909,7 +1959,7 @@ const ScoreLegInput = ({
             {getSaveButtonText()}
           </button>
           <button
-            className="btn-secondary text-xs"
+            className="btn-secondary text-xs flex-1 sm:flex-initial"
             type="button"
             onClick={() => {
               setHome('')

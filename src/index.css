@@ -210,6 +210,23 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
+/* ─── Score Input ─── */
+
+.input-score {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: var(--spacing-sm) var(--spacing-xs);
+  min-height: 36px;
+}
+
+@media (max-width: 640px) {
+  .input-score {
+    min-height: 40px;
+    font-size: 1rem;
+  }
+}
+
 /* ─── Section Typography ─── */
 
 .section-heading {
@@ -664,6 +681,39 @@ table {
 
 /* ────────── MOBILE OPTIMIZATIONS FOR KNOCKOUT BRACKET ──────────*/
 
+/* Scrollable bracket wrapper — allows horizontal pan on mobile */
+.bk-scroll-wrap {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  /* subtle fade hints on both edges when content overflows */
+  mask-image: linear-gradient(to right, transparent 0%, black 24px, black calc(100% - 24px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 24px, black calc(100% - 24px), transparent 100%);
+  padding: 0 16px 12px;
+  scrollbar-width: thin;
+}
+
+/* Scroll hint label shown only on small screens */
+.bk-scroll-hint {
+  display: none;
+  font-family: 'Orbitron', 'Rajdhani', sans-serif;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: rgba(168, 85, 247, 0.5);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 6px;
+  animation: hint-fade 2s ease-in-out 1s forwards;
+  opacity: 1;
+}
+
+@keyframes hint-fade {
+  0%   { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 @media (max-width: 1024px) {
   .bk-col--md { width: 150px; }
   .bk-col--sm { width: 138px; }
@@ -673,85 +723,58 @@ table {
   .bk-card--sm { width: 123px; }
   .bk-card--lg { width: 145px; }
 
-  .bk-card--final {
-    width: 155px;
-  }
+  .bk-card--final { width: 155px; }
 
-  .bk-name {
-    font-size: 8.5px;
-  }
-
-  .bk-trophy {
-    font-size: 36px;
-  }
+  .bk-name { font-size: 8.5px; }
+  .bk-trophy { font-size: 36px; }
 }
 
 @media (max-width: 768px) {
   .bk-page {
-    padding: 24px 8px 32px;
+    padding: 24px 0 32px;
     min-height: calc(100vh - 160px);
     border-radius: 16px;
   }
 
-  .bk-col--md { width: 135px; }
-  .bk-col--sm { width: 125px; }
-  .bk-col--lg { width: 145px; }
+  .bk-scroll-hint { display: block; }
 
-  .bk-card--md { width: 125px; }
-  .bk-card--sm { width: 112px; }
-  .bk-card--lg { width: 135px; }
+  .bk-col--md { width: 130px; }
+  .bk-col--sm { width: 120px; }
+  .bk-col--lg { width: 140px; }
 
-  .bk-card--final {
-    width: 145px;
-  }
+  .bk-card--md { width: 120px; }
+  .bk-card--sm { width: 108px; }
+  .bk-card--lg { width: 130px; }
+
+  .bk-card--final { width: 140px; }
 
   .bk-name {
-    font-size: 8.5px;
+    font-size: 8px;
     letter-spacing: 0.2px;
   }
 
-  .bk-logo {
-    font-size: 10px;
-    width: 10px;
-  }
-
-  .bk-check {
-    font-size: 8px;
-    width: 8px;
-  }
+  .bk-logo { font-size: 10px; width: 10px; }
+  .bk-check { font-size: 8px; width: 8px; }
 
   .bk-row {
-    height: 32px;
-    min-height: 32px;
-    padding: 0 7px;
-    gap: 4px;
+    height: 30px;
+    min-height: 30px;
+    padding: 0 6px;
+    gap: 3px;
   }
 
-  .bk-trophy {
-    font-size: 28px;
-  }
+  .bk-trophy { font-size: 28px; }
 
-  .bk-header {
-    margin-bottom: 24px;
-  }
+  .bk-header { margin-bottom: 20px; }
 
-  .bk-title {
-    font-size: clamp(18px, 3.5vw, 32px);
-  }
+  .bk-title { font-size: clamp(18px, 3.5vw, 32px); }
 
-  .bk-eyebrow {
-    font-size: 9px;
-    letter-spacing: 6px;
-  }
-
-  .bk-bracket {
-    gap: 0;
-  }
+  .bk-eyebrow { font-size: 9px; letter-spacing: 6px; }
 }
 
 @media (max-width: 480px) {
   .bk-page {
-    padding: 16px 4px 24px;
+    padding: 16px 0 24px;
     border-radius: 12px;
   }
 
@@ -763,9 +786,7 @@ table {
   .bk-card--sm { width: 95px; }
   .bk-card--lg { width: 115px; }
 
-  .bk-card--final {
-    width: 120px;
-  }
+  .bk-card--final { width: 120px; }
 
   .bk-name {
     font-size: 7.5px;
@@ -773,38 +794,26 @@ table {
   }
 
   .bk-row {
-    height: 30px;
-    min-height: 30px;
+    height: 28px;
+    min-height: 28px;
     padding: 0 5px;
     gap: 3px;
   }
 
-  .bk-trophy {
-    font-size: 20px;
-  }
+  .bk-trophy { font-size: 20px; }
 
-  .bk-title {
-    font-size: clamp(14px, 2.5vw, 24px);
-  }
+  .bk-title { font-size: clamp(14px, 4vw, 24px); }
 
-  .bk-header {
-    margin-bottom: 16px;
-  }
-
-  .bk-bracket {
-    gap: 0;
-  }
+  .bk-header { margin-bottom: 14px; }
 
   .bk-label {
     font-size: 7px;
-    height: 24px;
-    line-height: 24px;
-    letter-spacing: 2px;
+    height: 20px;
+    line-height: 20px;
+    letter-spacing: 1.5px;
   }
 
-  .bk-champion__name {
-    font-size: clamp(14px, 2.5vw, 20px);
-  }
+  .bk-champion__name { font-size: clamp(14px, 2.5vw, 20px); }
 }
 
 /* ────────── MOBILE OPTIMIZATIONS FOR HEADER/NAVBAR ──────────*/
@@ -817,5 +826,58 @@ table {
 
   header div:first-child {
     gap: 0.5rem !important;
+  }
+}
+
+/* ────────── ADMIN PAGE MOBILE OPTIMIZATIONS ──────────*/
+
+/* Improve table scrolling on mobile */
+.panel.overflow-x-auto {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 640px) {
+  .panel.overflow-x-auto {
+    padding: 0;
+  }
+
+  .panel.overflow-x-auto table {
+    min-width: 100%;
+  }
+
+  .panel.overflow-x-auto thead,
+  .panel.overflow-x-auto tbody {
+    display: block;
+  }
+
+  .panel.overflow-x-auto tr {
+    display: flex;
+    flex-wrap: wrap;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.15);
+  }
+
+  .panel.overflow-x-auto th,
+  .panel.overflow-x-auto td {
+    flex: 1 1 50%;
+    min-width: 100px;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .panel.overflow-x-auto th {
+    background: rgba(168, 85, 247, 0.08);
+    font-weight: 700;
+  }
+
+  .panel.overflow-x-auto td:nth-child(4) {
+    flex: 1 1 100%;
+  }
+}
+
+/* Improve knockout tie cards on mobile */
+@media (max-width: 640px) {
+  .panel > div[class*="rounded"][class*="border"] {
+    padding: 0.75rem;
   }
 }
