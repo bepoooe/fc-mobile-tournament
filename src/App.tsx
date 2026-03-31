@@ -906,20 +906,73 @@ const FixturesPage = () => {
   )
 }
 
-const RULES = [
-  'Match Format: 1 vs 1',
-  'Controls: Any in-game control mode (Buttons/Gestures)',
-  'No cross spamming — max 1 cross-to-header attempt per half',
-  'Disconnection within 2 in-game minutes = Full rematch',
-  'Disconnection after 2 in-game minutes = Score stands; organizers decide rematch',
-  'Draws allowed in League Stage; Knockout = rematch until winner',
-  "Device issues are player's responsibility; no automatic rematch without organizer approval",
-  'Substitutions and tactics allowed before match start only',
-  "Final Authority: TechStorm Tournament Management Team's decision is final and binding",
-]
+const RULES_SECTIONS = [
+  {
+    title: 'General Guidelines',
+    rules: [
+      'Platform: EA SPORTS FC™ Mobile (FIFA Mobile)',
+      'Game Mode: Head-to-Head (H2H) Friendly Match',
+      'Tournament Format: Multi-stage tournament consisting of a Group Stage (League System) followed by Knockout Rounds',
+      'Matchmaking: OVR-based matchmaking/seeding may be used where applicable',
+      'Minimum OVR Requirement: All participants must have at least an OVR of 110',
+      'Device Policy: Players must use their own mobile device. Power banks are allowed',
+      'Internet Policy: Players may use the provided Wi-Fi. Players may also use their own mobile network at their own risk',
+      'Accounts: Borrowed accounts are allowed only with prior declaration during registration and consent of the account owner',
+      'Fair Play Policy: Any exploitation of bugs or glitches will result in immediate disqualification. Toxic behavior, abuse, or misconduct may lead to removal from the tournament',
+      'Reporting Time: Players must report 10 minutes before their scheduled match. A 5-minute grace period is allowed; failure to report results in a walkover',
+      'Event Authority: Decisions made by tournament organizers/referees are final and binding',
+      'Event Type: This is an offline event conducted at the event venue',
+      'Registration Policy: Registration fees are strictly non-refundable',
+    ]
+  },
+  {
+    title: 'Match Guidelines',
+    rules: [
+      'Match Format: 1 vs 1',
+      'Team Type: Play with your account',
+      'Controls: Any in-game control mode is allowed (Buttons/Gestures)',
+      'Camera: Any in-game camera angle is allowed',
+      'Substitutions & Tactics: Allowed',
+      'Cross Spamming Rule: Cross spamming is strictly prohibited. Maximum 1 intentional cross-to-header attempt per half. Referee\'s discretion will apply in unclear situations',
+    ]
+  },
+  {
+    title: 'Disconnection & Technical Rules',
+    rules: [
+      'Disconnection (Within 2 in-game minutes): Full rematch',
+      'Disconnection (After 2 in-game minutes): Score stands; organizers decide whether to resume or rematch',
+      'Draw Rule - League Stage: Draws allowed',
+      'Draw Rule - Knockout Stage: Immediate rematch until a winner is decided',
+      'Match Recording: Organizers/players reserve the right to record matches for verification',
+      'Device Malfunction: Device-related issues are the player\'s responsibility. No automatic rematch unless approved by organizers/referees',
+    ]
+  },
+  {
+    title: 'Tournament Structure',
+    rules: [
+      'League Stage (Group-Based): All registered players will be divided into groups based on OVR balancing. Each group will follow a League format, where players play within their group. Draws are allowed during League Stage. Group rankings and qualification will be determined based on overall match performance, as decided by the tournament organizers. Qualified players from each group will qualify for the Knockout Rounds',
+      'Knockout Rounds: Players who qualify from the League Stage will advance to Knockout Rounds. From the Knockout Rounds onwards, matches will follow a Home & Away (Two-Leg) System. Each knockout pairing will consist of: One Home match and One Away match. Winner Determination: The player with the higher aggregate score across both matches will advance. If Aggregate Score is Tied: The player with more home goals will be declared the winner. If still tied, one deciding match will be played. The home goal advantage of the rematch will be decided by a toss. Knockout rounds will continue until the Final. If draw happens rematch will be conducted followed by higher Group Stage goal difference (GD) count in case of another draw in the rematch',
+    ]
+  },
+  {
+    title: 'Final Match Rules',
+    rules: [
+      'Format: The Final will be played in a Best of 3 format',
+      'Victory: The first player to win 2 matches will be declared the Champion',
+      'Disconnection: If a match in the Final is disconnected, only that particular match will be replaced',
+      'Guidelines: All general and match guidelines remain applicable during the Final',
+    ]
+  },
+  {
+    title: 'Final Authority',
+    rules: [
+      'The decision of the TechStorm Tournament Management Team will be final and binding in all matters, including but not limited to match outcomes, rule interpretations, disputes, and unforeseen situations',
+    ]
+  },
+];
 
 const RulesPage = () => (
-  <section className="panel space-y-3 sm:space-y-4 text-sm">
+  <section className="panel space-y-4 sm:space-y-6 text-sm">
     <h2
       style={{
         fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
@@ -933,47 +986,61 @@ const RulesPage = () => (
     >
       Tournament Rules
     </h2>
-    <p 
-      className="text-xs" 
-      style={{ 
-        color: 'var(--text-muted)', 
-        letterSpacing: '1px',
-        margin: '0.5rem 0 0 0',
-      }}
-    >
-      {RULES.length} rules govern all matches
-    </p>
-    <div className="space-y-2">
-      {RULES.map((text, i) => (
-        <div
-          key={i}
-          className="flex items-start gap-2 sm:gap-3 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-200"
-          style={{
-            border: '1px solid rgba(168,85,247,0.1)',
-            background: i % 2 === 0 ? 'rgba(24,20,34,0.4)' : 'rgba(24,20,34,0.2)',
-          }}
-        >
-          <span
+    
+    <div className="space-y-5 sm:space-y-6">
+      {RULES_SECTIONS.map((section, sectionIdx) => (
+        <div key={sectionIdx} className="space-y-2.5">
+          <h3
             style={{
-              fontFamily: "'Orbitron', sans-serif",
-              fontSize: 'clamp(8px, 2vw, 9px)',
+              fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+              fontSize: 'clamp(11px, 3vw, 12px)',
               fontWeight: 700,
-              color: 'rgba(168,85,247,0.5)',
-              minWidth: '24px',
-              paddingTop: '1px',
-              flexShrink: 0,
+              letterSpacing: '2px',
+              color: '#ec4899',
+              textTransform: 'uppercase' as const,
+              margin: 0,
+              paddingBottom: '0.5rem',
+              borderBottom: '2px solid rgba(236,72,153,0.3)',
             }}
           >
-            {String(i + 1).padStart(2, '0')}
-          </span>
-          <span 
-            style={{ 
-              color: 'var(--text-secondary)',
-              fontSize: 'clamp(0.8125rem, 2.5vw, 0.875rem)',
-            }}
-          >
-            {text}
-          </span>
+            {section.title}
+          </h3>
+          
+          <div className="space-y-2 pl-2">
+            {section.rules.map((rule, ruleIdx) => (
+              <div
+                key={ruleIdx}
+                className="flex items-start gap-2.5 sm:gap-3 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 transition-all duration-200 hover:border-purple-400/30"
+                style={{
+                  border: '1px solid rgba(168,85,247,0.15)',
+                  background: 'rgba(24,20,34,0.3)',
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: 'clamp(7px, 1.5vw, 8px)',
+                    fontWeight: 700,
+                    color: 'rgba(236,72,153,0.6)',
+                    minWidth: '20px',
+                    paddingTop: '2px',
+                    flexShrink: 0,
+                  }}
+                >
+                  ▸
+                </span>
+                <span 
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    fontSize: 'clamp(0.8rem, 2.5vw, 0.875rem)',
+                    lineHeight: '1.5',
+                  }}
+                >
+                  {rule}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       ))}
     </div>
