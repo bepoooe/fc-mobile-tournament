@@ -39,6 +39,7 @@ export const defaultState = (): TournamentState => ({
   stage: 'setup',
   groupsLocked: false,
   championId: null,
+  confirmedFixtures: [],
 })
 
 const shuffled = <T,>(items: T[]) => {

@@ -112,6 +112,7 @@ export interface TournamentState {
   stage: Stage
   groupsLocked: boolean
   championId: string | null
+  confirmedFixtures: string[]
 }
 
 export interface TournamentContextType {
@@ -133,6 +134,9 @@ export interface TournamentContextType {
   addLatePlayerToSuggestedGroup: (name: string, ovr: number) => string | null
   setFixtureScore: (fixtureId: string, homeGoals: number, awayGoals: number) => void
   clearFixtureScore: (fixtureId: string) => void
+  confirmFixture: (fixtureId: string) => void
+  isFixtureConfirmed: (fixtureId: string) => boolean
+  unconfirmFixture: (fixtureId: string) => void
   generateKnockout: () => void
   setTieLegScore: (
     roundIndex: number,

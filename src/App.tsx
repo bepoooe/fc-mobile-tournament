@@ -651,43 +651,50 @@ const GroupsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {standingsByGroup[group.id]?.map((row, idx) => (
-                  <tr
-                    key={row.playerId}
-                    style={{
-                      borderTop: '1px solid rgba(168,85,247,0.08)',
-                      background: idx % 2 === 0 ? 'transparent' : 'rgba(168,85,247,0.03)',
-                    }}
-                  >
-                    <td 
-                      className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-medium" 
-                      style={{ 
-                        color: '#e9d5ff',
-                        maxWidth: '80px',
-                        fontSize: 'clamp(7px, 2vw, 0.875rem)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                {standingsByGroup[group.id]?.map((row, idx) => {
+                  const isQualifier = state.stage !== 'setup' && idx < 2
+                  return (
+                    <tr
+                      key={row.playerId}
+                      style={{
+                        borderTop: '1px solid rgba(168,85,247,0.08)',
+                        background: isQualifier 
+                          ? 'rgba(34, 197, 94, 0.15)' 
+                          : idx % 2 === 0 ? 'transparent' : 'rgba(168,85,247,0.03)',
+                        borderLeft: isQualifier ? '3px solid rgba(34, 197, 94, 0.6)' : 'none',
                       }}
-                      title={playerMap[row.playerId]?.name}
                     >
-                      {playerMap[row.playerId]?.name}
-                    </td>
-                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.p}</td>
-                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.w}</td>
-                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.d}</td>
-                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.l}</td>
-                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.gf}</td>
-                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.ga}</td>
-                    <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.gd}</td>
-                    <td 
-                      className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-semibold text-center text-xs sm:text-sm" 
-                      style={{ color: '#d8b4fe' }}
-                    >
-                      {row.points}
-                    </td>
-                  </tr>
-                ))}
+                      <td 
+                        className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-medium" 
+                        style={{ 
+                          color: isQualifier ? '#86efac' : '#e9d5ff',
+                          maxWidth: '80px',
+                          fontSize: 'clamp(7px, 2vw, 0.875rem)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title={playerMap[row.playerId]?.name}
+                      >
+                        {playerMap[row.playerId]?.name}
+                        {isQualifier && ' ✓'}
+                      </td>
+                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.p}</td>
+                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.w}</td>
+                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.d}</td>
+                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.l}</td>
+                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.gf}</td>
+                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.ga}</td>
+                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.gd}</td>
+                      <td 
+                        className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-semibold text-center text-xs sm:text-sm" 
+                        style={{ color: isQualifier ? '#86efac' : '#d8b4fe' }}
+                      >
+                        {row.points}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -1517,22 +1524,45 @@ const FixtureEditor = ({
   onConfirm: (home: number, away: number) => void
   onClear: () => void
 }) => {
+  const { confirmFixture, isFixtureConfirmed, unconfirmFixture } = useTournament()
   const [home, setHome] = useState<string>(fixture.homeGoals?.toString() ?? '')
   const [away, setAway] = useState<string>(fixture.awayGoals?.toString() ?? '')
+  const [isUpdating, setIsUpdating] = useState(false)
+  const isConfirmed = isFixtureConfirmed(fixture.id)
 
   useEffect(() => {
     setHome(fixture.homeGoals?.toString() ?? '')
     setAway(fixture.awayGoals?.toString() ?? '')
-  }, [fixture.homeGoals, fixture.awayGoals])
+    setIsUpdating(false)
+  }, [fixture.id])
 
   const typedNumber = (value: string) => value.replace(/[^0-9]/g, '')
 
   const parsedHome = home === '' ? NaN : Number(home)
   const parsedAway = away === '' ? NaN : Number(away)
-  const canConfirm = Number.isInteger(parsedHome) && Number.isInteger(parsedAway)
+  const canConfirm = Number.isInteger(parsedHome) && Number.isInteger(parsedAway) && !isConfirmed
+
+  const handleConfirm = () => {
+    setIsUpdating(true)
+    onConfirm(parsedHome, parsedAway)
+    setTimeout(() => {
+      confirmFixture(fixture.id)
+      setIsUpdating(false)
+    }, 300)
+  }
+
+  const getButtonText = () => {
+    if (isConfirmed) return 'Confirmed'
+    if (isUpdating) return 'Updating...'
+    return 'Confirm'
+  }
 
   return (
-    <div className="grid gap-2 rounded border border-neonPurple/30 bg-zinc-950/70 p-2 text-xs sm:grid-cols-[1fr_60px_60px_auto] sm:items-center md:grid-cols-[1fr_auto_auto_auto_auto] md:gap-2">
+    <div className={`grid gap-2 rounded border p-2 text-xs sm:grid-cols-[1fr_60px_60px_auto] sm:items-center md:grid-cols-[1fr_auto_auto_auto_auto] md:gap-2 ${
+      isConfirmed 
+        ? 'border-green-500/50 bg-green-950/30' 
+        : 'border-neonPurple/30 bg-zinc-950/70'
+    }`}>
       <p className="sm:col-span-4 md:col-span-1">
         {homeName} vs {awayName}
       </p>
@@ -1544,6 +1574,7 @@ const FixtureEditor = ({
         placeholder="0"
         value={home}
         onChange={(event) => setHome(typedNumber(event.target.value))}
+        disabled={isConfirmed}
       />
       <input
         className="input input-score w-full sm:w-[60px]"
@@ -1553,14 +1584,16 @@ const FixtureEditor = ({
         placeholder="0"
         value={away}
         onChange={(event) => setAway(typedNumber(event.target.value))}
+        disabled={isConfirmed}
       />
       <button
         type="button"
-        className="btn-primary col-span-1 sm:col-span-2 md:col-span-1"
+        className={`btn-primary col-span-1 sm:col-span-2 md:col-span-1 ${isConfirmed ? 'opacity-75' : ''}`}
+        style={isConfirmed ? { backgroundColor: 'rgba(34, 197, 94, 0.2)', borderColor: 'rgba(34, 197, 94, 0.5)' } : undefined}
         disabled={!canConfirm}
-        onClick={() => onConfirm(parsedHome, parsedAway)}
+        onClick={handleConfirm}
       >
-        Confirm
+        {getButtonText()}
       </button>
       <button
         type="button"
@@ -1568,6 +1601,7 @@ const FixtureEditor = ({
         onClick={() => {
           setHome('')
           setAway('')
+          unconfirmFixture(fixture.id)
           onClear()
         }}
       >

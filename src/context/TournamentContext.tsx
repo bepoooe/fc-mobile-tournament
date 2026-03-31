@@ -359,6 +359,29 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
     })
   }, [])
 
+  const confirmFixture = useCallback((fixtureId: string) => {
+    setState((prev) => {
+      if (prev.confirmedFixtures.includes(fixtureId)) {
+        return prev
+      }
+      return {
+        ...prev,
+        confirmedFixtures: [...prev.confirmedFixtures, fixtureId],
+      }
+    })
+  }, [])
+
+  const isFixtureConfirmed = (fixtureId: string) => {
+    return state.confirmedFixtures.includes(fixtureId)
+  }
+
+  const unconfirmFixture = useCallback((fixtureId: string) => {
+    setState((prev) => ({
+      ...prev,
+      confirmedFixtures: prev.confirmedFixtures.filter(id => id !== fixtureId),
+    }))
+  }, [])
+
   const generateKnockout = useCallback(() => {
     setState((prev) => {
       const gdMap = standingsGoalDiffMap(
@@ -606,6 +629,9 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
       addLatePlayerToSuggestedGroup,
       setFixtureScore,
       clearFixtureScore,
+      confirmFixture,
+      isFixtureConfirmed,
+      unconfirmFixture,
       generateKnockout,
       setTieLegScore,
       clearTieLegScore,
@@ -632,6 +658,8 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
       addLatePlayerToSuggestedGroup,
       setFixtureScore,
       clearFixtureScore,
+      confirmFixture,
+      unconfirmFixture,
       generateKnockout,
       setTieLegScore,
       clearTieLegScore,
