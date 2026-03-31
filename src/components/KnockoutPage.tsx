@@ -16,7 +16,9 @@ const LOGOS: Record<string, string> = {
 const logoFor = (n: string) => LOGOS[n.toUpperCase()] ?? '⚽'
 const toTeam = (id: string | null, pm: Record<string, { name: string }>): Team | null => {
   if (!id) return null
-  const name = pm[id]?.name ?? 'TBD'
+  const player = pm[id]
+  if (!player) return null
+  const name = player.name
   return { name, logo: logoFor(name) }
 }
 const toMatch = (tie: KnockoutTie, pm: Record<string, { name: string }>): Match => ({
@@ -445,6 +447,22 @@ export const KnockoutPage = () => {
         <div className="bk-title">KNOCKOUT <span>ARENA</span></div>
         <div className="bk-subtitle">FC Mobile Elimination Bracket</div>
       </div>
+
+      {/* ── Status Badge ── */}
+      {(leftR16.some(m => !m.team1 || !m.team2) || rightR16.some(m => !m.team1 || !m.team2)) && (
+        <div style={{
+          background: 'rgba(251, 146, 60, 0.1)',
+          border: '1px solid rgba(251, 146, 60, 0.3)',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginBottom: '24px',
+          textAlign: 'center',
+          fontSize: '14px',
+          color: 'rgba(251, 146, 60, 0.8)',
+        }}>
+          ⚠ Some groups are still being completed · Bracket will update as results come in
+        </div>
+      )}
 
       {/* ── Bracket ── */}
       <div className="overflow-x-auto w-full" style={{ WebkitOverflowScrolling: 'touch' }}>

@@ -1656,6 +1656,14 @@ const KnockoutManagement = () => {
         </div>
       </div>
 
+      {state.knockout.enabled && state.knockout.rounds.length > 0 && state.knockout.rounds[0]?.ties.some(t => !t.playerAId || !t.playerBId) && (
+        <div className="panel p-3" style={{ background: 'rgba(251, 146, 60, 0.1)', border: '1px solid rgba(251, 146, 60, 0.3)' }}>
+          <p className="text-xs sm:text-sm" style={{ color: 'rgba(251, 146, 60, 0.8)' }}>
+            ⚠ Bracket is incomplete · Some group stage matches are still pending · Regenerate bracket after more groups are completed
+          </p>
+        </div>
+      )}
+
       {state.knockout.rounds.map((round, roundIndex) => (
         <div key={round.id} className="panel space-y-3">
           <h3 className="section-heading text-xs sm:text-sm">{round.name}</h3>

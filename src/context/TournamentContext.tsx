@@ -396,7 +396,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
         prev.settings.tiebreakers,
       )
 
-      if (qualifiedPlayers.length < MIN_PLAYERS) {
+      if (qualifiedPlayers.length < 2) {
         return prev
       }
 
