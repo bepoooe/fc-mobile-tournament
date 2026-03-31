@@ -281,13 +281,16 @@ function TeamRow({ team, isWinner }: { team: Team | null; isWinner: boolean }) {
    Two bare team rows + divider. No outer border / background box.
    The `bk-pair` class controls only width.
    ══════════════════════════════════════════════════════ */
-function MatchPair({ match, size = 'md' }: { match: Match; size?: 'sm' | 'md' | 'lg' }) {
+function MatchPair({ match, size = 'md', label }: { match: Match; size?: 'sm' | 'md' | 'lg'; label?: string }) {
   const won = (t: Team | null) => !!match.winner && !!t && match.winner.name === t.name
   return (
-    <div className={`bk-pair bk-pair--${size}`}>
-      <TeamRow team={match.team1} isWinner={won(match.team1)} />
-      <div className="bk-divider" />
-      <TeamRow team={match.team2} isWinner={won(match.team2)} />
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {label && <div className="bk-label" style={{ marginBottom: '4px' }}>{label}</div>}
+      <div className={`bk-pair bk-pair--${size}`}>
+        <TeamRow team={match.team1} isWinner={won(match.team1)} />
+        <div className="bk-divider" />
+        <TeamRow team={match.team2} isWinner={won(match.team2)} />
+      </div>
     </div>
   )
 }
@@ -311,15 +314,19 @@ function RoundCol({
 
   return (
     <div className={`bk-col bk-col--${size}`} style={{ height: totalH }}>
-      <div className="bk-label">{label}</div>
       {/* Relative container so pairs can be absolutely positioned */}
-      <div style={{ position: 'relative', height: totalH - LABEL_H }}>
+      <div style={{ position: 'relative', height: totalH }}>
+        {/* Label above first match */}
+        <div style={{ position: 'absolute', top: topPad, left: 0, right: 0 }}>
+          <div className="bk-label">{label}</div>
+        </div>
+        
         {matches.map((m, i) => (
           <div
             key={m.id}
             style={{
               position: 'absolute',
-              top: topPad + i * (PAIR_H + gap),
+              top: LABEL_H + topPad + i * (PAIR_H + gap),
               left: 0,
               right: 0,
             }}
@@ -334,21 +341,26 @@ function RoundCol({
 
 /* ─── One half of the bracket ─── */
 function BracketHalf({
-  r0, r1, r2, r3 = [], side,
-}: { r0: Match[]; r1: Match[]; r2: Match[]; r3?: Match[]; side: 'left' | 'right' }) {
+  r0, r1, r2, r3 = [], side, hasR32 = false,
+}: { r0: Match[]; r1: Match[]; r2: Match[]; r3?: Match[]; side: 'left' | 'right'; hasR32?: boolean }) {
   const geo  = useMemo(() => buildSide(r0.length, r1.length, r2.length, r3.length), [r0.length, r1.length, r2.length, r3.length])
   const flip = side === 'right'
 
-  // Determine the round labels based on match count
+  // Determine the round labels based on match count and whether R32 exists
   const getRoundLabel = (matches: Match[], index: number) => {
-    if (index === 0) {
-      if (matches.length === 16) return 'R32'
-      if (matches.length === 8) return 'R16'
-      return 'SF'
+    if (hasR32) {
+      // 4-round bracket: R32 → R16 → QF → SF
+      if (index === 0) return 'Round of 32'
+      if (index === 1) return 'Round of 16'
+      if (index === 2) return 'Quarter Final'
+      if (index === 3) return 'Semi Final'
+    } else {
+      // 3-round bracket: R16 → QF → SF
+      if (index === 0) return 'Round of 16'
+      if (index === 1) return 'Quarter Final'
+      if (index === 2) return 'Semi Final'
     }
-    if (index === 1) return matches.length === 8 ? 'R16' : 'QF'
-    if (index === 2) return 'QF'
-    return 'SF'
+    return 'Final'
   }
 
   const cols: React.ReactNode[] = []
@@ -405,7 +417,7 @@ function BracketHalf({
     cols.push(
       <RoundCol
         key="r3"
-        label="SF"
+        label={getRoundLabel(r3, 3)}
         matches={r3}
         size="sm"
         topPad={geo.a3.topPad}
@@ -584,6 +596,7 @@ export const KnockoutPage = () => {
             r2={leftR32.length > 0 ? leftQF : leftSF}
             r3={leftR32.length > 0 ? leftSF : []}
             side="left"
+            hasR32={leftR32.length > 0}
           />
 
           <FinalConnection meetY={sharedFinalY} match={finalMatch} />
@@ -594,6 +607,7 @@ export const KnockoutPage = () => {
             r2={rightR32.length > 0 ? rightQF : rightSF}
             r3={rightR32.length > 0 ? rightSF : []}
             side="right"
+            hasR32={rightR32.length > 0}
           />
         </div>
       </div>
