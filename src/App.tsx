@@ -651,50 +651,70 @@ const GroupsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {standingsByGroup[group.id]?.map((row, idx) => {
-                  const isQualifier = state.stage !== 'setup' && idx < 2
-                  return (
-                    <tr
-                      key={row.playerId}
-                      style={{
-                        borderTop: '1px solid rgba(168,85,247,0.08)',
-                        background: isQualifier 
-                          ? 'rgba(34, 197, 94, 0.15)' 
-                          : idx % 2 === 0 ? 'transparent' : 'rgba(168,85,247,0.03)',
-                        borderLeft: isQualifier ? '3px solid rgba(34, 197, 94, 0.6)' : 'none',
-                      }}
-                    >
-                      <td 
-                        className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-medium" 
-                        style={{ 
-                          color: isQualifier ? '#86efac' : '#e9d5ff',
-                          maxWidth: '80px',
-                          fontSize: 'clamp(7px, 2vw, 0.875rem)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                        title={playerMap[row.playerId]?.name}
-                      >
-                        {playerMap[row.playerId]?.name}
-                        {isQualifier && ' ✓'}
-                      </td>
-                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.p}</td>
-                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.w}</td>
-                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.d}</td>
-                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.l}</td>
-                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.gf}</td>
-                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.ga}</td>
-                      <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.gd}</td>
-                      <td 
-                        className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-semibold text-center text-xs sm:text-sm" 
-                        style={{ color: isQualifier ? '#86efac' : '#d8b4fe' }}
-                      >
-                        {row.points}
-                      </td>
-                    </tr>
+                {(() => {
+                  const groupFixtures = state.fixtures.filter((fixture) => fixture.groupId === group.id)
+                  const completedGroupFixtures = groupFixtures.filter((fixture) => fixture.completed)
+                  const playersWithPlayedMatch = new Set<string>()
+                  completedGroupFixtures.forEach((fixture) => {
+                    playersWithPlayedMatch.add(fixture.homeId)
+                    playersWithPlayedMatch.add(fixture.awayId)
+                  })
+
+                  const everyonePlayedAtLeastOne = group.playerIds.every((playerId) =>
+                    playersWithPlayedMatch.has(playerId),
                   )
-                })}
+                  const fullHighlightMatchTarget = Math.min(4, groupFixtures.length)
+                  const showFullQualifierHighlight =
+                    everyonePlayedAtLeastOne && completedGroupFixtures.length >= fullHighlightMatchTarget
+
+                  return standingsByGroup[group.id]?.map((row, idx) => {
+                    const isQualifier = state.stage !== 'setup' && idx < 2
+                    const useFullQualifierStyle = isQualifier && showFullQualifierHighlight
+
+                    return (
+                      <tr
+                        key={row.playerId}
+                        style={{
+                          borderTop: '1px solid rgba(168,85,247,0.08)',
+                          background: useFullQualifierStyle
+                            ? 'rgba(34, 197, 94, 0.15)'
+                            : idx % 2 === 0
+                            ? 'transparent'
+                            : 'rgba(168,85,247,0.03)',
+                          borderLeft: isQualifier ? '3px solid rgba(34, 197, 94, 0.6)' : 'none',
+                        }}
+                      >
+                        <td
+                          className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-medium"
+                          style={{
+                            color: useFullQualifierStyle ? '#86efac' : '#e9d5ff',
+                            maxWidth: '80px',
+                            fontSize: 'clamp(7px, 2vw, 0.875rem)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                          title={playerMap[row.playerId]?.name}
+                        >
+                          {playerMap[row.playerId]?.name}
+                        </td>
+                        <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.p}</td>
+                        <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.w}</td>
+                        <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.d}</td>
+                        <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.l}</td>
+                        <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.gf}</td>
+                        <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.ga}</td>
+                        <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.gd}</td>
+                        <td
+                          className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-semibold text-center text-xs sm:text-sm"
+                          style={{ color: useFullQualifierStyle ? '#86efac' : '#d8b4fe' }}
+                        >
+                          {row.points}
+                        </td>
+                      </tr>
+                    )
+                  })
+                })()}
               </tbody>
             </table>
           </div>
