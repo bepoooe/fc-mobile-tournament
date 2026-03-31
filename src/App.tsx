@@ -1677,43 +1677,62 @@ const KnockoutManagement = () => {
       {state.knockout.rounds.map((round, roundIndex) => (
         <div key={round.id} className="panel space-y-3">
           <h3 className="section-heading text-xs sm:text-sm">{round.name}</h3>
-          {round.ties.map((tie) => (
-            <div key={tie.id} className="rounded border border-neonPurple/30 bg-zinc-950/70 p-2 sm:p-3 text-xs">
-              <p className="font-semibold text-zinc-100 text-xs sm:text-sm">
-                {(tie.playerAId && playerMap[tie.playerAId]?.name) || 'TBD'} vs {(tie.playerBId && playerMap[tie.playerBId]?.name) || 'TBD'}
-              </p>
-              <ScoreLegInput
-                label="Leg 1"
-                defaultHome={tie.leg1.homeGoals}
-                defaultAway={tie.leg1.awayGoals}
-                onSave={(home, away) => setTieLegScore(roundIndex, tie.id, 'leg1', home, away)}
-                onClear={() => clearTieLegScore(roundIndex, tie.id, 'leg1')}
-              />
-              <ScoreLegInput
-                label="Leg 2"
-                defaultHome={tie.leg2.homeGoals}
-                defaultAway={tie.leg2.awayGoals}
-                onSave={(home, away) => setTieLegScore(roundIndex, tie.id, 'leg2', home, away)}
-                onClear={() => clearTieLegScore(roundIndex, tie.id, 'leg2')}
-              />
-              <div className="mt-2 rounded border border-neonPink/20 p-2 sm:p-3">
-                <button type="button" className="btn-secondary text-xs sm:text-sm" onClick={() => coinTossTie(roundIndex, tie.id)}>
-                  Coin Toss for Decider Home
-                </button>
-                <p className="mt-1 text-zinc-400 text-xs">
-                  Decider home: {(tie.coinTossWinnerId && playerMap[tie.coinTossWinnerId]?.name) || 'Not decided'}
+          {round.ties.map((tie) => {
+            const playerAName = (tie.playerAId && playerMap[tie.playerAId]?.name) || 'TBD'
+            const playerBName = (tie.playerBId && playerMap[tie.playerBId]?.name) || 'TBD'
+            // Leg 1: Player A is home, Player B is away
+            // Leg 2: Player B is home, Player A is away (away goals rule)
+            // Decider: coin toss winner is home
+            const deciderHomeName = (tie.coinTossWinnerId && playerMap[tie.coinTossWinnerId]?.name) || null
+            const deciderAwayName = deciderHomeName
+              ? deciderHomeName === playerAName ? playerBName : playerAName
+              : null
+            return (
+              <div key={tie.id} className="rounded border border-neonPurple/30 bg-zinc-950/70 p-2 sm:p-3 text-xs space-y-2">
+                <p className="font-semibold text-zinc-100 text-xs sm:text-sm">
+                  {playerAName} <span className="text-zinc-400">vs</span> {playerBName}
                 </p>
                 <ScoreLegInput
-                  label="Deciding Match"
-                  defaultHome={tie.decider.homeGoals}
-                  defaultAway={tie.decider.awayGoals}
-                  onSave={(home, away) => setTieLegScore(roundIndex, tie.id, 'decider', home, away)}
-                  onClear={() => clearTieLegScore(roundIndex, tie.id, 'decider')}
+                  label="Leg 1"
+                  homePlayerName={playerAName}
+                  awayPlayerName={playerBName}
+                  defaultHome={tie.leg1.homeGoals}
+                  defaultAway={tie.leg1.awayGoals}
+                  onSave={(home, away) => setTieLegScore(roundIndex, tie.id, 'leg1', home, away)}
+                  onClear={() => clearTieLegScore(roundIndex, tie.id, 'leg1')}
                 />
+                <ScoreLegInput
+                  label="Leg 2"
+                  homePlayerName={playerBName}
+                  awayPlayerName={playerAName}
+                  defaultHome={tie.leg2.homeGoals}
+                  defaultAway={tie.leg2.awayGoals}
+                  onSave={(home, away) => setTieLegScore(roundIndex, tie.id, 'leg2', home, away)}
+                  onClear={() => clearTieLegScore(roundIndex, tie.id, 'leg2')}
+                />
+                <div className="rounded border border-neonPink/20 p-2 sm:p-3 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button type="button" className="btn-secondary text-xs sm:text-sm" onClick={() => coinTossTie(roundIndex, tie.id)}>
+                      Coin Toss for Decider Home
+                    </button>
+                    <p className="text-zinc-400 text-xs">
+                      Decider home: <span className="text-zinc-200 font-medium">{deciderHomeName || 'Not decided'}</span>
+                    </p>
+                  </div>
+                  <ScoreLegInput
+                    label="Deciding Match"
+                    homePlayerName={deciderHomeName || 'Home (TBD — run coin toss first)'}
+                    awayPlayerName={deciderAwayName || 'Away (TBD)'}
+                    defaultHome={tie.decider.homeGoals}
+                    defaultAway={tie.decider.awayGoals}
+                    onSave={(home, away) => setTieLegScore(roundIndex, tie.id, 'decider', home, away)}
+                    onClear={() => clearTieLegScore(roundIndex, tie.id, 'decider')}
+                  />
+                </div>
+                <p className="text-neonPink text-xs sm:text-sm">Winner: {(tie.winnerId && playerMap[tie.winnerId]?.name) || 'Pending'}</p>
               </div>
-              <p className="mt-2 text-neonPink text-xs sm:text-sm">Winner: {(tie.winnerId && playerMap[tie.winnerId]?.name) || 'Pending'}</p>
-            </div>
-          ))}
+            )
+          })}
         </div>
       ))}
 
@@ -1773,12 +1792,16 @@ const KnockoutManagement = () => {
 
 const ScoreLegInput = ({
   label,
+  homePlayerName,
+  awayPlayerName,
   defaultHome,
   defaultAway,
   onSave,
   onClear,
 }: {
   label: string
+  homePlayerName: string
+  awayPlayerName: string
   defaultHome: number | null
   defaultAway: number | null
   onSave: (home: number, away: number) => void
@@ -1786,52 +1809,119 @@ const ScoreLegInput = ({
 }) => {
   const [home, setHome] = useState<string>(defaultHome?.toString() ?? '')
   const [away, setAway] = useState<string>(defaultAway?.toString() ?? '')
+  const [isSaved, setIsSaved] = useState(defaultHome !== null && defaultAway !== null)
+  const [isUpdating, setIsUpdating] = useState(false)
 
   useEffect(() => {
     setHome(defaultHome?.toString() ?? '')
     setAway(defaultAway?.toString() ?? '')
+    setIsSaved(defaultHome !== null && defaultAway !== null)
+    setIsUpdating(false)
   }, [defaultHome, defaultAway])
 
   const typedNumber = (value: string) => value.replace(/[^0-9]/g, '')
   const parsedHome = home === '' ? NaN : Number(home)
   const parsedAway = away === '' ? NaN : Number(away)
-  const canSave = Number.isInteger(parsedHome) && Number.isInteger(parsedAway)
+  const canSave = Number.isInteger(parsedHome) && Number.isInteger(parsedAway) && !isSaved
+
+  const handleSave = () => {
+    setIsUpdating(true)
+    onSave(parsedHome, parsedAway)
+    setTimeout(() => {
+      setIsSaved(true)
+      setIsUpdating(false)
+    }, 300)
+  }
+
+  const getSaveButtonText = () => {
+    if (isSaved) return 'Saved ✓'
+    if (isUpdating) return 'Saving...'
+    return 'Save'
+  }
 
   return (
-    <div className="mt-2 grid gap-2 sm:grid-cols-[80px_60px_60px_auto_auto] sm:items-center md:grid-cols-[100px_80px_80px_auto_auto]">
-      <span className="text-xs sm:text-sm">{label}</span>
-      <input
-        className="input input-score"
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        placeholder="0"
-        value={home}
-        onChange={(event) => setHome(typedNumber(event.target.value))}
-      />
-      <input
-        className="input input-score"
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        placeholder="0"
-        value={away}
-        onChange={(event) => setAway(typedNumber(event.target.value))}
-      />
-      <button className="btn-primary text-xs" type="button" disabled={!canSave} onClick={() => onSave(parsedHome, parsedAway)}>
-        Save
-      </button>
-      <button
-        className="btn-secondary text-xs"
-        type="button"
-        onClick={() => {
-          setHome('')
-          setAway('')
-          onClear()
-        }}
-      >
-        Reset
-      </button>
+    <div
+      className="rounded border p-2 text-xs"
+      style={{
+        borderColor: isSaved ? 'rgba(34,197,94,0.45)' : 'rgba(168,85,247,0.2)',
+        background: isSaved ? 'rgba(34,197,94,0.07)' : 'rgba(9,9,15,0.4)',
+      }}
+    >
+      {/* Label row */}
+      <p className="text-[10px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'rgba(168,85,247,0.7)' }}>
+        {label}
+      </p>
+      {/* Score entry row */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Home player */}
+        <div className="flex flex-col items-center gap-1 min-w-[60px]">
+          <span
+            className="text-[10px] text-center leading-tight max-w-[80px] truncate"
+            style={{ color: isSaved ? 'rgba(134,239,172,0.9)' : 'rgba(216,180,254,0.8)' }}
+            title={homePlayerName}
+          >
+            {homePlayerName}
+          </span>
+          <input
+            className="input input-score w-[52px] text-center"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="0"
+            value={home}
+            disabled={isSaved}
+            onChange={(event) => setHome(typedNumber(event.target.value))}
+            style={isSaved ? { opacity: 0.6 } : undefined}
+          />
+        </div>
+        {/* Divider */}
+        <span className="text-zinc-500 font-bold text-sm">—</span>
+        {/* Away player */}
+        <div className="flex flex-col items-center gap-1 min-w-[60px]">
+          <span
+            className="text-[10px] text-center leading-tight max-w-[80px] truncate"
+            style={{ color: isSaved ? 'rgba(134,239,172,0.9)' : 'rgba(216,180,254,0.8)' }}
+            title={awayPlayerName}
+          >
+            {awayPlayerName}
+          </span>
+          <input
+            className="input input-score w-[52px] text-center"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="0"
+            value={away}
+            disabled={isSaved}
+            onChange={(event) => setAway(typedNumber(event.target.value))}
+            style={isSaved ? { opacity: 0.6 } : undefined}
+          />
+        </div>
+        {/* Action buttons */}
+        <div className="flex gap-1.5 ml-auto">
+          <button
+            className={`btn-primary text-xs ${isSaved ? 'opacity-80' : ''}`}
+            type="button"
+            disabled={!canSave}
+            onClick={handleSave}
+            style={isSaved ? { backgroundColor: 'rgba(34,197,94,0.2)', borderColor: 'rgba(34,197,94,0.5)', color: '#86efac' } : undefined}
+          >
+            {getSaveButtonText()}
+          </button>
+          <button
+            className="btn-secondary text-xs"
+            type="button"
+            onClick={() => {
+              setHome('')
+              setAway('')
+              setIsSaved(false)
+              onClear()
+            }}
+          >
+            Reset
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
