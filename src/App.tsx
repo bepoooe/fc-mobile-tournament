@@ -654,18 +654,8 @@ const GroupsPage = () => {
                 {(() => {
                   const groupFixtures = state.fixtures.filter((fixture) => fixture.groupId === group.id)
                   const completedGroupFixtures = groupFixtures.filter((fixture) => fixture.completed)
-                  const playersWithPlayedMatch = new Set<string>()
-                  completedGroupFixtures.forEach((fixture) => {
-                    playersWithPlayedMatch.add(fixture.homeId)
-                    playersWithPlayedMatch.add(fixture.awayId)
-                  })
-
-                  const everyonePlayedAtLeastOne = group.playerIds.every((playerId) =>
-                    playersWithPlayedMatch.has(playerId),
-                  )
-                  const fullHighlightMatchTarget = Math.min(4, groupFixtures.length)
                   const showFullQualifierHighlight =
-                    everyonePlayedAtLeastOne && completedGroupFixtures.length >= fullHighlightMatchTarget
+                    groupFixtures.length > 0 && completedGroupFixtures.length === groupFixtures.length
 
                   return standingsByGroup[group.id]?.map((row, idx) => {
                     const isQualifier = state.stage !== 'setup' && idx < 2
