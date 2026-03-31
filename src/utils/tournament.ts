@@ -387,8 +387,12 @@ const evaluateTwoLegWinner = (
   const { playerAId, playerBId, leg1, leg2, decider } = tie
 
   if (!playerAId && !playerBId) return null
-  if (playerAId && !playerBId) return playerAId
-  if (playerBId && !playerAId) return playerBId
+  // Structural byes only exist in round 0 (bracket padding with empty strings).
+  // In rounds 1+, a null opponent means the source match is pending — not a bye.
+  if (tie.roundIndex === 0) {
+    if (playerAId && !playerBId) return playerAId
+    if (playerBId && !playerAId) return playerBId
+  }
   if (!playerAId || !playerBId) return null
 
   if (!leg1.completed || !leg2.completed) return null
@@ -447,13 +451,34 @@ export const propagateKnockout = (knockout: KnockoutState): KnockoutState => {
     const nextRound = rounds[r + 1]
     if (nextRound) {
       nextRound.ties = nextRound.ties.map((tie, slot) => {
-        const left = rounds[r].ties[slot * 2]?.winnerId ?? null
-        const right = rounds[r].ties[slot * 2 + 1]?.winnerId ?? null
+        const leftSourceTie  = rounds[r].ties[slot * 2]
+        const rightSourceTie = rounds[r].ties[slot * 2 + 1]
+
+        const left  = leftSourceTie?.winnerId  ?? null
+        const right = rightSourceTie?.winnerId ?? null
+
+        // A slot is a "true bye" only when the source bracket position has NO players
+        // assigned at all (neither A nor B). If a tie has players but the match hasn't
+        // been played yet, that is a pending match — NOT a bye.
+        const rightIsTrueBye =
+          !rightSourceTie ||
+          (!rightSourceTie.playerAId && !rightSourceTie.playerBId)
+        const leftIsTrueBye =
+          !leftSourceTie ||
+          (!leftSourceTie.playerAId && !leftSourceTie.playerBId)
+
+        // Only auto-advance a lone player when their opponent slot is genuinely empty.
+        // Never cascade through pending matches that simply haven't been played yet.
+        const autoWinner: string | null =
+          left && !right && rightIsTrueBye ? left
+          : right && !left && leftIsTrueBye ? right
+          : null
+
         return {
           ...tie,
           playerAId: left,
           playerBId: right,
-          winnerId: left && !right ? left : right && !left ? right : tie.winnerId,
+          winnerId: autoWinner ?? (left && right ? tie.winnerId : null),
         }
       })
     }
