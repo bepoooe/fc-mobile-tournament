@@ -45,13 +45,11 @@ const splitHalf = (ties: KnockoutTie[]) => {
    between its two team rows, i.e. at:
      topPad + LABEL_H + ROW_H + pairIndex * (PAIR_H + gap)
    ══════════════════════════════════════════════════════ */
-const ROW_H   = 37    // px — single team slot height
-const PAIR_H  = ROW_H * 2 + 1  // 75px — two rows + 1px divider
-const GAP     = 16   // px — gap between R16 pairs
-const LABEL_H = 28   // px — round label height
-const CONN_W  = 28   // px — connector SVG width
-const FINAL_CARD_BORDER = 1 // px per side
-const FINAL_MID_Y = (PAIR_H + FINAL_CARD_BORDER * 2) / 2 // visual midpoint of bordered final card
+const ROW_H   = 32    // px — single team slot height
+const PAIR_H  = ROW_H * 2 + 1  // 65px — two rows + 1px divider
+const GAP     = 12   // px — gap between R16 pairs
+const LABEL_H = 20   // px — round label height
+const CONN_W  = 20   // px — connector SVG width
 
 /** Y positions of the connector point (divider) for each pair in a round column. */
 const pairCenters = (n: number, topPad: number, gap: number): number[] =>
@@ -80,12 +78,13 @@ const alignTo = (targets: number[], n: number) => {
   return { topPad, gap, cs: pairCenters(n, topPad, gap) }
 }
 
-/** Build geometry for all three rounds on one side. */
-const buildSide = (n0: number, n1: number, n2: number) => {
+/** Build geometry for all rounds on one side (can be 3 or 4 rounds). */
+const buildSide = (n0: number, n1: number, n2: number, n3: number = 0) => {
   const cs0 = pairCenters(n0, 0, GAP)
   const a1  = alignTo(pairMids(cs0), n1)
   const a2  = alignTo(pairMids(a1.cs), n2)
-  return { cs0, a1, a2 }
+  const a3  = n3 > 0 ? alignTo(pairMids(a2.cs), n3) : { topPad: 0, gap: GAP, cs: [] as number[] }
+  return { cs0, a1, a2, a3 }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -139,21 +138,115 @@ function BracketConnector({ srcs, flip }: { srcs: number[]; flip?: boolean }) {
   )
 }
 
-/* ─── Final bridge: single horizontal line from SF to the Final card ─── */
-function FinalBridge({ srcs, flip }: { srcs: number[]; flip?: boolean }) {
-  const y = srcs[0] ?? LABEL_H + ROW_H
-  const h = Math.max(60, Math.ceil(y + ROW_H + 10))
-  const w = 32
-
+/* ─── Final Box - Match display with Final label ─── */
+function FinalBox({ match }: { match: Match | null }) {
+  const boxWidth = 160
+  
   return (
-    <div style={{ width: w, flexShrink: 0, alignSelf: 'flex-start' }} aria-hidden>
-      <svg width={w} height={h} overflow="visible">
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* Trophy Emoji */}
+      <div style={{ fontSize: '48px', marginBottom: '4px' }}>🏆</div>
+      
+      {/* Final Label */}
+      <div style={{ marginBottom: '8px', fontSize: '16px', fontWeight: 700, color: '#d8b4fe', letterSpacing: '2px' }}>
+        FINAL
+      </div>
+      
+      {/* Match display box */}
+      <div
+        style={{
+          width: `${boxWidth}px`,
+          position: 'relative',
+          background: 'linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(88,28,135,0.1) 100%)',
+          border: '2px solid rgba(168,85,247,0.4)',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          boxShadow: '0 0 16px rgba(168,85,247,0.2)',
+        }}
+      >
+        {match ? (
+          <>
+            <TeamRow team={match.team1} isWinner={!!match.winner && !!match.team1 && match.winner.name === match.team1.name} />
+            <div className="bk-divider" />
+            <TeamRow team={match.team2} isWinner={!!match.winner && !!match.team2 && match.winner.name === match.team2.name} />
+          </>
+        ) : (
+          <>
+            <div className="bk-row bk-row--empty">
+              <span className="bk-logo bk-logo--ghost" aria-hidden>•</span>
+              <span className="bk-name bk-name--tbd">TBD</span>
+              <span className="bk-check bk-check--ghost" aria-hidden>✓</span>
+            </div>
+            <div className="bk-divider" />
+            <div className="bk-row bk-row--empty">
+              <span className="bk-logo bk-logo--ghost" aria-hidden>•</span>
+              <span className="bk-name bk-name--tbd">TBD</span>
+              <span className="bk-check bk-check--ghost" aria-hidden>✓</span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Unified final connection: left bridge + center arrow + right bridge all meeting at one point ─── */
+function FinalConnection({ meetY, match }: { meetY: number; match: Match | null }) {
+  const leftW = 32
+  const centerW = 20
+  const rightW = 32
+  const totalW = leftW + centerW + rightW  // 84
+  const arrowH = 50
+  const finalBoxHeight = 180  // Trophy (52px) + label (24px) + match box (96px) + margins = 180px
+  const h = Math.max(arrowH + finalBoxHeight + 20, Math.ceil(meetY + 20))
+  
+  const centerX = leftW + centerW / 2
+  const arrowTipY = meetY - arrowH
+  
+  return (
+    <div style={{ width: totalW, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', height: h }} aria-hidden={false}>
+      <svg width={totalW} height={h} style={{ position: 'absolute', top: 0, left: 0 }} overflow="visible">
+        {/* Left horizontal line extending to center */}
         <line
-          x1={flip ? w : 0} y1={y}
-          x2={flip ? 0 : w} y2={y}
+          x1={0} y1={meetY}
+          x2={centerX} y2={meetY}
           stroke={LINE} strokeWidth="1.5" strokeLinecap="square"
         />
+        
+        {/* Right horizontal line extending from center */}
+        <line
+          x1={centerX} y1={meetY}
+          x2={totalW} y2={meetY}
+          stroke={LINE} strokeWidth="1.5" strokeLinecap="square"
+        />
+        
+        {/* Vertical line pointing upward from meet point */}
+        <line
+          x1={centerX} y1={meetY}
+          x2={centerX} y2={arrowTipY + 4}
+          stroke={LINE} strokeWidth="2" strokeLinecap="round"
+        />
+        
+        {/* Arrowhead at top */}
+        <polygon
+          points={`${centerX},${arrowTipY} ${centerX - 4},${arrowTipY + 8} ${centerX + 4},${arrowTipY + 8}`}
+          fill={LINE}
+        />
       </svg>
+      
+      {/* Final Box: bottom edge touches arrow tip */}
+      <div
+        style={{
+          position: 'absolute',
+          top: arrowTipY - finalBoxHeight + 5,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+        }}
+        aria-hidden={false}
+      >
+        <FinalBox match={match} />
+      </div>
     </div>
   )
 }
@@ -241,18 +334,22 @@ function RoundCol({
 
 /* ─── One half of the bracket ─── */
 function BracketHalf({
-  r0, r1, r2, side, finalY,
-}: { r0: Match[]; r1: Match[]; r2: Match[]; side: 'left' | 'right'; finalY?: number }) {
-  const geo  = useMemo(() => buildSide(r0.length, r1.length, r2.length), [r0.length, r1.length, r2.length])
+  r0, r1, r2, r3 = [], side,
+}: { r0: Match[]; r1: Match[]; r2: Match[]; r3?: Match[]; side: 'left' | 'right' }) {
+  const geo  = useMemo(() => buildSide(r0.length, r1.length, r2.length, r3.length), [r0.length, r1.length, r2.length, r3.length])
   const flip = side === 'right'
 
-  // Y that the FinalBridge line should be drawn at
-  const bridgeSrc = r2.length > 0
-    ? pairMids(geo.a2.cs)
-    : r1.length > 0
-    ? pairMids(geo.a1.cs)
-    : pairMids(geo.cs0)
-  const bridgeY = finalY ?? bridgeSrc[0]
+  // Determine the round labels based on match count
+  const getRoundLabel = (matches: Match[], index: number) => {
+    if (index === 0) {
+      if (matches.length === 16) return 'R32'
+      if (matches.length === 8) return 'R16'
+      return 'SF'
+    }
+    if (index === 1) return matches.length === 8 ? 'R16' : 'QF'
+    if (index === 2) return 'QF'
+    return 'SF'
+  }
 
   const cols: React.ReactNode[] = []
 
@@ -260,14 +357,14 @@ function BracketHalf({
     cols.push(
       <RoundCol
         key="r0"
-        label={r0.length > 2 ? 'R16' : 'SF'}
+        label={getRoundLabel(r0, 0)}
         matches={r0}
         size="md"
         topPad={0}
         gap={GAP}
       />
     )
-    if (r1.length > 0 || r2.length > 0) {
+    if (r1.length > 0 || r2.length > 0 || r3.length > 0) {
       cols.push(<BracketConnector key="c0" srcs={geo.cs0} flip={flip} />)
     }
   }
@@ -276,14 +373,14 @@ function BracketHalf({
     cols.push(
       <RoundCol
         key="r1"
-        label="QF"
+        label={getRoundLabel(r1, 1)}
         matches={r1}
         size="sm"
         topPad={geo.a1.topPad}
         gap={geo.a1.gap}
       />
     )
-    if (r2.length > 0) {
+    if (r2.length > 0 || r3.length > 0) {
       cols.push(<BracketConnector key="c1" srcs={geo.a1.cs} flip={flip} />)
     }
   }
@@ -292,16 +389,30 @@ function BracketHalf({
     cols.push(
       <RoundCol
         key="r2"
-        label="SF"
+        label={getRoundLabel(r2, 2)}
         matches={r2}
         size="sm"
         topPad={geo.a2.topPad}
         gap={geo.a2.gap}
       />
     )
+    if (r3.length > 0) {
+      cols.push(<BracketConnector key="c2" srcs={geo.a2.cs} flip={flip} />)
+    }
   }
 
-  cols.push(<FinalBridge key="arm" srcs={[bridgeY]} flip={flip} />)
+  if (r3.length > 0) {
+    cols.push(
+      <RoundCol
+        key="r3"
+        label="SF"
+        matches={r3}
+        size="sm"
+        topPad={geo.a3.topPad}
+        gap={geo.a3.gap}
+      />
+    )
+  }
 
   return (
     <div className="bk-half">
@@ -318,39 +429,32 @@ export const KnockoutPage = () => {
   const tournamentName = state.settings.tournamentName?.trim() || 'TechStorm Tournament'
 
   const roundMap = useMemo(() => {
+    const r32 = state.knockout.rounds.find(r => /round of 32|r32/i.test(r.name))
     const r16 = state.knockout.rounds.find(r => /round of 16|r16/i.test(r.name))
     const qf  = state.knockout.rounds.find(r => /quarter|qf/i.test(r.name))
     const sf  = state.knockout.rounds.find(r => /semi|sf/i.test(r.name))
     return {
+      r32: r32 ?? null,
       r16: r16 ?? state.knockout.rounds[0],
       qf:  qf  ?? state.knockout.rounds[1],
       sf:  sf  ?? state.knockout.rounds[2],
     }
   }, [state.knockout.rounds])
 
-  const mk = (round: typeof roundMap.r16, half: 'left' | 'right'): Match[] => {
+  const mk = (round: typeof roundMap.r32 | typeof roundMap.r16 | typeof roundMap.qf | typeof roundMap.sf, half: 'left' | 'right'): Match[] => {
     if (!round) return []
     const { left, right } = splitHalf(round.ties)
     return (half === 'left' ? left : right).map(t => toMatch(t, playerMap))
   }
 
+  const leftR32  = useMemo(() => mk(roundMap.r32, 'left'),  [roundMap.r32, playerMap])
+  const rightR32 = useMemo(() => mk(roundMap.r32, 'right'), [roundMap.r32, playerMap])
   const leftR16  = useMemo(() => mk(roundMap.r16, 'left'),  [roundMap.r16, playerMap])
   const rightR16 = useMemo(() => mk(roundMap.r16, 'right'), [roundMap.r16, playerMap])
   const leftQF   = useMemo(() => mk(roundMap.qf,  'left'),  [roundMap.qf,  playerMap])
   const rightQF  = useMemo(() => mk(roundMap.qf,  'right'), [roundMap.qf,  playerMap])
   const leftSF   = useMemo(() => mk(roundMap.sf,  'left'),  [roundMap.sf,  playerMap])
   const rightSF  = useMemo(() => mk(roundMap.sf,  'right'), [roundMap.sf,  playerMap])
-
-  const finalMatch = useMemo<Match>(() => {
-    const fs = state.knockout.finalSeries
-    if (!fs) return { id: 'final', team1: null, team2: null, winner: null }
-    return {
-      id: 'final',
-      team1: toTeam(fs.player1Id, playerMap),
-      team2: toTeam(fs.player2Id, playerMap),
-      winner: toTeam(fs.championId, playerMap),
-    }
-  }, [state.knockout.finalSeries, playerMap])
 
   const champion = useMemo(() => toTeam(state.championId, playerMap), [state.championId, playerMap])
 
@@ -405,28 +509,40 @@ export const KnockoutPage = () => {
     )
   }
 
-  const won = (t: Team | null) =>
-    !!finalMatch.winner && !!t && finalMatch.winner.name === t.name
-
   const leftGeo = useMemo(
-    () => buildSide(leftR16.length, leftQF.length, leftSF.length),
-    [leftR16.length, leftQF.length, leftSF.length]
+    () => buildSide(leftR32.length || leftR16.length, leftR32.length ? leftR16.length : leftQF.length, leftR32.length ? leftQF.length : leftSF.length, leftR32.length ? leftSF.length : 0),
+    [leftR32.length, leftR16.length, leftQF.length, leftSF.length]
   )
   const rightGeo = useMemo(
-    () => buildSide(rightR16.length, rightQF.length, rightSF.length),
-    [rightR16.length, rightQF.length, rightSF.length]
+    () => buildSide(rightR32.length || rightR16.length, rightR32.length ? rightR16.length : rightQF.length, rightR32.length ? rightQF.length : rightSF.length, rightR32.length ? rightSF.length : 0),
+    [rightR32.length, rightR16.length, rightQF.length, rightSF.length]
   )
 
   const leftBridgeSrcY = useMemo(() => {
-    if (leftSF.length > 0) return pairMids(leftGeo.a2.cs)[0]
-    if (leftQF.length > 0) return pairMids(leftGeo.a1.cs)[0]
-    return pairMids(leftGeo.cs0)[0]
-  }, [leftGeo, leftSF.length, leftQF.length])
+    if (leftR32.length > 0) {
+      if (leftSF.length > 0) return pairMids(leftGeo.a3.cs)[0]
+      if (leftQF.length > 0) return pairMids(leftGeo.a2.cs)[0]
+      if (leftR16.length > 0) return pairMids(leftGeo.a1.cs)[0]
+      return pairMids(leftGeo.cs0)[0]
+    } else {
+      if (leftSF.length > 0) return pairMids(leftGeo.a2.cs)[0]
+      if (leftQF.length > 0) return pairMids(leftGeo.a1.cs)[0]
+      return pairMids(leftGeo.cs0)[0]
+    }
+  }, [leftGeo, leftR32.length, leftR16.length, leftQF.length, leftSF.length])
+  
   const rightBridgeSrcY = useMemo(() => {
-    if (rightSF.length > 0) return pairMids(rightGeo.a2.cs)[0]
-    if (rightQF.length > 0) return pairMids(rightGeo.a1.cs)[0]
-    return pairMids(rightGeo.cs0)[0]
-  }, [rightGeo, rightSF.length, rightQF.length])
+    if (rightR32.length > 0) {
+      if (rightSF.length > 0) return pairMids(rightGeo.a3.cs)[0]
+      if (rightQF.length > 0) return pairMids(rightGeo.a2.cs)[0]
+      if (rightR16.length > 0) return pairMids(rightGeo.a1.cs)[0]
+      return pairMids(rightGeo.cs0)[0]
+    } else {
+      if (rightSF.length > 0) return pairMids(rightGeo.a2.cs)[0]
+      if (rightQF.length > 0) return pairMids(rightGeo.a1.cs)[0]
+      return pairMids(rightGeo.cs0)[0]
+    }
+  }, [rightGeo, rightR32.length, rightR16.length, rightQF.length, rightSF.length])
 
   const sharedFinalY = useMemo(() => {
     const ys = [leftBridgeSrcY, rightBridgeSrcY].filter((y): y is number => typeof y === 'number')
@@ -434,9 +550,19 @@ export const KnockoutPage = () => {
     return ys.reduce((a, b) => a + b, 0) / ys.length
   }, [leftBridgeSrcY, rightBridgeSrcY])
 
-  // Position .bk-center so the connector lands on the true middle of the winner box.
-  // The center block is anchored to the final card (header is absolutely positioned above it).
-  const centerCardTop = Math.max(0, sharedFinalY - FINAL_MID_Y)
+  // Create final match from the two semifinal matches
+  const finalMatch = useMemo(() => {
+    const leftWinner = leftSF[0]?.winner || null
+    const rightWinner = rightSF[0]?.winner || null
+    const finalWinner = champion
+    
+    return {
+      id: 'final',
+      team1: leftWinner,
+      team2: rightWinner,
+      winner: finalWinner,
+    }
+  }, [leftSF, rightSF, champion])
 
   return (
     <section className="bk-page">
@@ -448,51 +574,28 @@ export const KnockoutPage = () => {
         <div className="bk-subtitle">FC Mobile Elimination Bracket</div>
       </div>
 
-      {/* ── Status Badge ── */}
-      {(leftR16.some(m => !m.team1 || !m.team2) || rightR16.some(m => !m.team1 || !m.team2)) && (
-        <div style={{
-          background: 'rgba(251, 146, 60, 0.1)',
-          border: '1px solid rgba(251, 146, 60, 0.3)',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          marginBottom: '24px',
-          textAlign: 'center',
-          fontSize: '14px',
-          color: 'rgba(251, 146, 60, 0.8)',
-        }}>
-          ⚠ Some groups are still being completed · Bracket will update as results come in
-        </div>
-      )}
-
       {/* ── Bracket ── */}
-      <div className="overflow-x-auto w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="bk-bracket" style={{ minWidth: 'min-content' }}>
-          <BracketHalf r0={leftR16}  r1={leftQF}  r2={leftSF}  side="left" finalY={sharedFinalY} />
+      <div className="w-full" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'visible' }}>
+        <div className="bk-bracket" style={{ minWidth: 'auto', position: 'relative' }}>
+          <BracketHalf 
+            r0={leftR32.length > 0 ? leftR32 : leftR16}  
+            r1={leftR32.length > 0 ? leftR16 : leftQF}  
+            r2={leftR32.length > 0 ? leftQF : leftSF}
+            r3={leftR32.length > 0 ? leftSF : []}
+            side="left"
+          />
 
-          {/* Center: final card is the anchor; trophy/label are absolutely placed above */}
-          <div className="bk-center" style={{ marginTop: centerCardTop }}>
-            <div className="bk-center-head" aria-hidden>
-              <div className="bk-trophy">🏆</div>
-              <div className="bk-label" style={{ color: '#d8b4fe', letterSpacing: '5px' }}>FINAL</div>
-            </div>
-            <div className="bk-card bk-card--final">
-              <TeamRow team={finalMatch.team1} isWinner={won(finalMatch.team1)} />
-              <div className="bk-divider" />
-              <TeamRow team={finalMatch.team2} isWinner={won(finalMatch.team2)} />
-            </div>
-          </div>
+          <FinalConnection meetY={sharedFinalY} match={finalMatch} />
 
-          <BracketHalf r0={rightR16} r1={rightQF} r2={rightSF} side="right" finalY={sharedFinalY} />
+          <BracketHalf 
+            r0={rightR32.length > 0 ? rightR32 : rightR16} 
+            r1={rightR32.length > 0 ? rightR16 : rightQF} 
+            r2={rightR32.length > 0 ? rightQF : rightSF}
+            r3={rightR32.length > 0 ? rightSF : []}
+            side="right"
+          />
         </div>
       </div>
-
-      {/* ── Champion ── */}
-      {champion && (
-        <div className="bk-champion">
-          <div className="bk-champion__label">TechStorm Champion</div>
-          <div className="bk-champion__name">{champion.name}</div>
-        </div>
-      )}
 
       <div className="bk-note">Home and Away Legs · Decider if required</div>
     </section>

@@ -267,7 +267,7 @@ select:focus-visible {
 .bk-page {
   position: relative;
   min-height: calc(100vh - 180px);
-  padding: 36px 12px 48px;
+  padding: 20px 4px 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -290,29 +290,29 @@ select:focus-visible {
 
 .bk-header {
   text-align: center;
-  margin-bottom: 36px;
+  margin-bottom: 16px;
 }
 
 .bk-stars {
-  font-size: 13px;
-  letter-spacing: 10px;
+  font-size: 11px;
+  letter-spacing: 8px;
   color: rgba(168, 85, 247, 0.45);
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .bk-eyebrow {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 8px;
+  letter-spacing: 6px;
   color: rgba(216, 180, 254, 0.65);
   text-transform: uppercase;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .bk-title {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
-  font-size: clamp(24px, 4.5vw, 44px);
+  font-size: clamp(20px, 3.5vw, 36px);
   font-weight: 800;
   color: #f0edf5;
   text-shadow: 0 0 28px rgba(168, 85, 247, 0.18);
@@ -328,11 +328,11 @@ select:focus-visible {
 
 .bk-subtitle {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
-  font-size: 9px;
-  letter-spacing: 5px;
+  font-size: 8px;
+  letter-spacing: 4px;
   color: var(--text-muted);
   text-transform: uppercase;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 /* ── Main bracket row ── */
@@ -363,19 +363,19 @@ select:focus-visible {
   flex: 0 0 auto;
 }
 
-.bk-col--md { width: 168px; }
-.bk-col--sm { width: 152px; }
-.bk-col--lg { width: 180px; }
+.bk-col--md { width: 165px; }
+.bk-col--sm { width: 150px; }
+.bk-col--lg { width: 175px; }
 
 /* ── Round label ── */
 .bk-label {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
-  font-size: 8px;
-  letter-spacing: 3px;
+  font-size: 7px;
+  letter-spacing: 2px;
   color: var(--text-muted);
   text-transform: uppercase;
-  height: 28px;
-  line-height: 28px;
+  height: 20px;
+  line-height: 20px;
   text-align: center;
   white-space: nowrap;
 }
@@ -406,15 +406,15 @@ select:focus-visible {
   transition: border-color 0.2s;
 }
 
-.bk-card--md { width: 148px; }
-.bk-card--sm { width: 132px; }
-.bk-card--lg { width: 156px; }
+.bk-card--md { width: 145px; }
+.bk-card--sm { width: 130px; }
+.bk-card--lg { width: 155px; }
 
 .bk-card--final {
   background: linear-gradient(145deg, rgba(40, 22, 62, 0.97) 0%, rgba(18, 10, 32, 0.99) 100%);
   border: 1px solid rgba(168, 85, 247, 0.32);
   border-radius: 9px;
-  width: 176px;
+  width: 165px;
   box-shadow: 0 0 22px rgba(168, 85, 247, 0.1), 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
@@ -428,10 +428,10 @@ select:focus-visible {
 .bk-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: 37px;
-  min-height: 37px;
-  padding: 0 9px;
+  gap: 4px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 6px;
   transition: background 0.18s;
   overflow: hidden;
 }
@@ -462,7 +462,7 @@ select:focus-visible {
 
 .bk-name {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 10.5px;
+  font-size: 9px;
   font-weight: 700;
   color: rgba(240, 237, 245, 0.88);
   letter-spacing: 0.3px;
@@ -470,10 +470,11 @@ select:focus-visible {
   flex: 1;
   min-width: 0;
   display: block;
-  line-height: 1.1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
 }
 
 .bk-name--tbd {
@@ -535,7 +536,7 @@ select:focus-visible {
 
 /* ── Champion banner ── */
 .bk-champion {
-  margin-top: 22px;
+  margin-top: 14px;
   text-align: center;
   animation: champion-in 0.6s ease-out;
 }
@@ -565,14 +566,14 @@ select:focus-visible {
 
 /* ── Footer note ── */
 .bk-note {
-  font-size: 9px;
+  font-size: 8px;
   color: var(--text-muted);
   letter-spacing: 2px;
   text-transform: uppercase;
-  margin-top: 22px;
+  margin-top: 14px;
   border: 1px solid var(--border-muted);
   border-radius: 20px;
-  padding: 5px 14px;
+  padding: 4px 10px;
   display: inline-block;
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
 }
@@ -664,20 +665,20 @@ table {
 /* ────────── MOBILE OPTIMIZATIONS FOR KNOCKOUT BRACKET ──────────*/
 
 @media (max-width: 1024px) {
-  .bk-col--md { width: 140px; }
-  .bk-col--sm { width: 125px; }
-  .bk-col--lg { width: 150px; }
+  .bk-col--md { width: 150px; }
+  .bk-col--sm { width: 138px; }
+  .bk-col--lg { width: 160px; }
 
-  .bk-card--md { width: 120px; }
-  .bk-card--sm { width: 110px; }
-  .bk-card--lg { width: 130px; }
+  .bk-card--md { width: 135px; }
+  .bk-card--sm { width: 123px; }
+  .bk-card--lg { width: 145px; }
 
   .bk-card--final {
-    width: 145px;
+    width: 155px;
   }
 
   .bk-name {
-    font-size: 9.5px;
+    font-size: 8.5px;
   }
 
   .bk-trophy {
@@ -692,20 +693,20 @@ table {
     border-radius: 16px;
   }
 
-  .bk-col--md { width: 110px; }
-  .bk-col--sm { width: 100px; }
-  .bk-col--lg { width: 120px; }
+  .bk-col--md { width: 135px; }
+  .bk-col--sm { width: 125px; }
+  .bk-col--lg { width: 145px; }
 
-  .bk-card--md { width: 100px; }
-  .bk-card--sm { width: 90px; }
-  .bk-card--lg { width: 110px; }
+  .bk-card--md { width: 125px; }
+  .bk-card--sm { width: 112px; }
+  .bk-card--lg { width: 135px; }
 
   .bk-card--final {
-    width: 120px;
+    width: 145px;
   }
 
   .bk-name {
-    font-size: 8px;
+    font-size: 8.5px;
     letter-spacing: 0.2px;
   }
 
@@ -744,7 +745,7 @@ table {
   }
 
   .bk-bracket {
-    gap: 6px;
+    gap: 0;
   }
 }
 
@@ -754,26 +755,26 @@ table {
     border-radius: 12px;
   }
 
-  .bk-col--md { width: 90px; }
-  .bk-col--sm { width: 80px; }
-  .bk-col--lg { width: 100px; }
+  .bk-col--md { width: 110px; }
+  .bk-col--sm { width: 100px; }
+  .bk-col--lg { width: 120px; }
 
-  .bk-card--md { width: 85px; }
-  .bk-card--sm { width: 75px; }
-  .bk-card--lg { width: 95px; }
+  .bk-card--md { width: 105px; }
+  .bk-card--sm { width: 95px; }
+  .bk-card--lg { width: 115px; }
 
   .bk-card--final {
-    width: 100px;
+    width: 120px;
   }
 
   .bk-name {
-    font-size: 7px;
+    font-size: 7.5px;
     letter-spacing: 0.1px;
   }
 
   .bk-row {
-    height: 28px;
-    min-height: 28px;
+    height: 30px;
+    min-height: 30px;
     padding: 0 5px;
     gap: 3px;
   }
@@ -791,7 +792,7 @@ table {
   }
 
   .bk-bracket {
-    gap: 4px;
+    gap: 0;
   }
 
   .bk-label {
