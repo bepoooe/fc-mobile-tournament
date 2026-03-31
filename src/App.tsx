@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { TournamentProvider, useGroupFixtures, usePlayerMap, useTournament } from './context/TournamentContext'
 import { calculateStandings } from './utils/tournament'
 import { MAX_PLAYERS, MIN_PLAYERS } from './utils/tournament'
@@ -1568,7 +1568,7 @@ const ScoreEntryManagement = () => {
       <div className="mt-3 space-y-2">
         {state.fixtures.map((fixture) => (
           <FixtureEditor
-            key={fixture.id}
+            key={`${fixture.id}:${fixture.homeGoals ?? ''}:${fixture.awayGoals ?? ''}`}
             fixture={fixture}
             homeName={playerMap[fixture.homeId]?.name || 'Player A'}
             awayName={playerMap[fixture.awayId]?.name || 'Player B'}
@@ -1652,12 +1652,6 @@ const FixtureEditor = ({
   const [away, setAway] = useState<string>(fixture.awayGoals?.toString() ?? '')
   const [isUpdating, setIsUpdating] = useState(false)
   const isConfirmed = isFixtureConfirmed(fixture.id)
-
-  useEffect(() => {
-    setHome(fixture.homeGoals?.toString() ?? '')
-    setAway(fixture.awayGoals?.toString() ?? '')
-    setIsUpdating(false)
-  }, [fixture.id])
 
   const typedNumber = (value: string) => value.replace(/[^0-9]/g, '')
 
@@ -1806,6 +1800,7 @@ const KnockoutManagement = () => {
                   {playerAName} <span className="text-zinc-400">vs</span> {playerBName}
                 </p>
                 <ScoreLegInput
+                  key={`${tie.id}:leg1:${tie.leg1.homeGoals ?? ''}:${tie.leg1.awayGoals ?? ''}`}
                   label="Leg 1"
                   homePlayerName={playerAName}
                   awayPlayerName={playerBName}
@@ -1815,6 +1810,7 @@ const KnockoutManagement = () => {
                   onClear={() => clearTieLegScore(roundIndex, tie.id, 'leg1')}
                 />
                 <ScoreLegInput
+                  key={`${tie.id}:leg2:${tie.leg2.homeGoals ?? ''}:${tie.leg2.awayGoals ?? ''}`}
                   label="Leg 2"
                   homePlayerName={playerBName}
                   awayPlayerName={playerAName}
@@ -1833,6 +1829,7 @@ const KnockoutManagement = () => {
                     </p>
                   </div>
                   <ScoreLegInput
+                    key={`${tie.id}:decider:${tie.decider.homeGoals ?? ''}:${tie.decider.awayGoals ?? ''}:${tie.coinTossWinnerId ?? ''}`}
                     label="Deciding Match"
                     homePlayerName={deciderHomeName || 'Home (TBD — run coin toss first)'}
                     awayPlayerName={deciderAwayName || 'Away (TBD)'}
@@ -1928,13 +1925,6 @@ const ScoreLegInput = ({
   const [away, setAway] = useState<string>(defaultAway?.toString() ?? '')
   const [isSaved, setIsSaved] = useState(defaultHome !== null && defaultAway !== null)
   const [isUpdating, setIsUpdating] = useState(false)
-
-  useEffect(() => {
-    setHome(defaultHome?.toString() ?? '')
-    setAway(defaultAway?.toString() ?? '')
-    setIsSaved(defaultHome !== null && defaultAway !== null)
-    setIsUpdating(false)
-  }, [defaultHome, defaultAway])
 
   const typedNumber = (value: string) => value.replace(/[^0-9]/g, '')
   const parsedHome = home === '' ? NaN : Number(home)

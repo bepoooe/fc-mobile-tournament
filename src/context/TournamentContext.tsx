@@ -41,6 +41,13 @@ const STORAGE_KEY = 'techstorm_tournament_state'
 
 const TournamentContext = createContext<TournamentContextType | null>(null)
 
+const normalizeQualifiersPerGroup = (value: number, fallback: number): number => {
+  if (!Number.isInteger(value) || value < 1) {
+    return fallback
+  }
+  return value
+}
+
 const normalizeTournamentState = (incoming?: Partial<TournamentState>): TournamentState => {
   const fallback = defaultState()
   const mergedSettings = { ...fallback.settings, ...(incoming?.settings ?? {}) }
@@ -58,7 +65,10 @@ const normalizeTournamentState = (incoming?: Partial<TournamentState>): Tourname
       groupSize: [4, 5, 6, 8].includes(mergedSettings.groupSize)
         ? mergedSettings.groupSize
         : fallback.settings.groupSize,
-      qualifiersPerGroup: 2,
+      qualifiersPerGroup: normalizeQualifiersPerGroup(
+        mergedSettings.qualifiersPerGroup,
+        fallback.settings.qualifiersPerGroup,
+      ),
       tiebreakers:
         mergedSettings.tiebreakers && mergedSettings.tiebreakers.length
           ? mergedSettings.tiebreakers
@@ -222,7 +232,10 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
         settings: {
           ...merged,
           groupSize: [4, 5, 6, 8].includes(merged.groupSize) ? merged.groupSize : 4,
-          qualifiersPerGroup: 2,
+          qualifiersPerGroup: normalizeQualifiersPerGroup(
+            merged.qualifiersPerGroup,
+            prev.settings.qualifiersPerGroup,
+          ),
           tiebreakers:
             merged.tiebreakers && merged.tiebreakers.length
               ? merged.tiebreakers
@@ -470,9 +483,9 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
     })
   }, [])
 
-  const isFixtureConfirmed = (fixtureId: string) => {
+  const isFixtureConfirmed = useCallback((fixtureId: string) => {
     return state.confirmedFixtures.includes(fixtureId)
-  }
+  }, [state.confirmedFixtures])
 
   const unconfirmFixture = useCallback((fixtureId: string) => {
     setState((prev) => ({
@@ -741,6 +754,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
       setFixtureScore,
       clearFixtureScore,
       confirmFixture,
+      isFixtureConfirmed,
       unconfirmFixture,
       generateKnockout,
       setTieLegScore,

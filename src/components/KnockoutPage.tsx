@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { usePlayerMap, useTournament } from '../context/TournamentContext'
 import type { KnockoutTie } from '../types'
 
 /* ─── Types ─── */
 type Team = { name: string; logo: string }
 type Match = { id: string; team1: Team | null; team2: Team | null; winner: Team | null }
+type RoundSlice = { ties: KnockoutTie[] } | null | undefined
 
 const LOGOS: Record<string, string> = {
   PARIS: '🔵', CHELSEA: '🔵', LIVERPOOL: '🔴', 'REAL MADRID': '⚪',
@@ -439,6 +440,7 @@ export const KnockoutPage = () => {
   const { state } = useTournament()
   const playerMap = usePlayerMap()
   const tournamentName = state.settings.tournamentName?.trim() || 'TechStorm EA FC Mobile Tournament'
+  const knockoutDisabled = !state.knockout.enabled
 
   const roundMap = useMemo(() => {
     const r32 = state.knockout.rounds.find(r => /round of 32|r32/i.test(r.name))
@@ -453,25 +455,24 @@ export const KnockoutPage = () => {
     }
   }, [state.knockout.rounds])
 
-  const mk = (round: typeof roundMap.r32 | typeof roundMap.r16 | typeof roundMap.qf | typeof roundMap.sf, half: 'left' | 'right'): Match[] => {
+  const mk = useCallback((round: RoundSlice, half: 'left' | 'right'): Match[] => {
     if (!round) return []
     const { left, right } = splitHalf(round.ties)
     return (half === 'left' ? left : right).map(t => toMatch(t, playerMap))
-  }
+  }, [playerMap])
 
-  const leftR32  = useMemo(() => mk(roundMap.r32, 'left'),  [roundMap.r32, playerMap])
-  const rightR32 = useMemo(() => mk(roundMap.r32, 'right'), [roundMap.r32, playerMap])
-  const leftR16  = useMemo(() => mk(roundMap.r16, 'left'),  [roundMap.r16, playerMap])
-  const rightR16 = useMemo(() => mk(roundMap.r16, 'right'), [roundMap.r16, playerMap])
-  const leftQF   = useMemo(() => mk(roundMap.qf,  'left'),  [roundMap.qf,  playerMap])
-  const rightQF  = useMemo(() => mk(roundMap.qf,  'right'), [roundMap.qf,  playerMap])
-  const leftSF   = useMemo(() => mk(roundMap.sf,  'left'),  [roundMap.sf,  playerMap])
-  const rightSF  = useMemo(() => mk(roundMap.sf,  'right'), [roundMap.sf,  playerMap])
+  const leftR32  = useMemo(() => mk(roundMap.r32, 'left'),  [roundMap.r32, mk])
+  const rightR32 = useMemo(() => mk(roundMap.r32, 'right'), [roundMap.r32, mk])
+  const leftR16  = useMemo(() => mk(roundMap.r16, 'left'),  [roundMap.r16, mk])
+  const rightR16 = useMemo(() => mk(roundMap.r16, 'right'), [roundMap.r16, mk])
+  const leftQF   = useMemo(() => mk(roundMap.qf,  'left'),  [roundMap.qf, mk])
+  const rightQF  = useMemo(() => mk(roundMap.qf,  'right'), [roundMap.qf, mk])
+  const leftSF   = useMemo(() => mk(roundMap.sf,  'left'),  [roundMap.sf, mk])
+  const rightSF  = useMemo(() => mk(roundMap.sf,  'right'), [roundMap.sf, mk])
 
   const champion = useMemo(() => toTeam(state.championId, playerMap), [state.championId, playerMap])
 
-  if (!state.knockout.enabled) {
-    return (
+  const disabledView = (
       <section 
         style={{
           background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
@@ -519,7 +520,6 @@ export const KnockoutPage = () => {
         }}>✦ ✦ ✦</div>
       </section>
     )
-  }
 
   const leftGeo = useMemo(
     () => buildSide(leftR32.length || leftR16.length, leftR32.length ? leftR16.length : leftQF.length, leftR32.length ? leftQF.length : leftSF.length, leftR32.length ? leftSF.length : 0),
@@ -575,6 +575,10 @@ export const KnockoutPage = () => {
       winner: finalWinner,
     }
   }, [leftSF, rightSF, champion])
+
+  if (knockoutDisabled) {
+    return disabledView
+  }
 
   return (
     <section className="bk-page">
