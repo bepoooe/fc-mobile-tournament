@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local secrets
+.env
+
+# Firebase local cache
+.firebase/
+
+# TypeScript incremental build cache
+*.tsbuildinfo

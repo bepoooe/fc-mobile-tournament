@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -29,10 +30,43 @@ import type {
   TournamentContextType,
   TournamentState,
 } from '../types'
+import {
+  fetchRemoteTournamentState,
+  isFirebaseSyncEnabled,
+  saveRemoteTournamentState,
+  subscribeRemoteTournamentState,
+} from '../services/firebaseSync'
 
 const STORAGE_KEY = 'techstorm_tournament_state'
 
 const TournamentContext = createContext<TournamentContextType | null>(null)
+
+const normalizeTournamentState = (incoming?: Partial<TournamentState>): TournamentState => {
+  const fallback = defaultState()
+  const mergedSettings = { ...fallback.settings, ...(incoming?.settings ?? {}) }
+
+  const players = Array.isArray(incoming?.players)
+    ? incoming.players.slice(0, MAX_PLAYERS)
+    : fallback.players
+
+  return {
+    ...fallback,
+    ...incoming,
+    players,
+    settings: {
+      ...mergedSettings,
+      groupSize: [4, 5, 6, 8].includes(mergedSettings.groupSize)
+        ? mergedSettings.groupSize
+        : fallback.settings.groupSize,
+      qualifiersPerGroup: 2,
+      tiebreakers:
+        mergedSettings.tiebreakers && mergedSettings.tiebreakers.length
+          ? mergedSettings.tiebreakers
+          : fallback.settings.tiebreakers,
+    },
+    knockout: { ...fallback.knockout, ...(incoming?.knockout ?? {}) },
+  }
+}
 
 const parseState = (): TournamentState => {
   const raw = localStorage.getItem(STORAGE_KEY)
@@ -40,30 +74,7 @@ const parseState = (): TournamentState => {
 
   try {
     const parsed = JSON.parse(raw) as TournamentState
-    const fallback = defaultState()
-    const mergedSettings = { ...fallback.settings, ...parsed.settings }
-
-    const players = Array.isArray(parsed.players)
-      ? parsed.players.slice(0, MAX_PLAYERS)
-      : fallback.players
-
-    return {
-      ...fallback,
-      ...parsed,
-      players,
-      settings: {
-        ...mergedSettings,
-        groupSize: [4, 5, 6, 8].includes(mergedSettings.groupSize)
-          ? mergedSettings.groupSize
-          : fallback.settings.groupSize,
-        qualifiersPerGroup: 2,
-        tiebreakers:
-          mergedSettings.tiebreakers && mergedSettings.tiebreakers.length
-            ? mergedSettings.tiebreakers
-            : fallback.settings.tiebreakers,
-      },
-      knockout: { ...fallback.knockout, ...parsed.knockout },
-    }
+    return normalizeTournamentState(parsed)
   } catch {
     return defaultState()
   }
@@ -100,10 +111,95 @@ const updateTie = (
 
 export const TournamentProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<TournamentState>(parseState)
+  const [isRemoteReady, setIsRemoteReady] = useState(!isFirebaseSyncEnabled)
+  const stateJsonRef = useRef(JSON.stringify(state))
+  const lastRemoteJsonRef = useRef<string | null>(null)
+  const isApplyingRemoteRef = useRef(false)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    const serialized = JSON.stringify(state)
+    stateJsonRef.current = serialized
+    localStorage.setItem(STORAGE_KEY, serialized)
   }, [state])
+
+  useEffect(() => {
+    if (!isFirebaseSyncEnabled) {
+      setIsRemoteReady(true)
+      return
+    }
+
+    let mounted = true
+    let unsubscribe = () => {}
+
+    const startSync = async () => {
+      try {
+        const remote = await fetchRemoteTournamentState()
+        if (remote && mounted) {
+          const normalized = normalizeTournamentState(remote)
+          const serialized = JSON.stringify(normalized)
+          lastRemoteJsonRef.current = serialized
+
+          if (serialized !== stateJsonRef.current) {
+            isApplyingRemoteRef.current = true
+            setState(normalized)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch remote tournament state:', error)
+      } finally {
+        if (mounted) {
+          setIsRemoteReady(true)
+        }
+      }
+
+      unsubscribe = subscribeRemoteTournamentState((remote) => {
+        const normalized = normalizeTournamentState(remote)
+        const serialized = JSON.stringify(normalized)
+        lastRemoteJsonRef.current = serialized
+
+        if (serialized === stateJsonRef.current) {
+          return
+        }
+
+        isApplyingRemoteRef.current = true
+        setState(normalized)
+      })
+    }
+
+    void startSync()
+
+    return () => {
+      mounted = false
+      unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isFirebaseSyncEnabled || !isRemoteReady) {
+      return
+    }
+
+    if (isApplyingRemoteRef.current) {
+      isApplyingRemoteRef.current = false
+      return
+    }
+
+    if (stateJsonRef.current === lastRemoteJsonRef.current) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void saveRemoteTournamentState(state)
+        .then(() => {
+          lastRemoteJsonRef.current = stateJsonRef.current
+        })
+        .catch((error) => {
+          console.error('Failed to save remote tournament state:', error)
+        })
+    }, 500)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [state, isRemoteReady])
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
@@ -569,24 +665,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const importState = useCallback((incoming: TournamentState) => {
-    const fallback = defaultState()
-    const players = Array.isArray(incoming.players)
-      ? incoming.players.slice(0, MAX_PLAYERS)
-      : []
-
-    setState({
-      ...fallback,
-      ...incoming,
-      players,
-      settings: {
-        ...fallback.settings,
-        ...incoming.settings,
-        groupSize: [4, 5, 6, 8].includes(incoming.settings?.groupSize)
-          ? incoming.settings.groupSize
-          : fallback.settings.groupSize,
-        qualifiersPerGroup: 2,
-      },
-    })
+    setState(normalizeTournamentState(incoming))
   }, [])
 
   const exportState = useCallback(() => state, [state])

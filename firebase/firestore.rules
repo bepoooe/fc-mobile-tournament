@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Quick-start rule for shared tournament state across devices.
+    // Tighten before production by requiring Firebase Auth and role checks.
+    match /tournaments/{tournamentId} {
+      allow read, write: if true;
+    }
+  }
+}

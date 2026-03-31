@@ -8,9 +8,14 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "firebase:login": "npx firebase-tools login",
+    "firebase:deploy": "npm run build && npx firebase-tools deploy --project fc-mobile-f02a3",
+    "firebase:deploy:hosting": "npm run build && npx firebase-tools deploy --only hosting --project fc-mobile-f02a3",
+    "firebase:deploy:rules": "npx firebase-tools deploy --only firestore:rules,firestore:indexes --project fc-mobile-f02a3"
   },
   "dependencies": {
+    "firebase": "^12.11.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
