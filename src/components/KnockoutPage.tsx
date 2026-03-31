@@ -347,7 +347,7 @@ function BracketHalf({
   const flip = side === 'right'
 
   // Determine the round labels based on match count and whether R32 exists
-  const getRoundLabel = (matches: Match[], index: number) => {
+  const getRoundLabel = (_matches: Match[], index: number) => {
     if (hasR32) {
       // 4-round bracket: R32 → R16 → QF → SF
       if (index === 0) return 'Round of 32'
