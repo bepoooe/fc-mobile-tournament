@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'rea
 import { TournamentProvider, useGroupFixtures, usePlayerMap, useTournament } from './context/TournamentContext'
 import { calculateStandings } from './utils/tournament'
 import { MAX_PLAYERS, MIN_PLAYERS } from './utils/tournament'
-import type { Fixture, Group, StandingRow, Tiebreaker, TournamentState } from './types'
+import type { Fixture, Group, StandingRow, Tiebreaker, TournamentState, KnockoutRound } from './types'
 import { KnockoutPage } from './components/KnockoutPage'
 
 declare global {
@@ -1728,6 +1728,151 @@ const FixtureEditor = ({
   )
 }
 
+const BracketRearrangement = ({
+  round,
+  playerMap,
+  onSwap,
+}: {
+  round: KnockoutRound
+  playerMap: Record<string, { name: string }>
+  onSwap: (playerId1: string, playerId2: string) => void
+}) => {
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([])
+
+  const allBracketPlayers = Array.from(
+    new Set(
+      round.ties
+        .flatMap((tie) => [tie.playerAId, tie.playerBId])
+        .filter((id): id is string => !!id)
+    )
+  )
+
+  const handlePlayerSelect = (playerId: string) => {
+    setSelectedPlayers((prev) => {
+      if (prev.includes(playerId)) {
+        return prev.filter((id) => id !== playerId)
+      }
+      if (prev.length < 2) {
+        return [...prev, playerId]
+      }
+      return [playerId]
+    })
+  }
+
+  const handleSwap = () => {
+    if (selectedPlayers.length === 2) {
+      onSwap(selectedPlayers[0], selectedPlayers[1])
+      setSelectedPlayers([])
+    }
+  }
+
+  const handleClear = () => {
+    setSelectedPlayers([])
+  }
+
+  return (
+    <div className="panel space-y-4">
+      <div className="space-y-2">
+        <h3 className="section-heading text-sm sm:text-base flex items-center gap-2">
+          <span>🔄</span>
+          <span>Rearrange Bracket</span>
+        </h3>
+        <p className="text-xs sm:text-sm text-zinc-400">
+          Select two players to swap their positions in the bracket
+        </p>
+      </div>
+
+      {/* Selection Display */}
+      <div className="rounded-lg bg-zinc-900/50 border border-neonPurple/20 p-3 sm:p-4">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-zinc-300 uppercase tracking-wide">Selected Players</p>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
+            <div className="flex-1 rounded bg-zinc-800/50 border border-zinc-700 p-3 text-center">
+              <p className="text-xs text-zinc-500 mb-1">Player 1</p>
+              <p className="text-sm font-semibold text-zinc-100 truncate">
+                {selectedPlayers[0] ? playerMap[selectedPlayers[0]]?.name : '—'}
+              </p>
+            </div>
+            <div className="hidden sm:flex items-center justify-center text-neonPurple font-bold">⇄</div>
+            <div className="sm:hidden flex items-center justify-center text-neonPurple font-bold py-1">↕</div>
+            <div className="flex-1 rounded bg-zinc-800/50 border border-zinc-700 p-3 text-center">
+              <p className="text-xs text-zinc-500 mb-1">Player 2</p>
+              <p className="text-sm font-semibold text-zinc-100 truncate">
+                {selectedPlayers[1] ? playerMap[selectedPlayers[1]]?.name : '—'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Player Grid */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Available Players</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          {allBracketPlayers.map((playerId) => {
+            const isSelected = selectedPlayers.includes(playerId)
+            const selectionIndex = selectedPlayers.indexOf(playerId) + 1
+            
+            return (
+              <button
+                key={playerId}
+                type="button"
+                onClick={() => handlePlayerSelect(playerId)}
+                className={`relative p-3 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 ${
+                  isSelected
+                    ? 'bg-gradient-to-br from-neonPurple to-purple-600 text-white shadow-lg shadow-neonPurple/50 scale-105'
+                    : 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700 border border-zinc-700 hover:border-neonPurple/50'
+                }`}
+              >
+                {isSelected && (
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-neonPink rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    {selectionIndex}
+                  </div>
+                )}
+                <span className="block truncate">{playerMap[playerId]?.name || 'Unknown'}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-2 pt-2">
+        <button
+          type="button"
+          onClick={handleSwap}
+          disabled={selectedPlayers.length !== 2}
+          className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-200 ${
+            selectedPlayers.length === 2
+              ? 'bg-gradient-to-r from-neonPurple to-purple-600 text-white hover:shadow-lg hover:shadow-neonPurple/50 active:scale-95'
+              : 'bg-zinc-700 text-zinc-400 cursor-not-allowed opacity-50'
+          }`}
+        >
+          ✓ Swap Players
+        </button>
+        {selectedPlayers.length > 0 && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="flex-1 sm:flex-initial py-3 px-4 rounded-lg font-semibold text-sm bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Info Message */}
+      {selectedPlayers.length === 2 && (
+        <div className="rounded-lg bg-green-900/20 border border-green-500/30 p-3">
+          <p className="text-xs sm:text-sm text-green-400">
+            ✓ Ready to swap {playerMap[selectedPlayers[0]]?.name} and {playerMap[selectedPlayers[1]]?.name}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const KnockoutManagement = () => {
   const {
     state,
@@ -1738,6 +1883,7 @@ const KnockoutManagement = () => {
     coinTossTie,
     setFinalGameResult,
     clearFinalGameResult,
+    swapBracketPlayers,
   } = useTournament()
   const playerMap = usePlayerMap()
   const finalSeries = state.knockout.finalSeries
@@ -1779,6 +1925,14 @@ const KnockoutManagement = () => {
             ⚠ Bracket is incomplete · Some group stage matches are still pending · Regenerate bracket after more groups are completed
           </p>
         </div>
+      )}
+
+      {state.knockout.enabled && state.knockout.rounds.length > 0 && (
+        <BracketRearrangement 
+          round={state.knockout.rounds[0]} 
+          playerMap={playerMap}
+          onSwap={swapBracketPlayers}
+        />
       )}
 
       {state.knockout.rounds.map((round, roundIndex) => (

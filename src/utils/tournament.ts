@@ -380,6 +380,53 @@ export const createKnockout = (
   }
 }
 
+export const swapBracketPlayers = (
+  knockout: KnockoutState,
+  playerId1: string,
+  playerId2: string,
+): KnockoutState => {
+  if (!knockout.enabled || knockout.rounds.length === 0) {
+    return knockout
+  }
+
+  const firstRound = knockout.rounds[0]
+  if (!firstRound) return knockout
+
+  const updatedRounds = knockout.rounds.map((round, roundIndex) => {
+    if (roundIndex !== 0) return round
+
+    return {
+      ...round,
+      ties: round.ties.map((tie) => {
+        let playerAId = tie.playerAId
+        let playerBId = tie.playerBId
+
+        if (playerAId === playerId1) playerAId = playerId2
+        else if (playerAId === playerId2) playerAId = playerId1
+
+        if (playerBId === playerId1) playerBId = playerId2
+        else if (playerBId === playerId2) playerBId = playerId1
+
+        return {
+          ...tie,
+          playerAId,
+          playerBId,
+          winnerId: null,
+          leg1: { homeGoals: null, awayGoals: null, completed: false },
+          leg2: { homeGoals: null, awayGoals: null, completed: false },
+          coinTossWinnerId: null,
+          decider: { homeGoals: null, awayGoals: null, completed: false, homeId: null },
+        }
+      }),
+    }
+  })
+
+  return {
+    ...knockout,
+    rounds: updatedRounds,
+  }
+}
+
 const evaluateTwoLegWinner = (
   tie: KnockoutTie,
   gdMap: Record<string, number>,

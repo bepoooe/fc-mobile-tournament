@@ -153,4 +153,5 @@ export interface TournamentContextType {
   coinTossTie: (roundIndex: number, tieId: string) => void
   setFinalGameResult: (gameId: string, winnerId: string | null, isVoid: boolean) => void
   clearFinalGameResult: (gameId: string) => void
+  swapBracketPlayers: (playerId1: string, playerId2: string) => void
 }

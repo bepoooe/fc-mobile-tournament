@@ -22,6 +22,7 @@ import {
   snakeDraftGroups,
   standingsGoalDiffMap,
   suggestBalancedGroup,
+  swapBracketPlayers,
 } from '../utils/tournament'
 import type {
   Fixture,
@@ -704,6 +705,16 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
     }))
   }, [])
 
+  const swapBracketPlayersHandler = useCallback((playerId1: string, playerId2: string) => {
+    setState((prev) => {
+      const updated = swapBracketPlayers(prev.knockout, playerId1, playerId2)
+      return {
+        ...prev,
+        knockout: updated,
+      }
+    })
+  }, [])
+
   const value = useMemo<TournamentContextType>(
     () => ({
       state,
@@ -733,6 +744,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
       coinTossTie,
       setFinalGameResult,
       clearFinalGameResult,
+      swapBracketPlayers: swapBracketPlayersHandler,
     }),
     [
       state,
@@ -762,6 +774,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
       coinTossTie,
       setFinalGameResult,
       clearFinalGameResult,
+      swapBracketPlayersHandler,
     ],
   )
 
