@@ -338,7 +338,7 @@ export const createKnockout = (
     size *= 2
   }
 
-  const seeded = [...qualifiedPlayers]
+  const seeded = shuffled(qualifiedPlayers)
   while (seeded.length < size) seeded.push('')
 
   const rounds: KnockoutRound[] = []
