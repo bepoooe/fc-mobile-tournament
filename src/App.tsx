@@ -1117,26 +1117,26 @@ const StatsPage = () => {
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="panel">
           <h3 className="section-heading text-xs sm:text-sm">Top 10 Highest Goal Scorers</h3>
-          <div className="mt-3 w-full overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
-            <table className="w-full text-left text-xs sm:text-sm" style={{ minWidth: '360px' }}>
+          <div className="mt-3 w-full overflow-x-auto -mx-2 px-2 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
+            <table className="w-full min-w-[320px] table-fixed sm:table-auto text-left text-[11px] sm:text-sm">
               <thead className="text-neonPurple">
                 <tr>
-                  <th className="px-1.5 sm:px-2 py-2">#</th>
+                  <th className="w-8 px-1.5 sm:px-2 py-2 whitespace-nowrap">#</th>
                   <th className="px-1.5 sm:px-2 py-2">Player</th>
-                  <th className="px-1.5 sm:px-2 py-2 text-center">GF</th>
-                  <th className="px-1.5 sm:px-2 py-2 text-center">Matches</th>
+                  <th className="w-12 sm:w-16 px-1.5 sm:px-2 py-2 text-center whitespace-nowrap">GF</th>
+                  <th className="w-14 sm:w-20 px-1.5 sm:px-2 py-2 text-center whitespace-nowrap">Matches</th>
                 </tr>
               </thead>
               <tbody>
                 {topScorers.length > 0 ? (
                   topScorers.map((row, index) => (
                     <tr key={row.playerId} className="border-t border-neonPurple/20">
-                      <td className="px-1.5 sm:px-2 py-2">{index + 1}</td>
-                      <td className="px-1.5 sm:px-2 py-2 max-w-[170px] sm:max-w-none truncate" title={playerMap[row.playerId]?.name ?? 'Unknown'}>
+                      <td className="px-1.5 sm:px-2 py-2 whitespace-nowrap">{index + 1}</td>
+                      <td className="px-1.5 sm:px-2 py-2 truncate" title={playerMap[row.playerId]?.name ?? 'Unknown'}>
                         {playerMap[row.playerId]?.name ?? 'Unknown'}
                       </td>
-                      <td className="px-1.5 sm:px-2 py-2 text-center font-semibold text-neonPink">{row.goalsFor}</td>
-                      <td className="px-1.5 sm:px-2 py-2 text-center">{row.matches}</td>
+                      <td className="px-1.5 sm:px-2 py-2 text-center font-semibold text-neonPink whitespace-nowrap">{row.goalsFor}</td>
+                      <td className="px-1.5 sm:px-2 py-2 text-center whitespace-nowrap">{row.matches}</td>
                     </tr>
                   ))
                 ) : (
@@ -1153,26 +1153,26 @@ const StatsPage = () => {
 
         <div className="panel">
           <h3 className="section-heading text-xs sm:text-sm">Top 10 Least Goal Conceders</h3>
-          <div className="mt-3 w-full overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
-            <table className="w-full text-left text-xs sm:text-sm" style={{ minWidth: '360px' }}>
+          <div className="mt-3 w-full overflow-x-auto -mx-2 px-2 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
+            <table className="w-full min-w-[320px] table-fixed sm:table-auto text-left text-[11px] sm:text-sm">
               <thead className="text-neonPurple">
                 <tr>
-                  <th className="px-1.5 sm:px-2 py-2">#</th>
+                  <th className="w-8 px-1.5 sm:px-2 py-2 whitespace-nowrap">#</th>
                   <th className="px-1.5 sm:px-2 py-2">Player</th>
-                  <th className="px-1.5 sm:px-2 py-2 text-center">GA</th>
-                  <th className="px-1.5 sm:px-2 py-2 text-center">Matches</th>
+                  <th className="w-12 sm:w-16 px-1.5 sm:px-2 py-2 text-center whitespace-nowrap">GA</th>
+                  <th className="w-14 sm:w-20 px-1.5 sm:px-2 py-2 text-center whitespace-nowrap">Matches</th>
                 </tr>
               </thead>
               <tbody>
                 {leastConceders.length > 0 ? (
                   leastConceders.map((row, index) => (
                     <tr key={row.playerId} className="border-t border-neonPurple/20">
-                      <td className="px-1.5 sm:px-2 py-2">{index + 1}</td>
-                      <td className="px-1.5 sm:px-2 py-2 max-w-[170px] sm:max-w-none truncate" title={playerMap[row.playerId]?.name ?? 'Unknown'}>
+                      <td className="px-1.5 sm:px-2 py-2 whitespace-nowrap">{index + 1}</td>
+                      <td className="px-1.5 sm:px-2 py-2 truncate" title={playerMap[row.playerId]?.name ?? 'Unknown'}>
                         {playerMap[row.playerId]?.name ?? 'Unknown'}
                       </td>
-                      <td className="px-1.5 sm:px-2 py-2 text-center font-semibold text-emerald-300">{row.goalsAgainst}</td>
-                      <td className="px-1.5 sm:px-2 py-2 text-center">{row.matches}</td>
+                      <td className="px-1.5 sm:px-2 py-2 text-center font-semibold text-emerald-300 whitespace-nowrap">{row.goalsAgainst}</td>
+                      <td className="px-1.5 sm:px-2 py-2 text-center whitespace-nowrap">{row.matches}</td>
                     </tr>
                   ))
                 ) : (
