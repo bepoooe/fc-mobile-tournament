@@ -79,6 +79,43 @@ const normalizeTournamentState = (incoming?: Partial<TournamentState>): Tourname
   }
 }
 
+const defaultGroupName = (existingNames: string[]): string => {
+  const normalized = new Set(existingNames.map((name) => name.trim().toLowerCase()))
+  let index = 0
+
+  while (index < 26) {
+    const candidate = `Group ${String.fromCharCode(65 + index)}`
+    if (!normalized.has(candidate.toLowerCase())) {
+      return candidate
+    }
+    index += 1
+  }
+
+  let numeric = 27
+  while (normalized.has(`group ${numeric}`)) {
+    numeric += 1
+  }
+  return `Group ${numeric}`
+}
+
+const uniqueGroupName = (requestedName: string, existingNames: string[]): string => {
+  const trimmed = requestedName.trim()
+  if (!trimmed) {
+    return defaultGroupName(existingNames)
+  }
+
+  const normalized = new Set(existingNames.map((name) => name.trim().toLowerCase()))
+  if (!normalized.has(trimmed.toLowerCase())) {
+    return trimmed
+  }
+
+  let suffix = 2
+  while (normalized.has(`${trimmed.toLowerCase()} ${suffix}`)) {
+    suffix += 1
+  }
+  return `${trimmed} ${suffix}`
+}
+
 const parseState = (): TournamentState => {
   const raw = localStorage.getItem(STORAGE_KEY)
   if (!raw) return defaultState()
@@ -354,6 +391,93 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
         championId: null,
       }
     })
+  }, [])
+
+  const createGroup = useCallback((name?: string) => {
+    let createdGroupId: string | null = null
+
+    setState((prev) => {
+      const groupName = uniqueGroupName(name ?? '', prev.groups.map((group) => group.name))
+      const groupId = createId()
+      createdGroupId = groupId
+
+      return {
+        ...prev,
+        groups: [...prev.groups, { id: groupId, name: groupName, playerIds: [] }],
+        knockout: defaultState().knockout,
+        championId: null,
+      }
+    })
+
+    return createdGroupId
+  }, [])
+
+  const deleteGroup = useCallback((groupId: string, destinationGroupId?: string | null) => {
+    let deleted = false
+
+    setState((prev) => {
+      const groupToDelete = prev.groups.find((group) => group.id === groupId)
+      if (!groupToDelete || prev.groups.length <= 1) {
+        return prev
+      }
+
+      const movingPlayers = [...groupToDelete.playerIds]
+      const hasPlayers = movingPlayers.length > 0
+      const targetGroupId = destinationGroupId ?? null
+
+      if (hasPlayers) {
+        if (!targetGroupId || targetGroupId === groupId) {
+          return prev
+        }
+
+        const targetExists = prev.groups.some((group) => group.id === targetGroupId)
+        if (!targetExists) {
+          return prev
+        }
+      }
+
+      const groupsWithoutDeleted = prev.groups.filter((group) => group.id !== groupId)
+      const groups = hasPlayers && targetGroupId
+        ? groupsWithoutDeleted.map((group) =>
+            group.id === targetGroupId
+              ? { ...group, playerIds: [...group.playerIds, ...movingPlayers] }
+              : group,
+          )
+        : groupsWithoutDeleted
+
+      const players = hasPlayers && targetGroupId
+        ? prev.players.map((player) =>
+            movingPlayers.includes(player.id)
+              ? { ...player, groupId: targetGroupId }
+              : player,
+          )
+        : prev.players
+
+      let fixtures = prev.fixtures.filter((fixture) => fixture.groupId !== groupId)
+      if (hasPlayers && targetGroupId) {
+        for (const playerId of movingPlayers) {
+          fixtures = addLateEntrantFixtures(playerId, targetGroupId, fixtures, groups)
+        }
+      }
+
+      const activeFixtureIds = new Set(fixtures.map((fixture) => fixture.id))
+      deleted = true
+
+      return {
+        ...prev,
+        players,
+        groups,
+        fixtures,
+        confirmedFixtures: prev.confirmedFixtures.filter((fixtureId) =>
+          activeFixtureIds.has(fixtureId),
+        ),
+        knockout: defaultState().knockout,
+        championId: null,
+        stage: prev.groupsLocked ? 'group_stage' : prev.stage,
+      }
+    })
+
+    return deleted
   }, [])
 
   const movePlayerToGroup = useCallback((playerId: string, targetGroupId: string) => {
@@ -730,6 +854,8 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
       clearAllPlayers,
       bulkAddPlayers,
       generateGroups,
+      createGroup,
+      deleteGroup,
       movePlayerToGroup,
       lockGroups,
       addLatePlayerToSuggestedGroup,
@@ -760,6 +886,8 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
       clearAllPlayers,
       bulkAddPlayers,
       generateGroups,
+      createGroup,
+      deleteGroup,
       movePlayerToGroup,
       lockGroups,
       addLatePlayerToSuggestedGroup,

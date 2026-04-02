@@ -129,6 +129,8 @@ export interface TournamentContextType {
   clearAllPlayers: () => void
   bulkAddPlayers: (players: Array<{ name: string; ovr: number }>) => void
   generateGroups: () => void
+  createGroup: (name?: string) => string | null
+  deleteGroup: (groupId: string, destinationGroupId?: string | null) => boolean
   movePlayerToGroup: (playerId: string, targetGroupId: string) => void
   lockGroups: () => void
   addLatePlayerToSuggestedGroup: (name: string, ovr: number) => string | null

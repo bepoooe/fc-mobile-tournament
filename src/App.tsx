@@ -27,12 +27,13 @@ declare global {
   }
 }
 
-type Page = 'groups' | 'fixtures' | 'knockout' | 'rules' | 'admin'
+type Page = 'groups' | 'fixtures' | 'stats' | 'knockout' | 'rules' | 'admin'
 type AdminTab = 'players' | 'groups' | 'fixtures' | 'score_entry' | 'knockout' | 'settings'
 
 const navItems: Array<{ key: Page; label: string }> = [
   { key: 'groups', label: 'Groups' },
   { key: 'fixtures', label: 'Fixtures' },
+  { key: 'stats', label: 'Stats' },
   { key: 'knockout', label: 'Knockout' },
   { key: 'rules', label: 'Rules' },
   { key: 'admin', label: 'Admin' },
@@ -493,6 +494,7 @@ const AppShell = () => {
         >
           {page === 'groups' && <GroupsPage />}
           {page === 'fixtures' && <FixturesPage />}
+          {page === 'stats' && <StatsPage />}
           {page === 'knockout' && <KnockoutPage />}
           {page === 'rules' && <RulesPage />}
           {page === 'admin' && <AdminPage />}
@@ -905,6 +907,334 @@ const FixturesPage = () => {
     </section>
   )
 }
+
+type PlayerStatsRow = {
+  playerId: string
+  matches: number
+  goalsFor: number
+  goalsAgainst: number
+  cleanSheets: number
+  highestGoalsInMatch: number
+}
+
+const aggregatePlayerStats = (state: TournamentState): PlayerStatsRow[] => {
+  const stats = state.players.reduce<Record<string, PlayerStatsRow>>((acc, player) => {
+    acc[player.id] = {
+      playerId: player.id,
+      matches: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      cleanSheets: 0,
+      highestGoalsInMatch: 0,
+    }
+    return acc
+  }, {})
+
+  const recordMatch = (
+    homeId: string | null,
+    awayId: string | null,
+    homeGoals: number | null,
+    awayGoals: number | null,
+    completed: boolean,
+  ) => {
+    if (!completed || homeId === null || awayId === null) return
+    if (homeGoals === null || awayGoals === null) return
+    if (!stats[homeId] || !stats[awayId]) return
+
+    stats[homeId].matches += 1
+    stats[awayId].matches += 1
+
+    stats[homeId].goalsFor += homeGoals
+    stats[homeId].goalsAgainst += awayGoals
+    stats[awayId].goalsFor += awayGoals
+    stats[awayId].goalsAgainst += homeGoals
+
+    if (awayGoals === 0) stats[homeId].cleanSheets += 1
+    if (homeGoals === 0) stats[awayId].cleanSheets += 1
+
+    stats[homeId].highestGoalsInMatch = Math.max(stats[homeId].highestGoalsInMatch, homeGoals)
+    stats[awayId].highestGoalsInMatch = Math.max(stats[awayId].highestGoalsInMatch, awayGoals)
+  }
+
+  state.fixtures.forEach((fixture) => {
+    recordMatch(
+      fixture.homeId,
+      fixture.awayId,
+      fixture.homeGoals,
+      fixture.awayGoals,
+      fixture.completed,
+    )
+  })
+
+  state.knockout.rounds.forEach((round) => {
+    round.ties.forEach((tie) => {
+      recordMatch(
+        tie.playerAId,
+        tie.playerBId,
+        tie.leg1.homeGoals,
+        tie.leg1.awayGoals,
+        tie.leg1.completed,
+      )
+      recordMatch(
+        tie.playerBId,
+        tie.playerAId,
+        tie.leg2.homeGoals,
+        tie.leg2.awayGoals,
+        tie.leg2.completed,
+      )
+
+      const deciderHomeId = tie.decider.homeId
+      const deciderAwayId =
+        deciderHomeId && tie.playerAId && tie.playerBId
+          ? deciderHomeId === tie.playerAId
+            ? tie.playerBId
+            : tie.playerAId
+          : null
+
+      recordMatch(
+        deciderHomeId,
+        deciderAwayId,
+        tie.decider.homeGoals,
+        tie.decider.awayGoals,
+        tie.decider.completed,
+      )
+    })
+  })
+
+  return Object.values(stats)
+}
+
+const StatsPage = () => {
+  const { state } = useTournament()
+  const playerMap = usePlayerMap()
+
+  const statsRows = useMemo(() => aggregatePlayerStats(state), [state])
+  const hasCompletedMatch = useMemo(
+    () => statsRows.some((row) => row.matches > 0),
+    [statsRows],
+  )
+
+  const topScorers = useMemo(
+    () =>
+      [...statsRows]
+        .filter((row) => row.goalsFor > 0)
+        .sort((a, b) => {
+          if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor
+          if (a.matches !== b.matches) return a.matches - b.matches
+          return (playerMap[a.playerId]?.name ?? '').localeCompare(playerMap[b.playerId]?.name ?? '')
+        })
+        .slice(0, 10),
+    [statsRows, playerMap],
+  )
+
+  const leastConceders = useMemo(
+    () =>
+      [...statsRows]
+        .filter((row) => row.matches > 0)
+        .sort((a, b) => {
+          if (a.goalsAgainst !== b.goalsAgainst) return a.goalsAgainst - b.goalsAgainst
+          if (b.matches !== a.matches) return b.matches - a.matches
+          return (playerMap[a.playerId]?.name ?? '').localeCompare(playerMap[b.playerId]?.name ?? '')
+        })
+        .slice(0, 10),
+    [statsRows, playerMap],
+  )
+
+  const mostCleanSheets = useMemo(() => {
+    const best = [...statsRows].sort((a, b) => {
+      if (b.cleanSheets !== a.cleanSheets) return b.cleanSheets - a.cleanSheets
+      if (b.matches !== a.matches) return b.matches - a.matches
+      return (playerMap[a.playerId]?.name ?? '').localeCompare(playerMap[b.playerId]?.name ?? '')
+    })[0] ?? null
+
+    if (!best || best.cleanSheets <= 0) return null
+    return best
+  }, [statsRows, playerMap])
+
+  const bestSingleMatchScorer = useMemo(() => {
+    const best = [...statsRows].sort((a, b) => {
+      if (b.highestGoalsInMatch !== a.highestGoalsInMatch) {
+        return b.highestGoalsInMatch - a.highestGoalsInMatch
+      }
+      if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor
+      return (playerMap[a.playerId]?.name ?? '').localeCompare(playerMap[b.playerId]?.name ?? '')
+    })[0] ?? null
+
+    if (!best || best.highestGoalsInMatch <= 0) return null
+    return best
+  }, [statsRows, playerMap])
+
+  if (!state.players.length) {
+    return (
+      <StatsWelcomeState
+        title="TOURNAMENT STATS"
+        message="Add players and start the tournament to unlock leaderboard insights."
+      />
+    )
+  }
+
+  if (!hasCompletedMatch) {
+    return (
+      <StatsWelcomeState
+        title="TOURNAMENT STATS"
+        message="No data yet. Stats will appear after at least 1 match is completed."
+      />
+    )
+  }
+
+  return (
+    <section className="space-y-6">
+      <div className="panel space-y-3">
+        <h2 className="section-heading">Tournament Stats</h2>
+        <p className="text-xs text-zinc-300">
+          Rankings include completed group-stage matches and completed knockout legs.
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="panel space-y-2">
+          <p className="text-xs uppercase tracking-wider text-neonPurple">Most Clean Sheets</p>
+          <p className="text-lg font-semibold text-zinc-100">
+            {mostCleanSheets ? playerMap[mostCleanSheets.playerId]?.name : 'No clean sheets yet'}
+          </p>
+          <p className="text-xs text-zinc-400">
+            {mostCleanSheets ? `${mostCleanSheets.cleanSheets} clean sheet(s)` : 'Play and complete matches to unlock this stat.'}
+          </p>
+        </div>
+        <div className="panel space-y-2">
+          <p className="text-xs uppercase tracking-wider text-neonPink">Highest Goals in a Single Match</p>
+          <p className="text-lg font-semibold text-zinc-100">
+            {bestSingleMatchScorer ? playerMap[bestSingleMatchScorer.playerId]?.name : 'No data'}
+          </p>
+          <p className="text-xs text-zinc-400">
+            {bestSingleMatchScorer
+              ? `${bestSingleMatchScorer.highestGoalsInMatch} goal(s) in one match`
+              : 'Enter completed scores to calculate.'}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="panel overflow-x-auto">
+          <h3 className="section-heading text-xs sm:text-sm">Top 10 Highest Goal Scorers</h3>
+          <table className="mt-3 w-full text-left text-xs sm:text-sm" style={{ minWidth: '420px' }}>
+            <thead className="text-neonPurple">
+              <tr>
+                <th className="px-2 py-2">#</th>
+                <th className="px-2 py-2">Player</th>
+                <th className="px-2 py-2 text-center">GF</th>
+                <th className="px-2 py-2 text-center">Matches</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topScorers.length > 0 ? (
+                topScorers.map((row, index) => (
+                  <tr key={row.playerId} className="border-t border-neonPurple/20">
+                    <td className="px-2 py-2">{index + 1}</td>
+                    <td className="px-2 py-2">{playerMap[row.playerId]?.name ?? 'Unknown'}</td>
+                    <td className="px-2 py-2 text-center font-semibold text-neonPink">{row.goalsFor}</td>
+                    <td className="px-2 py-2 text-center">{row.matches}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr className="border-t border-neonPurple/20">
+                  <td className="px-2 py-3 text-center text-zinc-400" colSpan={4}>
+                    No goal scorers yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="panel overflow-x-auto">
+          <h3 className="section-heading text-xs sm:text-sm">Top 10 Least Goal Conceders</h3>
+          <table className="mt-3 w-full text-left text-xs sm:text-sm" style={{ minWidth: '420px' }}>
+            <thead className="text-neonPurple">
+              <tr>
+                <th className="px-2 py-2">#</th>
+                <th className="px-2 py-2">Player</th>
+                <th className="px-2 py-2 text-center">GA</th>
+                <th className="px-2 py-2 text-center">Matches</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leastConceders.map((row, index) => (
+                <tr key={row.playerId} className="border-t border-neonPurple/20">
+                  <td className="px-2 py-2">{index + 1}</td>
+                  <td className="px-2 py-2">{playerMap[row.playerId]?.name ?? 'Unknown'}</td>
+                  <td className="px-2 py-2 text-center font-semibold text-emerald-300">{row.goalsAgainst}</td>
+                  <td className="px-2 py-2 text-center">{row.matches}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const StatsWelcomeState = ({ title, message }: { title: string; message: string }) => (
+  <section
+    style={{
+      background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
+      minHeight: 'calc(100vh - 120px)',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 'clamp(2rem, 4vw, 3rem)',
+      textAlign: 'center',
+    }}
+  >
+    <div
+      style={{
+        fontSize: 'clamp(14px, 2.5vw, 18px)',
+        letterSpacing: '8px',
+        color: 'rgba(168,85,247,0.45)',
+        marginBottom: '12px',
+      }}
+    >
+      ✦ ✦ ✦
+    </div>
+    <h1
+      style={{
+        fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+        fontSize: 'clamp(32px, 6vw, 52px)',
+        fontWeight: 800,
+        color: '#f0edf5',
+        textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+        letterSpacing: '3px',
+        lineHeight: 1.1,
+        margin: '16px 0',
+      }}
+    >
+      Welcome to <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>{title}</span>
+    </h1>
+    <p
+      style={{
+        fontFamily: "'Rajdhani', sans-serif",
+        fontSize: 'clamp(14px, 2vw, 16px)',
+        letterSpacing: '2px',
+        color: 'rgba(216,180,254,0.6)',
+        margin: '16px 0 0 0',
+      }}
+    >
+      {message}
+    </p>
+    <div
+      style={{
+        fontSize: 'clamp(14px, 2.5vw, 18px)',
+        letterSpacing: '8px',
+        color: 'rgba(168,85,247,0.45)',
+        marginTop: '12px',
+      }}
+    >
+      ✦ ✦ ✦
+    </div>
+  </section>
+)
 
 const RULES_SECTIONS = [
   {
@@ -1386,9 +1716,20 @@ const PlayerManagement = () => {
 }
 
 const GroupManagement = () => {
-  const { state, setSettings, generateGroups, movePlayerToGroup, lockGroups } = useTournament()
+  const {
+    state,
+    setSettings,
+    generateGroups,
+    createGroup,
+    deleteGroup,
+    movePlayerToGroup,
+    lockGroups,
+  } = useTournament()
   const canGenerate = state.players.length >= MIN_PLAYERS
   const [feedback, setFeedback] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [groupToDeleteId, setGroupToDeleteId] = useState('')
+  const [destinationGroupId, setDestinationGroupId] = useState('')
 
   const onExportGroups = () => {
     try {
@@ -1398,6 +1739,60 @@ const GroupManagement = () => {
       const message = error instanceof Error ? error.message : 'Could not export groups.'
       setFeedback({ tone: 'error', text: message })
     }
+  }
+
+  const onCreateGroup = () => {
+    const groupId = createGroup(newGroupName)
+    if (!groupId) {
+      setFeedback({ tone: 'error', text: 'Could not create group.' })
+      return
+    }
+
+    const displayName = newGroupName.trim() || 'New group'
+    setFeedback({ tone: 'ok', text: `${displayName} created.` })
+    setNewGroupName('')
+  }
+
+  const onDeleteGroup = () => {
+    if (!groupToDeleteId) {
+      setFeedback({ tone: 'error', text: 'Select a group to delete.' })
+      return
+    }
+
+    const group = state.groups.find((item) => item.id === groupToDeleteId)
+    if (!group) {
+      setFeedback({ tone: 'error', text: 'Selected group was not found.' })
+      return
+    }
+
+    const hasPlayers = group.playerIds.length > 0
+    const destination = hasPlayers ? destinationGroupId : null
+
+    if (hasPlayers && (!destination || destination === groupToDeleteId)) {
+      setFeedback({
+        tone: 'error',
+        text: 'Choose a valid destination group to move players before deletion.',
+      })
+      return
+    }
+
+    const proceed = window.confirm(
+      hasPlayers
+        ? `Delete ${group.name}? Players will be moved and fixtures updated.`
+        : `Delete ${group.name}?`,
+    )
+
+    if (!proceed) return
+
+    const deleted = deleteGroup(groupToDeleteId, destination)
+    if (!deleted) {
+      setFeedback({ tone: 'error', text: 'Could not delete group. Check selected options.' })
+      return
+    }
+
+    setFeedback({ tone: 'ok', text: `${group.name} deleted successfully.` })
+    setGroupToDeleteId('')
+    setDestinationGroupId('')
   }
 
   return (
@@ -1463,6 +1858,73 @@ const GroupManagement = () => {
             Export Groups (.xlsx)
           </button>
           {!canGenerate && <p className="text-xs text-amber-300 sm:col-span-2 lg:col-span-4">Add at least two players before generating groups.</p>}
+        </div>
+        <div className="grid gap-2 border-t border-neonPurple/20 pt-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="text-xs text-zinc-300 sm:col-span-2">
+            Create Group (optional custom name)
+            <input
+              className="input mt-1"
+              value={newGroupName}
+              onChange={(event) => setNewGroupName(event.target.value)}
+              placeholder="e.g. Group H"
+            />
+          </label>
+          <button type="button" className="btn-primary mt-auto" onClick={onCreateGroup}>
+            Create Group Mid-Tournament
+          </button>
+          <p className="text-xs text-zinc-400 mt-auto">
+            Useful for late player entry when current groups are full.
+          </p>
+        </div>
+        <div className="grid gap-2 border-t border-neonPurple/20 pt-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="text-xs text-zinc-300">
+            Group To Delete
+            <select
+              className="input mt-1"
+              value={groupToDeleteId}
+              onChange={(event) => {
+                setGroupToDeleteId(event.target.value)
+                if (destinationGroupId === event.target.value) {
+                  setDestinationGroupId('')
+                }
+              }}
+            >
+              <option value="">Select group</option>
+              {state.groups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name} ({group.playerIds.length} players)
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-zinc-300">
+            Move Players To (if needed)
+            <select
+              className="input mt-1"
+              value={destinationGroupId}
+              onChange={(event) => setDestinationGroupId(event.target.value)}
+            >
+              <option value="">Select destination</option>
+              {state.groups
+                .filter((group) => group.id !== groupToDeleteId)
+                .map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="btn-danger mt-auto"
+            onClick={onDeleteGroup}
+            disabled={state.groups.length <= 1}
+          >
+            Delete Selected Group
+          </button>
+          <p className="text-xs text-zinc-400 mt-auto">
+            Deletion removes that group&apos;s fixtures and resets knockout progress.
+          </p>
         </div>
         {feedback && (
           <p className={`rounded border px-3 py-2 text-xs ${feedback.tone === 'ok' ? 'border-emerald-300/50 bg-emerald-500/10 text-emerald-100' : 'border-red-300/50 bg-red-500/10 text-red-100'}`}>
