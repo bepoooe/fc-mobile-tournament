@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { usePlayerMap, useTournament } from '../context/TournamentContext'
 import type { KnockoutTie } from '../types'
 
-/* ─── Types ─── */
+/*  Types  */
 type Team = { name: string; logo: string }
 type Match = { id: string; team1: Team | null; team2: Team | null; winner: Team | null }
 type RoundSlice = { ties: KnockoutTie[] } | null | undefined
@@ -33,9 +33,9 @@ const splitHalf = (ties: KnockoutTie[]) => {
   return { left: ties.slice(0, mid), right: ties.slice(mid) }
 }
 
-/* ══════════════════════════════════════════════════════
+/* """"""""""""""""""""""""""""""""""""""""""""""""""""""
    GEOMETRY
-   ══════════════════════════════════════════════════════
+   """"""""""""""""""""""""""""""""""""""""""""""""""""""
    ROW_H  = height of a single team slot
    PAIR_H = height of a match pair (2 rows + 1px divider)
    GAP    = gap between pairs in the R16 column
@@ -45,12 +45,12 @@ const splitHalf = (ties: KnockoutTie[]) => {
    The connector line for a pair exits at the DIVIDER line
    between its two team rows, i.e. at:
      topPad + LABEL_H + ROW_H + pairIndex * (PAIR_H + gap)
-   ══════════════════════════════════════════════════════ */
-const ROW_H   = 32    // px — single team slot height
-const PAIR_H  = ROW_H * 2 + 1  // 65px — two rows + 1px divider
-const GAP     = 12   // px — gap between R16 pairs
-const LABEL_H = 20   // px — round label height
-const CONN_W  = 20   // px — connector SVG width
+   """""""""""""""""""""""""""""""""""""""""""""""""""""" */
+const ROW_H   = 32    // px  single team slot height
+const PAIR_H  = ROW_H * 2 + 1  // 65px  two rows + 1px divider
+const GAP     = 12   // px  gap between R16 pairs
+const LABEL_H = 20   // px  round label height
+const CONN_W  = 20   // px  connector SVG width
 
 /** Y positions of the connector point (divider) for each pair in a round column. */
 const pairCenters = (n: number, topPad: number, gap: number): number[] =>
@@ -71,7 +71,7 @@ const pairMids = (cs: number[]): number[] => {
 /** Align `n` pairs so their connector points land on `targets`. */
 const alignTo = (targets: number[], n: number) => {
   if (n <= 0 || targets.length === 0) return { topPad: 0, gap: GAP, cs: [] as number[] }
-  // LABEL_H + topPad + ROW_H = targets[0]  →  topPad = targets[0] - LABEL_H - ROW_H
+  // LABEL_H + topPad + ROW_H = targets[0]     topPad = targets[0] - LABEL_H - ROW_H
   const topPad = Math.max(0, Math.round(targets[0] - LABEL_H - ROW_H))
   const gap = n > 1 && targets[1] !== undefined
     ? Math.max(8, Math.round(targets[1] - targets[0] - PAIR_H))
@@ -88,16 +88,16 @@ const buildSide = (n0: number, n1: number, n2: number, n3: number = 0) => {
   return { cs0, a1, a2, a3 }
 }
 
-/* ══════════════════════════════════════════════════════
+/* """"""""""""""""""""""""""""""""""""""""""""""""""""""
    BRACKET CONNECTOR
    Draws strict L-shaped right-angle lines:
-     • Horizontal from the card column edge → vertical bar
-     • Single vertical bar connecting pair A and pair B
-     • Horizontal from vertical bar midpoint → next round
+     ⬢ Horizontal from the card column edge   vertical bar
+     ⬢ Single vertical bar connecting pair A and pair B
+     ⬢ Horizontal from vertical bar midpoint   next round
    `srcs`  = Y positions of each pair's connector point
-   `flip`  = true for right half (lines drawn right→left)
-   ══════════════════════════════════════════════════════ */
-const LINE = 'rgba(168,85,247,0.6)'
+   `flip`  = true for right half (lines drawn right left)
+   """""""""""""""""""""""""""""""""""""""""""""""""""""" */
+const LINE = 'rgba(245, 184, 0,0.6)'
 
 function BracketConnector({ srcs, flip }: { srcs: number[]; flip?: boolean }) {
   if (!srcs.length) return <div style={{ width: CONN_W, flexShrink: 0 }} aria-hidden />
@@ -123,13 +123,13 @@ function BracketConnector({ srcs, flip }: { srcs: number[]; flip?: boolean }) {
 
           return (
             <g key={p} strokeLinecap="square" fill="none">
-              {/* ① Horizontal in — pair A */}
+              {/*  Horizontal in  pair A */}
               <line x1={xCard} y1={yA}   x2={xBar}  y2={yA}   stroke={LINE} strokeWidth="1.5" />
-              {/* ② Horizontal in — pair B */}
+              {/*  Horizontal in  pair B */}
               {hasB && <line x1={xCard} y1={yB}   x2={xBar}  y2={yB}   stroke={LINE} strokeWidth="1.5" />}
-              {/* ③ Vertical bar joining A and B */}
+              {/*  Vertical bar joining A and B */}
               {hasB && <line x1={xBar}  y1={yA}   x2={xBar}  y2={yB}   stroke={LINE} strokeWidth="1.5" />}
-              {/* ④ Horizontal out — from midpoint of vertical bar */}
+              {/*  Horizontal out  from midpoint of vertical bar */}
               <line x1={xBar}  y1={yMid} x2={xNext} y2={yMid} stroke={LINE} strokeWidth="1.5" />
             </g>
           )
@@ -139,7 +139,7 @@ function BracketConnector({ srcs, flip }: { srcs: number[]; flip?: boolean }) {
   )
 }
 
-/* ─── Final Box - Match display with Final label ─── */
+/*  Final Box - Match display with Final label  */
 function FinalBox({ match }: { match: Match | null }) {
   const boxWidth = 160
   
@@ -149,7 +149,7 @@ function FinalBox({ match }: { match: Match | null }) {
       <div style={{ fontSize: '48px', marginBottom: '4px' }}>🏆</div>
       
       {/* Final Label */}
-      <div style={{ marginBottom: '8px', fontSize: '16px', fontWeight: 700, color: '#d8b4fe', letterSpacing: '2px' }}>
+      <div style={{ marginBottom: '8px', fontSize: '16px', fontWeight: 700, color: '#F5B800', letterSpacing: '2px' }}>
         FINAL
       </div>
       
@@ -158,11 +158,11 @@ function FinalBox({ match }: { match: Match | null }) {
         style={{
           width: `${boxWidth}px`,
           position: 'relative',
-          background: 'linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(88,28,135,0.1) 100%)',
-          border: '2px solid rgba(168,85,247,0.4)',
+          background: 'linear-gradient(135deg, rgba(245, 184, 0,0.15) 0%, rgba(88,28,135,0.1) 100%)',
+          border: '2px solid rgba(245, 184, 0,0.4)',
           borderRadius: '8px',
           overflow: 'hidden',
-          boxShadow: '0 0 16px rgba(168,85,247,0.2)',
+          boxShadow: '0 0 16px rgba(245, 184, 0,0.2)',
         }}
       >
         {match ? (
@@ -174,13 +174,13 @@ function FinalBox({ match }: { match: Match | null }) {
         ) : (
           <>
             <div className="bk-row bk-row--empty">
-              <span className="bk-logo bk-logo--ghost" aria-hidden>•</span>
+              <span className="bk-logo bk-logo--ghost" aria-hidden>⬢</span>
               <span className="bk-name bk-name--tbd">TBD</span>
               <span className="bk-check bk-check--ghost" aria-hidden>✓</span>
             </div>
             <div className="bk-divider" />
             <div className="bk-row bk-row--empty">
-              <span className="bk-logo bk-logo--ghost" aria-hidden>•</span>
+              <span className="bk-logo bk-logo--ghost" aria-hidden>⬢</span>
               <span className="bk-name bk-name--tbd">TBD</span>
               <span className="bk-check bk-check--ghost" aria-hidden>✓</span>
             </div>
@@ -191,7 +191,7 @@ function FinalBox({ match }: { match: Match | null }) {
   )
 }
 
-/* ─── Unified final connection: left bridge + center arrow + right bridge all meeting at one point ─── */
+/*  Unified final connection: left bridge + center arrow + right bridge all meeting at one point  */
 function FinalConnection({ meetY, match }: { meetY: number; match: Match | null }) {
   const leftW = 32
   const centerW = 20
@@ -252,12 +252,12 @@ function FinalConnection({ meetY, match }: { meetY: number; match: Match | null 
   )
 }
 
-/* ─── Team Row ─── */
+/*  Team Row  */
 function TeamRow({ team, isWinner }: { team: Team | null; isWinner: boolean }) {
   if (!team) {
     return (
       <div className="bk-row bk-row--empty">
-        <span className="bk-logo bk-logo--ghost" aria-hidden>•</span>
+        <span className="bk-logo bk-logo--ghost" aria-hidden>⬢</span>
         <span className="bk-name bk-name--tbd">TBD</span>
         <span className="bk-check bk-check--ghost" aria-hidden>✓</span>
       </div>
@@ -277,11 +277,11 @@ function TeamRow({ team, isWinner }: { team: Team | null; isWinner: boolean }) {
   )
 }
 
-/* ══════════════════════════════════════════════════════
+/* """"""""""""""""""""""""""""""""""""""""""""""""""""""
    MATCH PAIR
    Two bare team rows + divider. No outer border / background box.
    The `bk-pair` class controls only width.
-   ══════════════════════════════════════════════════════ */
+   """""""""""""""""""""""""""""""""""""""""""""""""""""" */
 function MatchPair({ match, size = 'md', label }: { match: Match; size?: 'sm' | 'md' | 'lg'; label?: string }) {
   const won = (t: Team | null) => !!match.winner && !!t && match.winner.name === t.name
   return (
@@ -296,11 +296,11 @@ function MatchPair({ match, size = 'md', label }: { match: Match; size?: 'sm' | 
   )
 }
 
-/* ══════════════════════════════════════════════════════
+/* """"""""""""""""""""""""""""""""""""""""""""""""""""""
    ROUND COLUMN
    Uses absolute positioning so every pair sits at the
    exact pixel row computed by the geometry functions.
-   ══════════════════════════════════════════════════════ */
+   """""""""""""""""""""""""""""""""""""""""""""""""""""" */
 function RoundCol({
   label, matches, size = 'md', topPad = 0, gap = GAP,
 }: {
@@ -340,7 +340,7 @@ function RoundCol({
   )
 }
 
-/* ─── One half of the bracket ─── */
+/*  One half of the bracket  */
 function BracketHalf({
   r0, r1, r2, r3 = [], side, hasR32 = false,
 }: { r0: Match[]; r1: Match[]; r2: Match[]; r3?: Match[]; side: 'left' | 'right'; hasR32?: boolean }) {
@@ -350,13 +350,13 @@ function BracketHalf({
   // Determine the round labels based on match count and whether R32 exists
   const getRoundLabel = (_matches: Match[], index: number) => {
     if (hasR32) {
-      // 4-round bracket: R32 → R16 → QF → SF
+      // 4-round bracket: R32   R16   QF   SF
       if (index === 0) return 'Round of 32'
       if (index === 1) return 'Round of 16'
       if (index === 2) return 'Quarter Final'
       if (index === 3) return 'Semi Final'
     } else {
-      // 3-round bracket: R16 → QF → SF
+      // 3-round bracket: R16   QF   SF
       if (index === 0) return 'Round of 16'
       if (index === 1) return 'Quarter Final'
       if (index === 2) return 'Semi Final'
@@ -435,7 +435,7 @@ function BracketHalf({
 }
 
 
-/* ─── Main Page ─── */
+/*  Main Page  */
 export const KnockoutPage = () => {
   const { state } = useTournament()
   const playerMap = usePlayerMap()
@@ -488,7 +488,7 @@ export const KnockoutPage = () => {
         <div style={{
           fontSize: 'clamp(14px, 2.5vw, 18px)',
           letterSpacing: '8px',
-          color: 'rgba(168,85,247,0.45)',
+          color: 'rgba(245, 184, 0,0.45)',
           marginBottom: '12px',
         }}>✦ ✦ ✦</div>
         <h1 style={{
@@ -496,18 +496,18 @@ export const KnockoutPage = () => {
           fontSize: 'clamp(32px, 6vw, 52px)',
           fontWeight: 800,
           color: '#f0edf5',
-          textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+          textShadow: '0 0 28px rgba(245, 184, 0, 0.18)',
           letterSpacing: '3px',
           lineHeight: 1.1,
           margin: '16px 0',
         }}>
-          Welcome to <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>KNOCKOUT ARENA</span>
+          Welcome to <span style={{ color: '#F5B800', textShadow: '0 0 18px rgba(245, 184, 0,0.3)' }}>KNOCKOUT ARENA</span>
         </h1>
         <p style={{
           fontFamily: "'Rajdhani', sans-serif",
           fontSize: 'clamp(14px, 2vw, 16px)',
           letterSpacing: '2px',
-          color: 'rgba(216,180,254,0.6)',
+          color: 'rgba(245, 184, 0,0.6)',
           margin: '16px 0 0 0',
         }}>
           The knockout bracket will appear here once generated in the Admin panel
@@ -515,7 +515,7 @@ export const KnockoutPage = () => {
         <div style={{
           fontSize: 'clamp(14px, 2.5vw, 18px)',
           letterSpacing: '8px',
-          color: 'rgba(168,85,247,0.45)',
+          color: 'rgba(245, 184, 0,0.45)',
           marginTop: '12px',
         }}>✦ ✦ ✦</div>
       </section>
@@ -582,7 +582,7 @@ export const KnockoutPage = () => {
 
   return (
     <section className="bk-page">
-      {/* ── Title ── */}
+      {/*  Title  */}
       <div className="bk-header">
         <div className="bk-stars">✦ ✦ ✦ ✦ ✦</div>
         <div className="bk-eyebrow">{tournamentName}</div>
@@ -590,9 +590,9 @@ export const KnockoutPage = () => {
         <div className="bk-subtitle">FC Mobile Elimination Bracket</div>
       </div>
 
-      {/* ── Bracket ── */}
+      {/*  Bracket  */}
       <div className="bk-scroll-wrap">
-        <div className="bk-scroll-hint">← swipe to explore →</div>
+        <div className="bk-scroll-hint">↔ swipe to explore ↔</div>
         <div className="bk-bracket" style={{ minWidth: 'max-content', margin: '0 auto', position: 'relative' }}>
           <BracketHalf 
             r0={leftR32.length > 0 ? leftR32 : leftR16}  
@@ -620,3 +620,4 @@ export const KnockoutPage = () => {
     </section>
   )
 }
+

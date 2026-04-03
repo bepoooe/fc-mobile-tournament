@@ -394,16 +394,30 @@ const AppShell = () => {
     <div 
       className="min-h-screen text-white" 
       style={{ 
-        background: '#09090f',
+        background: '#080C18',
+        position: 'relative',
         display: 'flex',
         flexDirection: 'column',
       }}
     >
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          pointerEvents: 'none',
+          zIndex: 0,
+          backgroundImage: "url('https://res.cloudinary.com/ds3vepmkd/image/upload/f_auto,q_auto/v1/eoorox/event_specific_pictures/games/fifa_mobile')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
+          opacity: 0.08,
+        }}
+      />
       <header
         className="sticky top-0 z-40 backdrop-blur-md"
         style={{
-          borderBottom: '1px solid rgba(168,85,247,0.12)',
-          background: 'rgba(9,9,15,0.88)',
+          borderBottom: '1px solid rgba(245,184,0,0.18)',
+          background: 'rgba(8,12,24,0.88)',
           paddingTop: 'env(safe-area-inset-top)',
         }}
       >
@@ -415,7 +429,7 @@ const AppShell = () => {
                 fontSize: 'clamp(10px, 3vw, 13px)',
                 fontWeight: 700,
                 letterSpacing: '2px',
-                color: '#d8b4fe',
+                color: '#F5B800',
                 textTransform: 'uppercase' as const,
                 margin: 0,
                 lineHeight: 1.2,
@@ -427,7 +441,7 @@ const AppShell = () => {
               className="mt-0.5" 
               style={{ 
                 fontSize: 'clamp(8px, 1.8vw, 10px)',
-                color: 'rgba(184,176,200,0.7)',
+                color: 'rgba(245,184,0,0.72)',
                 margin: 0,
                 lineHeight: 1.2,
                 letterSpacing: '0.5px',
@@ -451,18 +465,18 @@ const AppShell = () => {
                   fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)',
                   border: `1px solid ${
                     page === item.key
-                      ? 'rgba(168,85,247,0.4)'
-                      : 'rgba(168,85,247,0.12)'
+                      ? 'rgba(245,184,0,0.4)'
+                      : 'rgba(245,184,0,0.14)'
                   }`,
                   background:
                     page === item.key
-                      ? 'rgba(168,85,247,0.12)'
-                      : 'rgba(24,20,34,0.5)',
+                      ? 'rgba(245,184,0,0.12)'
+                      : 'rgba(8,12,24,0.5)',
                   color:
-                    page === item.key ? '#d8b4fe' : 'rgba(184,176,200,0.8)',
+                    page === item.key ? '#F5B800' : 'rgba(245,184,0,0.75)',
                   boxShadow:
                     page === item.key
-                      ? '0 0 12px rgba(168,85,247,0.1)'
+                      ? '0 0 12px rgba(245,184,0,0.1)'
                       : 'none',
                   display: 'flex',
                   alignItems: 'center',
@@ -485,6 +499,8 @@ const AppShell = () => {
           paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))',
           paddingLeft: 'max(var(--spacing-md), env(safe-area-inset-left))',
           paddingRight: 'max(var(--spacing-md), env(safe-area-inset-right))',
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         <div
@@ -529,7 +545,7 @@ const GroupsPage = () => {
         <div style={{
           fontSize: 'clamp(14px, 2.5vw, 18px)',
           letterSpacing: '8px',
-          color: 'rgba(168,85,247,0.45)',
+          color: 'rgba(245, 184, 0,0.45)',
           marginBottom: '12px',
         }}>✦ ✦ ✦</div>
         <h1 style={{
@@ -537,18 +553,18 @@ const GroupsPage = () => {
           fontSize: 'clamp(32px, 6vw, 52px)',
           fontWeight: 800,
           color: '#f0edf5',
-          textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+          textShadow: '0 0 28px rgba(245, 184, 0, 0.18)',
           letterSpacing: '3px',
           lineHeight: 1.1,
           margin: '16px 0',
         }}>
-          Welcome to <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>GROUP STAGE</span>
+          Welcome to <span style={{ color: '#F5B800', textShadow: '0 0 18px rgba(245, 184, 0,0.3)' }}>GROUP STAGE</span>
         </h1>
         <p style={{
           fontFamily: "'Rajdhani', sans-serif",
           fontSize: 'clamp(14px, 2vw, 16px)',
           letterSpacing: '2px',
-          color: 'rgba(216,180,254,0.6)',
+          color: 'rgba(245, 184, 0,0.6)',
           margin: '16px 0 0 0',
         }}>
           Groups will appear here once generated in the Admin panel
@@ -556,7 +572,7 @@ const GroupsPage = () => {
         <div style={{
           fontSize: 'clamp(14px, 2.5vw, 18px)',
           letterSpacing: '8px',
-          color: 'rgba(168,85,247,0.45)',
+          color: 'rgba(245, 184, 0,0.45)',
           marginTop: '12px',
         }}>✦ ✦ ✦</div>
       </section>
@@ -570,14 +586,14 @@ const GroupsPage = () => {
         className="panel text-center space-y-2"
         style={{
           background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
-          border: '1px solid rgba(168,85,247,0.2)',
+          border: '1px solid rgba(245, 184, 0,0.2)',
           padding: 'clamp(1.5rem, 3vw, 2rem)',
         }}
       >
         <div style={{
           fontSize: 'clamp(10px, 2vw, 12px)',
           letterSpacing: '8px',
-          color: 'rgba(168,85,247,0.45)',
+          color: 'rgba(245, 184, 0,0.45)',
           marginBottom: '4px',
         }}>✦ ✦ ✦</div>
         <div style={{
@@ -585,7 +601,7 @@ const GroupsPage = () => {
           fontSize: 'clamp(9px, 1.8vw, 10px)',
           fontWeight: 700,
           letterSpacing: '6px',
-          color: 'rgba(216,180,254,0.65)',
+          color: 'rgba(245, 184, 0,0.65)',
           textTransform: 'uppercase' as const,
           marginBottom: '2px',
         }}>
@@ -596,12 +612,12 @@ const GroupsPage = () => {
           fontSize: 'clamp(24px, 5vw, 40px)',
           fontWeight: 800,
           color: '#f0edf5',
-          textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+          textShadow: '0 0 28px rgba(245, 184, 0, 0.18)',
           letterSpacing: '2px',
           lineHeight: 1.1,
           margin: '0.5rem 0 0 0',
         }}>
-          GROUP <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>STAGE</span>
+          GROUP <span style={{ color: '#F5B800', textShadow: '0 0 18px rgba(245, 184, 0,0.3)' }}>STAGE</span>
         </h1>
         <p style={{
           fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
@@ -622,7 +638,7 @@ const GroupsPage = () => {
               fontSize: 'clamp(11px, 3vw, 11px)',
               fontWeight: 700,
               letterSpacing: '3px',
-              color: '#d8b4fe',
+              color: '#F5B800',
               textTransform: 'uppercase' as const,
               margin: 0,
             }}
@@ -638,12 +654,12 @@ const GroupsPage = () => {
                       key={h}
                       className="px-1.5 sm:px-3 py-1.5 sm:py-2.5"
                       style={{
-                        color: 'rgba(168,85,247,0.7)',
+                        color: 'rgba(245, 184, 0,0.7)',
                         fontWeight: 600,
                         fontSize: 'clamp(7px, 2vw, 10px)',
                         letterSpacing: '0.5px',
                         textTransform: 'uppercase',
-                        borderBottom: '1px solid rgba(168,85,247,0.12)',
+                        borderBottom: '1px solid rgba(245, 184, 0,0.12)',
                         whiteSpace: 'nowrap',
                       }}
                     >
@@ -667,19 +683,19 @@ const GroupsPage = () => {
                       <tr
                         key={row.playerId}
                         style={{
-                          borderTop: '1px solid rgba(168,85,247,0.08)',
+                          borderTop: '1px solid rgba(245, 184, 0,0.08)',
                           background: useFullQualifierStyle
                             ? 'rgba(34, 197, 94, 0.15)'
                             : idx % 2 === 0
                             ? 'transparent'
-                            : 'rgba(168,85,247,0.03)',
+                            : 'rgba(245, 184, 0,0.03)',
                           borderLeft: isQualifier ? '3px solid rgba(34, 197, 94, 0.6)' : 'none',
                         }}
                       >
                         <td
                           className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-medium"
                           style={{
-                            color: useFullQualifierStyle ? '#86efac' : '#e9d5ff',
+                            color: useFullQualifierStyle ? '#86efac' : '#F5B800',
                             maxWidth: '80px',
                             fontSize: 'clamp(7px, 2vw, 0.875rem)',
                             overflow: 'hidden',
@@ -699,7 +715,7 @@ const GroupsPage = () => {
                         <td className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 text-center text-xs sm:text-sm">{row.gd}</td>
                         <td
                           className="px-1.5 sm:px-3 py-1.5 sm:py-2.5 font-semibold text-center text-xs sm:text-sm"
-                          style={{ color: useFullQualifierStyle ? '#86efac' : '#d8b4fe' }}
+                          style={{ color: useFullQualifierStyle ? '#86efac' : '#F5B800' }}
                         >
                           {row.points}
                         </td>
@@ -737,7 +753,7 @@ const FixturesPage = () => {
         <div style={{
           fontSize: 'clamp(14px, 2.5vw, 18px)',
           letterSpacing: '8px',
-          color: 'rgba(168,85,247,0.45)',
+          color: 'rgba(245, 184, 0,0.45)',
           marginBottom: '12px',
         }}>✦ ✦ ✦</div>
         <h1 style={{
@@ -745,18 +761,18 @@ const FixturesPage = () => {
           fontSize: 'clamp(32px, 6vw, 52px)',
           fontWeight: 800,
           color: '#f0edf5',
-          textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+          textShadow: '0 0 28px rgba(245, 184, 0, 0.18)',
           letterSpacing: '3px',
           lineHeight: 1.1,
           margin: '16px 0',
         }}>
-          Welcome to <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>MATCH FIXTURES</span>
+          Welcome to <span style={{ color: '#F5B800', textShadow: '0 0 18px rgba(245, 184, 0,0.3)' }}>MATCH FIXTURES</span>
         </h1>
         <p style={{
           fontFamily: "'Rajdhani', sans-serif",
           fontSize: 'clamp(14px, 2vw, 16px)',
           letterSpacing: '2px',
-          color: 'rgba(216,180,254,0.6)',
+          color: 'rgba(245, 184, 0,0.6)',
           margin: '16px 0 0 0',
         }}>
           Fixtures will appear here once groups are confirmed in the Admin panel
@@ -764,7 +780,7 @@ const FixturesPage = () => {
         <div style={{
           fontSize: 'clamp(14px, 2.5vw, 18px)',
           letterSpacing: '8px',
-          color: 'rgba(168,85,247,0.45)',
+          color: 'rgba(245, 184, 0,0.45)',
           marginTop: '12px',
         }}>✦ ✦ ✦</div>
       </section>
@@ -778,14 +794,14 @@ const FixturesPage = () => {
         className="panel text-center space-y-2"
         style={{
           background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
-          border: '1px solid rgba(168,85,247,0.2)',
+          border: '1px solid rgba(245, 184, 0,0.2)',
           padding: 'clamp(1.5rem, 3vw, 2rem)',
         }}
       >
         <div style={{
           fontSize: 'clamp(10px, 2vw, 12px)',
           letterSpacing: '8px',
-          color: 'rgba(168,85,247,0.45)',
+          color: 'rgba(245, 184, 0,0.45)',
           marginBottom: '4px',
         }}>✦ ✦ ✦</div>
         <div style={{
@@ -793,7 +809,7 @@ const FixturesPage = () => {
           fontSize: 'clamp(9px, 1.8vw, 10px)',
           fontWeight: 700,
           letterSpacing: '6px',
-          color: 'rgba(216,180,254,0.65)',
+          color: 'rgba(245, 184, 0,0.65)',
           textTransform: 'uppercase' as const,
           marginBottom: '2px',
         }}>
@@ -804,12 +820,12 @@ const FixturesPage = () => {
           fontSize: 'clamp(24px, 5vw, 40px)',
           fontWeight: 800,
           color: '#f0edf5',
-          textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+          textShadow: '0 0 28px rgba(245, 184, 0, 0.18)',
           letterSpacing: '2px',
           lineHeight: 1.1,
           margin: '0.5rem 0 0 0',
         }}>
-          MATCH <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>FIXTURES</span>
+          MATCH <span style={{ color: '#F5B800', textShadow: '0 0 18px rgba(245, 184, 0,0.3)' }}>FIXTURES</span>
         </h1>
         <p style={{
           fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
@@ -833,12 +849,12 @@ const FixturesPage = () => {
               alignItems: 'center',
               gap: '12px',
               paddingBottom: '12px',
-              borderBottom: '1px solid rgba(168,85,247,0.1)',
+              borderBottom: '1px solid rgba(245, 184, 0,0.1)',
             }}>
               <div style={{
                 width: '4px',
                 height: '24px',
-                background: 'linear-gradient(180deg, rgba(168,85,247,0.6), rgba(236,72,153,0.5))',
+                background: 'linear-gradient(180deg, rgba(245, 184, 0,0.6), rgba(245, 184, 0,0.5))',
                 borderRadius: '4px',
               }}></div>
               <h3
@@ -847,7 +863,7 @@ const FixturesPage = () => {
                   fontSize: 'clamp(11px, 3vw, 13px)',
                   fontWeight: 700,
                   letterSpacing: '2px',
-                  color: '#d8b4fe',
+                  color: '#F5B800',
                   textTransform: 'uppercase' as const,
                   margin: 0,
                 }}
@@ -857,7 +873,7 @@ const FixturesPage = () => {
               <div style={{
                 marginLeft: 'auto',
                 fontSize: '11px',
-                color: 'rgba(168,85,247,0.6)',
+                color: 'rgba(245, 184, 0,0.6)',
                 letterSpacing: '1px',
               }}>
                 {groupFixtures.length} Match{groupFixtures.length !== 1 ? 'es' : ''}
@@ -869,26 +885,26 @@ const FixturesPage = () => {
                   key={fixture.id}
                   className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg px-3 sm:px-4 py-3 sm:py-3 text-xs sm:text-sm transition-all duration-200 hover:border-opacity-50"
                   style={{
-                    border: `1px solid ${fixture.completed ? 'rgba(16,185,129,0.3)' : 'rgba(168,85,247,0.15)'}`,
+                    border: `1px solid ${fixture.completed ? 'rgba(16,185,129,0.3)' : 'rgba(245, 184, 0,0.15)'}`,
                     background: fixture.completed
                       ? 'linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.03) 100%)'
-                      : 'linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(24,20,34,0.8) 100%)',
+                      : 'linear-gradient(135deg, rgba(245, 184, 0,0.06) 0%, rgba(24,20,34,0.8) 100%)',
                     backdropFilter: 'blur(4px)',
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#e9d5ff', fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)', wordBreak: 'break-word', fontWeight: 500 }}>
+                    <div style={{ color: '#F5B800', fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)', wordBreak: 'break-word', fontWeight: 500 }}>
                       {playerMap[fixture.homeId]?.name}
                     </div>
-                    <div style={{ color: 'rgba(168,85,247,0.4)', fontSize: '10px', margin: '4px 0', letterSpacing: '1px' }}>vs</div>
-                    <div style={{ color: '#e9d5ff', fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)', wordBreak: 'break-word', fontWeight: 500 }}>
+                    <div style={{ color: 'rgba(245, 184, 0,0.4)', fontSize: '10px', margin: '4px 0', letterSpacing: '1px' }}>vs</div>
+                    <div style={{ color: '#F5B800', fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)', wordBreak: 'break-word', fontWeight: 500 }}>
                       {playerMap[fixture.awayId]?.name}
                     </div>
                   </div>
                   <div
                     className="font-semibold whitespace-nowrap px-3 py-1.5 rounded-lg"
                     style={{
-                      background: fixture.completed ? 'rgba(16,185,129,0.12)' : 'rgba(168,85,247,0.08)',
+                      background: fixture.completed ? 'rgba(16,185,129,0.12)' : 'rgba(245, 184, 0,0.08)',
                       color: fixture.completed ? '#6ee7b7' : 'rgba(184,176,200,0.7)',
                       fontSize: fixture.completed ? 'clamp(0.75rem, 1.5vw, 0.875rem)' : '10px',
                       letterSpacing: fixture.completed ? '1px' : '2px',
@@ -1208,7 +1224,7 @@ const StatsWelcomeState = ({ title, message }: { title: string; message: string 
       style={{
         fontSize: 'clamp(14px, 2.5vw, 18px)',
         letterSpacing: '8px',
-        color: 'rgba(168,85,247,0.45)',
+        color: 'rgba(245, 184, 0,0.45)',
         marginBottom: '12px',
       }}
     >
@@ -1220,20 +1236,20 @@ const StatsWelcomeState = ({ title, message }: { title: string; message: string 
         fontSize: 'clamp(32px, 6vw, 52px)',
         fontWeight: 800,
         color: '#f0edf5',
-        textShadow: '0 0 28px rgba(168, 85, 247, 0.18)',
+        textShadow: '0 0 28px rgba(245, 184, 0, 0.18)',
         letterSpacing: '3px',
         lineHeight: 1.1,
         margin: '16px 0',
       }}
     >
-      Welcome to <span style={{ color: '#d8b4fe', textShadow: '0 0 18px rgba(168,85,247,0.3)' }}>{title}</span>
+      Welcome to <span style={{ color: '#F5B800', textShadow: '0 0 18px rgba(245, 184, 0,0.3)' }}>{title}</span>
     </h1>
     <p
       style={{
         fontFamily: "'Rajdhani', sans-serif",
         fontSize: 'clamp(14px, 2vw, 16px)',
         letterSpacing: '2px',
-        color: 'rgba(216,180,254,0.6)',
+        color: 'rgba(245, 184, 0,0.6)',
         margin: '16px 0 0 0',
       }}
     >
@@ -1243,7 +1259,7 @@ const StatsWelcomeState = ({ title, message }: { title: string; message: string 
       style={{
         fontSize: 'clamp(14px, 2.5vw, 18px)',
         letterSpacing: '8px',
-        color: 'rgba(168,85,247,0.45)',
+        color: 'rgba(245, 184, 0,0.45)',
         marginTop: '12px',
       }}
     >
@@ -1251,12 +1267,11 @@ const StatsWelcomeState = ({ title, message }: { title: string; message: string 
     </div>
   </section>
 )
-
 const RULES_SECTIONS = [
   {
     title: 'General Guidelines',
     rules: [
-      'Platform: EA SPORTS FC™ Mobile (FIFA Mobile)',
+      'Platform: EA SPORTS FC Mobile (FIFA Mobile)',
       'Game Mode: Head-to-Head (H2H) Friendly Match',
       'Tournament Format: Multi-stage tournament consisting of a Group Stage (League System) followed by Knockout Rounds',
       'Matchmaking: OVR-based matchmaking/seeding may be used where applicable',
@@ -1325,7 +1340,7 @@ const RulesPage = () => (
         fontSize: 'clamp(13px, 4vw, 14px)',
         fontWeight: 700,
         letterSpacing: '4px',
-        color: '#d8b4fe',
+        color: '#F5B800',
         textTransform: 'uppercase' as const,
         margin: 0,
       }}
@@ -1342,11 +1357,11 @@ const RulesPage = () => (
               fontSize: 'clamp(11px, 3vw, 12px)',
               fontWeight: 700,
               letterSpacing: '2px',
-              color: '#ec4899',
+              color: '#F5B800',
               textTransform: 'uppercase' as const,
               margin: 0,
               paddingBottom: '0.5rem',
-              borderBottom: '2px solid rgba(236,72,153,0.3)',
+              borderBottom: '2px solid rgba(245, 184, 0,0.3)',
             }}
           >
             {section.title}
@@ -1356,9 +1371,9 @@ const RulesPage = () => (
             {section.rules.map((rule, ruleIdx) => (
               <div
                 key={ruleIdx}
-                className="flex items-start gap-2.5 sm:gap-3 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 transition-all duration-200 hover:border-purple-400/30"
+                className="flex items-start gap-2 sm:gap-3 rounded-lg px-2.5 sm:px-4 py-2 sm:py-2.5 transition-all duration-200 hover:border-amber-400/30 overflow-hidden"
                 style={{
-                  border: '1px solid rgba(168,85,247,0.15)',
+                  border: '1px solid rgba(245, 184, 0,0.15)',
                   background: 'rgba(24,20,34,0.3)',
                 }}
               >
@@ -1367,8 +1382,8 @@ const RulesPage = () => (
                     fontFamily: "'Orbitron', sans-serif",
                     fontSize: 'clamp(7px, 1.5vw, 8px)',
                     fontWeight: 700,
-                    color: 'rgba(236,72,153,0.6)',
-                    minWidth: '20px',
+                    color: 'rgba(245, 184, 0,0.6)',
+                    minWidth: 'clamp(14px, 3vw, 20px)',
                     paddingTop: '2px',
                     flexShrink: 0,
                   }}
@@ -1380,6 +1395,7 @@ const RulesPage = () => (
                     color: 'var(--text-secondary)',
                     fontSize: 'clamp(0.8rem, 2.5vw, 0.875rem)',
                     lineHeight: '1.5',
+                    wordBreak: 'break-word',
                   }}
                 >
                   {rule}
@@ -1434,8 +1450,11 @@ const AdminPage = () => {
                 setPassword(event.target.value)
                 if (authError) setAuthError('')
               }}
-              className="input"
+              className="input input-mascot"
               placeholder="Enter admin password"
+              style={{
+                backgroundImage: "url('https://res.cloudinary.com/ds3vepmkd/image/upload/f_auto,q_auto/v1/eoorox/PIXELATED%20EVENT%20MASCOTS/FIFA%20Mobile')",
+              }}
             />
             {authError && <p className="text-xs text-red-300">{authError}</p>}
             <button className="btn-primary" type="submit">
@@ -1458,10 +1477,10 @@ const AdminPage = () => {
             className="rounded-lg px-2 sm:px-3 py-2 text-xs uppercase tracking-wider transition-all duration-200 touch-manipulation flex-1 min-w-fit sm:flex-initial min-h-[44px] flex items-center justify-center"
             style={{
               border: `1px solid ${
-                adminTab === tab ? 'rgba(168,85,247,0.35)' : 'rgba(168,85,247,0.12)'
+                adminTab === tab ? 'rgba(245, 184, 0,0.35)' : 'rgba(245, 184, 0,0.12)'
               }`,
-              background: adminTab === tab ? 'rgba(168,85,247,0.1)' : 'rgba(24,20,34,0.4)',
-              color: adminTab === tab ? '#d8b4fe' : 'rgba(184,176,200,0.7)',
+              background: adminTab === tab ? 'rgba(245, 184, 0,0.1)' : 'rgba(24,20,34,0.4)',
+              color: adminTab === tab ? '#F5B800' : 'rgba(184,176,200,0.7)',
               fontSize: 'clamp(0.65rem, 2vw, 0.75rem)',
             }}
           >
@@ -2298,7 +2317,7 @@ const BracketRearrangement = ({
                 onClick={() => handlePlayerSelect(playerId)}
                 className={`relative p-3 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 ${
                   isSelected
-                    ? 'bg-gradient-to-br from-neonPurple to-purple-600 text-white shadow-lg shadow-neonPurple/50 scale-105'
+                    ? 'bg-gradient-to-br from-neonPurple to-amber-500 text-white shadow-lg shadow-neonPurple/50 scale-105'
                     : 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700 border border-zinc-700 hover:border-neonPurple/50'
                 }`}
               >
@@ -2322,7 +2341,7 @@ const BracketRearrangement = ({
           disabled={selectedPlayers.length !== 2}
           className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all duration-200 ${
             selectedPlayers.length === 2
-              ? 'bg-gradient-to-r from-neonPurple to-purple-600 text-white hover:shadow-lg hover:shadow-neonPurple/50 active:scale-95'
+              ? 'bg-gradient-to-r from-neonPurple to-amber-500 text-white hover:shadow-lg hover:shadow-neonPurple/50 active:scale-95'
               : 'bg-zinc-700 text-zinc-400 cursor-not-allowed opacity-50'
           }`}
         >
@@ -2582,12 +2601,12 @@ const ScoreLegInput = ({
     <div
       className="rounded border p-2 sm:p-3 text-xs space-y-2"
       style={{
-        borderColor: isSaved ? 'rgba(34,197,94,0.45)' : 'rgba(168,85,247,0.2)',
+        borderColor: isSaved ? 'rgba(34,197,94,0.45)' : 'rgba(245, 184, 0,0.2)',
         background: isSaved ? 'rgba(34,197,94,0.07)' : 'rgba(9,9,15,0.4)',
       }}
     >
       {/* Label row */}
-      <p className="text-[10px] font-semibold tracking-widest uppercase" style={{ color: 'rgba(168,85,247,0.7)' }}>
+      <p className="text-[10px] font-semibold tracking-widest uppercase" style={{ color: 'rgba(245, 184, 0,0.7)' }}>
         {label}
       </p>
       {/* Score entry row */}
@@ -2596,7 +2615,7 @@ const ScoreLegInput = ({
         <div className="flex flex-col items-center gap-1 flex-1 sm:flex-initial">
           <span
             className="text-[10px] text-center leading-tight truncate w-full"
-            style={{ color: isSaved ? 'rgba(134,239,172,0.9)' : 'rgba(216,180,254,0.8)' }}
+            style={{ color: isSaved ? 'rgba(134,239,172,0.9)' : 'rgba(245, 184, 0,0.8)' }}
             title={homePlayerName}
           >
             {homePlayerName}
@@ -2619,7 +2638,7 @@ const ScoreLegInput = ({
         <div className="flex flex-col items-center gap-1 flex-1 sm:flex-initial">
           <span
             className="text-[10px] text-center leading-tight truncate w-full"
-            style={{ color: isSaved ? 'rgba(134,239,172,0.9)' : 'rgba(216,180,254,0.8)' }}
+            style={{ color: isSaved ? 'rgba(134,239,172,0.9)' : 'rgba(245, 184, 0,0.8)' }}
             title={awayPlayerName}
           >
             {awayPlayerName}
@@ -2792,3 +2811,4 @@ const App = () => (
 )
 
 export default App
+

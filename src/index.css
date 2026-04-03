@@ -1,15 +1,15 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   color-scheme: dark;
-  --glow-pink: rgba(255, 0, 255, 0.35);
-  --glow-purple: rgba(168, 85, 247, 0.25);
+  --glow-pink: rgba(245, 184, 0, 0.35);
+  --glow-purple: rgba(245, 184, 0, 0.25);
   --surface: rgba(24, 20, 34, 0.82);
   --surface-hover: rgba(30, 24, 42, 0.88);
-  --border-muted: rgba(168, 85, 247, 0.18);
-  --border-accent: rgba(236, 72, 153, 0.35);
+  --border-muted: rgba(245, 184, 0, 0.18);
+  --border-accent: rgba(245, 184, 0, 0.35);
   --text-primary: #f0edf5;
   --text-secondary: #b8b0c8;
   --text-muted: #8a8096;
@@ -44,10 +44,10 @@ body {
   color: var(--text-primary);
   overflow-x: hidden;
   background:
-    radial-gradient(ellipse at 10% 10%, rgba(168, 85, 247, 0.08), transparent 50%),
-    radial-gradient(ellipse at 90% 15%, rgba(236, 72, 153, 0.06), transparent 50%),
-    radial-gradient(ellipse at 50% 85%, rgba(16, 185, 129, 0.04), transparent 45%),
-    #09090f;
+    radial-gradient(ellipse at 10% 10%, rgba(232, 116, 10, 0.08), transparent 50%),
+    radial-gradient(ellipse at 90% 15%, rgba(245, 184, 0, 0.06), transparent 50%),
+    radial-gradient(ellipse at 50% 85%, rgba(232, 116, 10, 0.04), transparent 45%),
+    #080C18;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -55,7 +55,7 @@ body {
 }
 
 ::selection {
-  background: rgba(168, 85, 247, 0.3);
+  background: rgba(245, 184, 0, 0.3);
   color: #fff;
 }
 
@@ -67,11 +67,11 @@ body {
   }
 }
 
-/* ─── Scrollbar ─── */
+/* â”€â”€â”€ Scrollbar â”€â”€â”€ */
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(168, 85, 247, 0.5) rgba(24, 20, 34, 0.4);
+  scrollbar-color: rgba(245, 184, 0, 0.5) rgba(24, 20, 34, 0.4);
 }
 
 *::-webkit-scrollbar {
@@ -84,16 +84,16 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(168, 85, 247, 0.6), rgba(236, 72, 153, 0.5));
+  background: linear-gradient(180deg, rgba(245, 184, 0, 0.6), rgba(245, 184, 0, 0.5));
   border-radius: 9999px;
 }
 
-/* ─── Panels ─── */
+/* â”€â”€â”€ Panels â”€â”€â”€ */
 
 .panel {
   @apply rounded-xl border bg-zinc-900/70 backdrop-blur-sm transition-all duration-300;
   border-color: var(--border-muted);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(168, 85, 247, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(245, 184, 0, 0.05);
   padding: var(--spacing-md);
 }
 
@@ -104,11 +104,11 @@ body {
 }
 
 .panel:hover {
-  border-color: rgba(168, 85, 247, 0.3);
-  box-shadow: 0 2px 12px rgba(168, 85, 247, 0.08), 0 0 0 1px rgba(168, 85, 247, 0.1);
+  border-color: rgba(245, 184, 0, 0.3);
+  box-shadow: 0 2px 12px rgba(245, 184, 0, 0.08), 0 0 0 1px rgba(245, 184, 0, 0.1);
 }
 
-/* ─── Inputs ─── */
+/* â”€â”€â”€ Inputs â”€â”€â”€ */
 
 .input {
   @apply w-full rounded-lg border bg-zinc-950/80 outline-none transition-all duration-200;
@@ -130,11 +130,26 @@ body {
 }
 
 .input:focus {
-  border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
+  border-color: rgba(245, 184, 0, 0.5);
+  box-shadow: 0 0 0 3px rgba(245, 184, 0, 0.12);
 }
 
-/* ─── Buttons ─── */
+.input-mascot {
+  padding-right: 52px;
+  background-repeat: no-repeat;
+  background-size: 34px 34px;
+  background-position: right 10px center;
+}
+
+@media (max-width: 640px) {
+  .input-mascot {
+    padding-right: 44px;
+    background-size: 26px 26px;
+    background-position: right 8px center;
+  }
+}
+
+/* â”€â”€â”€ Buttons â”€â”€â”€ */
 
 .btn-primary,
 .btn-secondary,
@@ -156,16 +171,16 @@ body {
 }
 
 .btn-primary {
-  border-color: rgba(236, 72, 153, 0.45);
-  background: rgba(236, 72, 153, 0.1);
-  color: #f9a8d4;
+  border-color: rgba(245, 184, 0, 0.45);
+  background: rgba(245, 184, 0, 0.1);
+  color: #F5B800;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: rgba(236, 72, 153, 0.18);
-  border-color: rgba(236, 72, 153, 0.55);
+  background: rgba(245, 184, 0, 0.18);
+  border-color: rgba(245, 184, 0, 0.55);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(236, 72, 153, 0.12);
+  box-shadow: 0 4px 14px rgba(245, 184, 0, 0.12);
 }
 
 .btn-primary:active:not(:disabled) {
@@ -174,15 +189,15 @@ body {
 
 .btn-secondary {
   border-color: var(--border-muted);
-  background: rgba(168, 85, 247, 0.06);
+  background: rgba(245, 184, 0, 0.06);
   color: var(--text-secondary);
 }
 
 .btn-secondary:hover {
-  border-color: rgba(168, 85, 247, 0.35);
-  color: #d8b4fe;
+  border-color: rgba(245, 184, 0, 0.35);
+  color: #F5B800;
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.08);
+  box-shadow: 0 4px 14px rgba(245, 184, 0, 0.08);
 }
 
 .btn-secondary:active {
@@ -201,16 +216,16 @@ body {
   transform: translateY(-1px);
 }
 
-/* ─── Focus ─── */
+/* â”€â”€â”€ Focus â”€â”€â”€ */
 
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid rgba(168, 85, 247, 0.6);
+  outline: 2px solid rgba(245, 184, 0, 0.6);
   outline-offset: 2px;
 }
 
-/* ─── Score Input ─── */
+/* â”€â”€â”€ Score Input â”€â”€â”€ */
 
 .input-score {
   font-size: 0.875rem;
@@ -227,7 +242,7 @@ select:focus-visible {
   }
 }
 
-/* ─── Section Typography ─── */
+/* â”€â”€â”€ Section Typography â”€â”€â”€ */
 
 .section-heading {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
@@ -235,7 +250,7 @@ select:focus-visible {
   font-weight: 700;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: #d8b4fe;
+  color: #F5B800;
   margin: 0;
 }
 
@@ -245,7 +260,7 @@ select:focus-visible {
   color: var(--text-secondary);
 }
 
-/* ─── Status Chip ─── */
+/* â”€â”€â”€ Status Chip â”€â”€â”€ */
 
 .status-chip {
   @apply inline-flex items-center rounded-full border font-semibold uppercase tracking-wider;
@@ -262,7 +277,7 @@ select:focus-visible {
   letter-spacing: clamp(1px, 0.5vw, 1.5px);
 }
 
-/* ─── Animations ─── */
+/* â”€â”€â”€ Animations â”€â”€â”€ */
 
 .fade-in {
   animation: fadeIn 0.4s ease-out;
@@ -279,7 +294,7 @@ select:focus-visible {
   }
 }
 
-/* ────────── KNOCKOUT BRACKET — DESKTOP FIRST ──────────*/
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ KNOCKOUT BRACKET â€” DESKTOP FIRST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 
 .bk-page {
   position: relative;
@@ -289,13 +304,13 @@ select:focus-visible {
   flex-direction: column;
   align-items: center;
   overflow: hidden;
-  border: 1px solid rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(245, 184, 0, 0.15);
   border-radius: 20px;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.1) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 90%, rgba(236, 72, 153, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 0%, rgba(245, 184, 0, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(245, 184, 0, 0.06) 0%, transparent 50%),
     linear-gradient(180deg, rgba(12, 8, 20, 0.97) 0%, rgba(8, 6, 16, 0.99) 100%);
-  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.05), 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 1px rgba(245, 184, 0, 0.05), 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
 @media (min-width: 768px) {
@@ -313,7 +328,7 @@ select:focus-visible {
 .bk-stars {
   font-size: 11px;
   letter-spacing: 8px;
-  color: rgba(168, 85, 247, 0.45);
+  color: rgba(245, 184, 0, 0.45);
   margin-bottom: 2px;
 }
 
@@ -322,7 +337,7 @@ select:focus-visible {
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 6px;
-  color: rgba(216, 180, 254, 0.65);
+  color: rgba(245, 184, 0, 0.65);
   text-transform: uppercase;
   margin-bottom: 1px;
 }
@@ -332,15 +347,15 @@ select:focus-visible {
   font-size: clamp(20px, 3.5vw, 36px);
   font-weight: 800;
   color: #f0edf5;
-  text-shadow: 0 0 28px rgba(168, 85, 247, 0.18);
+  text-shadow: 0 0 28px rgba(245, 184, 0, 0.18);
   letter-spacing: 3px;
   line-height: 1.1;
   margin: 0;
 }
 
 .bk-title span {
-  color: #d8b4fe;
-  text-shadow: 0 0 18px rgba(168, 85, 247, 0.3);
+  color: #F5B800;
+  text-shadow: 0 0 18px rgba(245, 184, 0, 0.3);
 }
 
 .bk-subtitle {
@@ -352,7 +367,7 @@ select:focus-visible {
   margin-top: 4px;
 }
 
-/* ── Main bracket row ── */
+/* â”€â”€ Main bracket row â”€â”€ */
 
 .bk-bracket {
   display: flex;
@@ -384,7 +399,7 @@ select:focus-visible {
 .bk-col--sm { width: 150px; }
 .bk-col--lg { width: 175px; }
 
-/* ── Round label ── */
+/* â”€â”€ Round label â”€â”€ */
 .bk-label {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
   font-size: 7px;
@@ -397,14 +412,14 @@ select:focus-visible {
   white-space: nowrap;
 }
 
-/* ── Match pair (R16 / QF / SF) — bare slots, no outer box ── */
+/* â”€â”€ Match pair (R16 / QF / SF) â€” bare slots, no outer box â”€â”€ */
 .bk-pair {
   flex: 0 0 auto;
   overflow: hidden;
   position: relative;
   width: 100%;
   background: linear-gradient(145deg, rgba(22, 16, 34, 0.92) 0%, rgba(12, 8, 22, 0.96) 100%);
-  border: 1px solid rgba(168, 85, 247, 0.22);
+  border: 1px solid rgba(245, 184, 0, 0.22);
   border-radius: 7px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
@@ -412,10 +427,10 @@ select:focus-visible {
 .bk-pair--sm,
 .bk-pair--lg { width: 100%; }
 
-/* ── Final card only — keeps the styled bordered box ── */
+/* â”€â”€ Final card only â€” keeps the styled bordered box â”€â”€ */
 .bk-card {
   background: linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%);
-  border: 1px solid rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(245, 184, 0, 0.2);
   border-radius: 7px;
   overflow: hidden;
   flex: 0 0 auto;
@@ -429,19 +444,19 @@ select:focus-visible {
 
 .bk-card--final {
   background: linear-gradient(145deg, rgba(40, 22, 62, 0.97) 0%, rgba(18, 10, 32, 0.99) 100%);
-  border: 1px solid rgba(168, 85, 247, 0.32);
+  border: 1px solid rgba(245, 184, 0, 0.32);
   border-radius: 9px;
   width: 165px;
-  box-shadow: 0 0 22px rgba(168, 85, 247, 0.1), 0 4px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 22px rgba(245, 184, 0, 0.1), 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
-/* ── Match divider ── */
+/* â”€â”€ Match divider â”€â”€ */
 .bk-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.25), transparent);
+  background: linear-gradient(90deg, transparent, rgba(245, 184, 0, 0.25), transparent);
 }
 
-/* ── Team rows ── */
+/* â”€â”€ Team rows â”€â”€ */
 .bk-row {
   display: flex;
   align-items: center;
@@ -454,11 +469,11 @@ select:focus-visible {
 }
 
 .bk-row--win {
-  background: linear-gradient(90deg, rgba(168, 85, 247, 0.14), transparent);
+  background: linear-gradient(90deg, rgba(245, 184, 0, 0.14), transparent);
 }
 
 .bk-row--win .bk-name {
-  color: #e9d5ff;
+  color: #F5B800;
 }
 
 .bk-row--empty {
@@ -512,7 +527,7 @@ select:focus-visible {
   opacity: 0;
 }
 
-/* ── Center block ── */
+/* â”€â”€ Center block â”€â”€ */
 .bk-center {
   position: relative;
   display: flex;
@@ -551,7 +566,7 @@ select:focus-visible {
   }
 }
 
-/* ── Champion banner ── */
+/* â”€â”€ Champion banner â”€â”€ */
 .bk-champion {
   margin-top: 14px;
   text-align: center;
@@ -576,12 +591,12 @@ select:focus-visible {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
   font-size: clamp(16px, 3vw, 26px);
   font-weight: 800;
-  color: #d8b4fe;
-  text-shadow: 0 0 18px rgba(168, 85, 247, 0.4);
+  color: #F5B800;
+  text-shadow: 0 0 18px rgba(245, 184, 0, 0.4);
   letter-spacing: 3px;
 }
 
-/* ── Footer note ── */
+/* â”€â”€ Footer note â”€â”€ */
 .bk-note {
   font-size: 8px;
   color: var(--text-muted);
@@ -595,7 +610,7 @@ select:focus-visible {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
 }
 
-/* ────────── ADDITIONAL MOBILE OPTIMIZATIONS ──────────*/
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ADDITIONAL MOBILE OPTIMIZATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 
 /* Touch-friendly tap targets */
 button, a, input[type="checkbox"], input[type="radio"] {
@@ -679,9 +694,9 @@ table {
   }
 }
 
-/* ────────── MOBILE OPTIMIZATIONS FOR KNOCKOUT BRACKET ──────────*/
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ MOBILE OPTIMIZATIONS FOR KNOCKOUT BRACKET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 
-/* Scrollable bracket wrapper — allows horizontal pan on mobile */
+/* Scrollable bracket wrapper â€” allows horizontal pan on mobile */
 .bk-scroll-wrap {
   width: 100%;
   overflow-x: auto;
@@ -700,7 +715,7 @@ table {
   font-family: 'Orbitron', 'Rajdhani', sans-serif;
   font-size: 8px;
   letter-spacing: 2px;
-  color: rgba(168, 85, 247, 0.5);
+  color: rgba(245, 184, 0, 0.5);
   text-transform: uppercase;
   text-align: center;
   margin-bottom: 6px;
@@ -816,7 +831,7 @@ table {
   .bk-champion__name { font-size: clamp(14px, 2.5vw, 20px); }
 }
 
-/* ────────── MOBILE OPTIMIZATIONS FOR HEADER/NAVBAR ──────────*/
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ MOBILE OPTIMIZATIONS FOR HEADER/NAVBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 
 @media (max-width: 640px) {
   header {
@@ -829,7 +844,7 @@ table {
   }
 }
 
-/* ────────── ADMIN PAGE MOBILE OPTIMIZATIONS ──────────*/
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ADMIN PAGE MOBILE OPTIMIZATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 
 /* Improve table scrolling on mobile */
 .panel.overflow-x-auto {
@@ -854,7 +869,7 @@ table {
   .panel.overflow-x-auto tr {
     display: flex;
     flex-wrap: wrap;
-    border-bottom: 1px solid rgba(168, 85, 247, 0.15);
+    border-bottom: 1px solid rgba(245, 184, 0, 0.15);
   }
 
   .panel.overflow-x-auto th,
@@ -866,7 +881,7 @@ table {
   }
 
   .panel.overflow-x-auto th {
-    background: rgba(168, 85, 247, 0.08);
+    background: rgba(245, 184, 0, 0.08);
     font-weight: 700;
   }
 
