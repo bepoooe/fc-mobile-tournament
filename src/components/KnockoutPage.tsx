@@ -473,9 +473,9 @@ export const KnockoutPage = () => {
   const champion = useMemo(() => toTeam(state.championId, playerMap), [state.championId, playerMap])
 
   const disabledView = (
-      <section 
+      <section
+        className="welcome-mascot-bg"
         style={{
-          background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
           minHeight: 'calc(100vh - 120px)',
           display: 'flex',
           flexDirection: 'column',

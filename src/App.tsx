@@ -530,9 +530,9 @@ const GroupsPage = () => {
 
   if (!state.groups.length) {
     return (
-      <section 
+      <section
+        className="welcome-mascot-bg"
         style={{
-          background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
           minHeight: 'calc(100vh - 120px)',
           display: 'flex',
           flexDirection: 'column',
@@ -738,9 +738,9 @@ const FixturesPage = () => {
 
   if (!state.fixtures.length) {
     return (
-      <section 
+      <section
+        className="welcome-mascot-bg"
         style={{
-          background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
           minHeight: 'calc(100vh - 120px)',
           display: 'flex',
           flexDirection: 'column',
@@ -1209,8 +1209,8 @@ const StatsPage = () => {
 
 const StatsWelcomeState = ({ title, message }: { title: string; message: string }) => (
   <section
+    className="welcome-mascot-bg"
     style={{
-      background: 'linear-gradient(145deg, rgba(24, 18, 38, 0.95) 0%, rgba(14, 9, 24, 0.98) 100%)',
       minHeight: 'calc(100vh - 120px)',
       display: 'flex',
       flexDirection: 'column',
