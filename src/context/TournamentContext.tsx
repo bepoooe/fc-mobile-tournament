@@ -203,7 +203,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      unsubscribe = subscribeRemoteTournamentState((remote) => {
+      const remoteUnsubscribe = await subscribeRemoteTournamentState((remote) => {
         const normalized = normalizeTournamentState(remote)
         const serialized = JSON.stringify(normalized)
         lastRemoteJsonRef.current = serialized
@@ -215,6 +215,10 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
         isApplyingRemoteRef.current = true
         setState(normalized)
       })
+
+      if (remoteUnsubscribe) {
+        unsubscribe = remoteUnsubscribe
+      }
     }
 
     void startSync()

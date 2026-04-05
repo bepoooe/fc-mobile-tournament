@@ -135,10 +135,10 @@ body {
 }
 
 .input-mascot {
-  padding-right: 52px;
+  padding-right: 92px;
   background-repeat: no-repeat;
   background-size: 34px 34px;
-  background-position: right 10px center;
+  background-position: right 48px center;
 }
 
 .welcome-mascot-bg {
@@ -152,9 +152,9 @@ body {
 
 @media (max-width: 640px) {
   .input-mascot {
-    padding-right: 44px;
+    padding-right: 84px;
     background-size: 26px 26px;
-    background-position: right 8px center;
+    background-position: right 44px center;
   }
 
   .welcome-mascot-bg {

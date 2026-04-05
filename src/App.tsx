@@ -1413,6 +1413,7 @@ const AdminPage = () => {
   const { state } = useTournament()
   const [authenticated, setAuthenticated] = useState(false)
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [adminTab, setAdminTab] = useState<AdminTab>('players')
   const [authError, setAuthError] = useState('')
 
@@ -1421,6 +1422,7 @@ const AdminPage = () => {
     if (password === state.settings.adminPassword) {
       setAuthenticated(true)
       setPassword('')
+      setShowPassword(false)
       setAuthError('')
     } else {
       setAuthError('Invalid password. Please try again.')
@@ -1442,19 +1444,43 @@ const AdminPage = () => {
         <div className="panel max-w-md w-full">
           <h2 className="section-heading">Admin Login</h2>
           <form onSubmit={onSubmit} className="mt-4 space-y-3">
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => {
-                setPassword(event.target.value)
-                if (authError) setAuthError('')
-              }}
-              className="input input-mascot"
-              placeholder="Enter admin password"
-              style={{
-                backgroundImage: "url('https://res.cloudinary.com/ds3vepmkd/image/upload/f_auto,q_auto/v1/eoorox/PIXELATED%20EVENT%20MASCOTS/FIFA%20Mobile')",
-              }}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value)
+                  if (authError) setAuthError('')
+                }}
+                className="input input-mascot pr-12"
+                placeholder="Enter admin password"
+                style={{
+                  backgroundImage: "url('https://res.cloudinary.com/ds3vepmkd/image/upload/f_auto,q_auto/v1/eoorox/PIXELATED%20EVENT%20MASCOTS/FIFA%20Mobile')",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                onMouseDown={(event) => event.preventDefault()}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 transition hover:bg-white/10"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M3 3l18 18" />
+                    <path d="M10.58 10.58A2 2 0 0 0 12 15a2 2 0 0 0 1.42-.58" />
+                    <path d="M9.88 5.09A10.94 10.94 0 0 1 12 5c5.5 0 9.5 7 9.5 7a18.36 18.36 0 0 1-3.2 4.1" />
+                    <path d="M6.1 6.1C3.8 7.7 2.5 12 2.5 12s2 7 9.5 7a10.94 10.94 0 0 0 4.12-.77" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
             {authError && <p className="text-xs text-red-300">{authError}</p>}
             <button className="btn-primary" type="submit">
               Login
@@ -1510,8 +1536,25 @@ const PlayerManagement = () => {
   const [name, setName] = useState('')
   const [ovr, setOvr] = useState<number>(90)
   const [editId, setEditId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const [excelLoading, setExcelLoading] = useState(false)
   const [feedback, setFeedback] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
+
+  const visiblePlayers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) {
+      return state.players
+    }
+
+    return state.players.filter((player) => {
+      const groupName = state.groups.find((group) => group.id === player.groupId)?.name ?? ''
+      return (
+        player.name.toLowerCase().includes(query) ||
+        String(player.ovr).includes(query) ||
+        groupName.toLowerCase().includes(query)
+      )
+    })
+  }, [searchQuery, state.groups, state.players])
 
   const confirmDeletePlayer = (playerId: string, playerName: string) => {
     const proceed = window.confirm(
@@ -1623,6 +1666,26 @@ const PlayerManagement = () => {
             Required columns: Player Name | OVR Rating {excelLoading ? '(processing...)' : ''}
           </span>
         </div>
+        <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+          <input
+            className="input"
+            type="search"
+            placeholder="Search players by name, OVR, or group"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
+          <button
+            type="button"
+            className="btn-secondary sm:justify-self-end"
+            onClick={() => setSearchQuery('')}
+            disabled={!searchQuery}
+          >
+            Clear Search
+          </button>
+        </div>
+        <p className="text-xs text-zinc-400">
+          Showing {visiblePlayers.length} of {state.players.length} players
+        </p>
         <form className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" onSubmit={submitPlayer}>
           <input
             className="input"
@@ -1668,7 +1731,7 @@ const PlayerManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {state.players.map((player) => (
+              {visiblePlayers.map((player) => (
                 <tr key={player.id} className="border-t border-neonPurple/20">
                   <td className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm truncate">{player.name}</td>
                   <td className="px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm">{player.ovr}</td>
@@ -1699,11 +1762,14 @@ const PlayerManagement = () => {
               ))}
             </tbody>
           </table>
+          {!visiblePlayers.length && (
+            <p className="px-2 py-4 text-sm text-zinc-400">No players match your search.</p>
+          )}
         </div>
 
         {/* Mobile card view */}
         <div className="sm:hidden space-y-2 p-2">
-          {state.players.map((player) => (
+          {visiblePlayers.map((player) => (
             <div key={player.id} className="rounded border border-neonPurple/30 bg-zinc-950/70 p-3 space-y-2">
               <div className="flex justify-between items-start gap-2">
                 <div className="flex-1 min-w-0">
@@ -1743,6 +1809,9 @@ const PlayerManagement = () => {
               </div>
             </div>
           ))}
+          {!visiblePlayers.length && (
+            <p className="px-1 py-4 text-sm text-zinc-400">No players match your search.</p>
+          )}
         </div>
       </div>
     </section>

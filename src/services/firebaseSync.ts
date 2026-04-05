@@ -1,12 +1,4 @@
-import { getApp, getApps, initializeApp, type FirebaseOptions } from 'firebase/app'
-import {
-  doc,
-  getDoc,
-  initializeFirestore,
-  onSnapshot,
-  serverTimestamp,
-  setDoc,
-} from 'firebase/firestore'
+import type { FirebaseOptions } from 'firebase/app'
 import type { TournamentState } from '../types'
 
 const firebaseConfig: FirebaseOptions = {
@@ -27,44 +19,57 @@ const hasFirebaseConfig = Boolean(
 
 const tournamentDocId = import.meta.env.VITE_FIREBASE_TOURNAMENT_DOC_ID || 'main'
 
-const app = hasFirebaseConfig
-  ? getApps().length
-    ? getApp()
-    : initializeApp(firebaseConfig)
-  : null
+type FirebaseModules = {
+  app: typeof import('firebase/app')
+  firestore: typeof import('firebase/firestore')
+}
 
-const db = app
-  ? initializeFirestore(app, {
-      experimentalAutoDetectLongPolling: true,
-      ignoreUndefinedProperties: true,
-    })
-  : null
+let firebaseModulesPromise: Promise<FirebaseModules> | null = null
 
-const getTournamentDocRef = () => {
-  if (!db) return null
-  return doc(db, 'tournaments', tournamentDocId)
+const loadFirebaseModules = async (): Promise<FirebaseModules> => {
+  if (!firebaseModulesPromise) {
+    firebaseModulesPromise = Promise.all([import('firebase/app'), import('firebase/firestore')]).then(
+      ([app, firestore]) => ({ app, firestore }),
+    )
+  }
+
+  return firebaseModulesPromise
 }
 
 export const isFirebaseSyncEnabled = hasFirebaseConfig
 
 export const fetchRemoteTournamentState = async (): Promise<TournamentState | null> => {
-  const ref = getTournamentDocRef()
-  if (!ref) return null
+  if (!hasFirebaseConfig) return null
 
-  const snapshot = await getDoc(ref)
+  const { app, firestore } = await loadFirebaseModules()
+  const firebaseApp = app.getApps().length ? app.getApp() : app.initializeApp(firebaseConfig)
+  const db = firestore.initializeFirestore(firebaseApp, {
+    experimentalAutoDetectLongPolling: true,
+    ignoreUndefinedProperties: true,
+  })
+  const ref = firestore.doc(db, 'tournaments', tournamentDocId)
+
+  const snapshot = await firestore.getDoc(ref)
   if (!snapshot.exists()) return null
 
   const data = snapshot.data() as { payload?: TournamentState }
   return data.payload ?? null
 }
 
-export const subscribeRemoteTournamentState = (
+export const subscribeRemoteTournamentState = async (
   onState: (state: TournamentState) => void,
-): (() => void) => {
-  const ref = getTournamentDocRef()
-  if (!ref) return () => {}
+): Promise<(() => void) | undefined> => {
+  if (!hasFirebaseConfig) return undefined
 
-  return onSnapshot(
+  const { app, firestore } = await loadFirebaseModules()
+  const firebaseApp = app.getApps().length ? app.getApp() : app.initializeApp(firebaseConfig)
+  const db = firestore.initializeFirestore(firebaseApp, {
+    experimentalAutoDetectLongPolling: true,
+    ignoreUndefinedProperties: true,
+  })
+  const ref = firestore.doc(db, 'tournaments', tournamentDocId)
+
+  return firestore.onSnapshot(
     ref,
     (snapshot) => {
       if (!snapshot.exists()) return
@@ -80,14 +85,21 @@ export const subscribeRemoteTournamentState = (
 }
 
 export const saveRemoteTournamentState = async (state: TournamentState): Promise<void> => {
-  const ref = getTournamentDocRef()
-  if (!ref) return
+  if (!hasFirebaseConfig) return
 
-  await setDoc(
+  const { app, firestore } = await loadFirebaseModules()
+  const firebaseApp = app.getApps().length ? app.getApp() : app.initializeApp(firebaseConfig)
+  const db = firestore.initializeFirestore(firebaseApp, {
+    experimentalAutoDetectLongPolling: true,
+    ignoreUndefinedProperties: true,
+  })
+  const ref = firestore.doc(db, 'tournaments', tournamentDocId)
+
+  await firestore.setDoc(
     ref,
     {
       payload: state,
-      updatedAt: serverTimestamp(),
+      updatedAt: firestore.serverTimestamp(),
     },
     { merge: true },
   )
