@@ -1441,7 +1441,6 @@ const AdminPage = () => {
       >
         <div className="panel max-w-md w-full">
           <h2 className="section-heading">Admin Login</h2>
-          <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Default password: techstorm2025</p>
           <form onSubmit={onSubmit} className="mt-4 space-y-3">
             <input
               type="password"
