@@ -595,6 +595,7 @@ export const KnockoutPage = () => {
       team1: leftWinner,
       team2: rightWinner,
       winner: finalWinner,
+      aggregate: null,
     }
   }, [leftSF, rightSF, champion])
 
