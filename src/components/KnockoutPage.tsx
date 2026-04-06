@@ -4,7 +4,7 @@ import type { KnockoutTie } from '../types'
 
 /*  Types  */
 type Team = { name: string; logo: string }
-type Match = { id: string; team1: Team | null; team2: Team | null; winner: Team | null }
+type Match = { id: string; team1: Team | null; team2: Team | null; winner: Team | null; aggregate: string | null }
 type RoundSlice = { ties: KnockoutTie[] } | null | undefined
 
 const LOGOS: Record<string, string> = {
@@ -27,7 +27,28 @@ const toMatch = (tie: KnockoutTie, pm: Record<string, { name: string }>): Match 
   team1: toTeam(tie.playerAId, pm),
   team2: toTeam(tie.playerBId, pm),
   winner: toTeam(tie.winnerId, pm),
+  aggregate: getAggregateScore(tie),
 })
+
+const getAggregateScore = (tie: KnockoutTie): string | null => {
+  const { leg1, leg2 } = tie
+
+  if (
+    !leg1.completed ||
+    !leg2.completed ||
+    leg1.homeGoals === null ||
+    leg1.awayGoals === null ||
+    leg2.homeGoals === null ||
+    leg2.awayGoals === null
+  ) {
+    return null
+  }
+
+  const aggregateA = leg1.homeGoals + leg2.awayGoals
+  const aggregateB = leg1.awayGoals + leg2.homeGoals
+
+  return `${aggregateA}-${aggregateB}`
+}
 const splitHalf = (ties: KnockoutTie[]) => {
   const mid = Math.ceil(ties.length / 2)
   return { left: ties.slice(0, mid), right: ties.slice(mid) }
@@ -291,6 +312,7 @@ function MatchPair({ match, size = 'md', label }: { match: Match; size?: 'sm' | 
         <TeamRow team={match.team1} isWinner={won(match.team1)} />
         <div className="bk-divider" />
         <TeamRow team={match.team2} isWinner={won(match.team2)} />
+        {match.aggregate && <div className="bk-aggregate">{match.aggregate}</div>}
       </div>
     </div>
   )
