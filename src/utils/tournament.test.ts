@@ -5,6 +5,7 @@ import {
   createKnockout,
   getQualifiedPlayers,
   propagateKnockout,
+  resetKnockoutAfterRound,
   snakeDraftGroups,
 } from './tournament'
 import type { Fixture, Group, Player } from '../types'
@@ -130,6 +131,101 @@ describe('knockout generation and propagation', () => {
     const resolved = propagateKnockout(withFinalResults)
     expect(resolved.finalSeries?.championId).toBe(player1Id)
   })
+
+    it('allows an admin override to replace the automatic winner', () => {
+      const knockout = createKnockout(['p1', 'p2', 'p3', 'p4'], { p1: 1, p2: 9, p3: 5, p4: 7 })
+      const propagated = propagateKnockout(knockout)
+
+      const tie = propagated.rounds[0]?.ties.find(
+        (match) => match.playerAId && match.playerBId,
+      )
+      expect(tie).toBeTruthy()
+      if (!tie || !tie.playerAId || !tie.playerBId) return
+
+      const autoWinnerId = tie.playerAId
+      const manualWinnerId = tie.playerBId
+
+      const withResults = propagateKnockout({
+        ...propagated,
+        rounds: [
+          {
+            ...propagated.rounds[0],
+            ties: [
+              {
+                ...tie,
+                leg1: { homeGoals: 2, awayGoals: 1, completed: true },
+                leg2: { homeGoals: 0, awayGoals: 1, completed: true },
+              },
+            ],
+          },
+        ],
+      })
+
+      expect(withResults.rounds[0]?.ties[0]?.winnerId).toBe(autoWinnerId)
+
+      const overridden = propagateKnockout({
+        ...withResults,
+        rounds: [
+          {
+            ...withResults.rounds[0],
+            ties: [
+              {
+                ...withResults.rounds[0].ties[0],
+                manualWinnerId,
+              },
+            ],
+          },
+        ],
+      })
+
+      expect(overridden.rounds[0]?.ties[0]?.winnerId).toBe(manualWinnerId)
+    })
+
+    it('clears downstream rounds when a knockout winner changes', () => {
+      const knockout = createKnockout(['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'], {
+        p1: 1,
+        p2: 2,
+        p3: 3,
+        p4: 4,
+        p5: 5,
+        p6: 6,
+        p7: 7,
+        p8: 8,
+      })
+
+      const propagated = propagateKnockout(knockout)
+      const reset = resetKnockoutAfterRound(propagated, 0)
+
+      const downstreamTie = reset.rounds[1]?.ties[0]
+      expect(downstreamTie?.playerAId).toBeNull()
+      expect(downstreamTie?.playerBId).toBeNull()
+      expect(downstreamTie?.winnerId).toBeNull()
+      expect(downstreamTie?.manualWinnerId).toBeNull()
+    })
+
+    it('lets a manual winner override an incomplete tie immediately', () => {
+      const knockout = createKnockout(['p1', 'p2', 'p3', 'p4'], { p1: 1, p2: 2, p3: 3, p4: 4 })
+      const tie = knockout.rounds[0]?.ties.find((match) => match.playerAId && match.playerBId)
+      expect(tie).toBeTruthy()
+      if (!tie || !tie.playerAId || !tie.playerBId) return
+
+      const overridden = propagateKnockout({
+        ...knockout,
+        rounds: [
+          {
+            ...knockout.rounds[0],
+            ties: [
+              {
+                ...tie,
+                manualWinnerId: tie.playerBId,
+              },
+            ],
+          },
+        ],
+      })
+
+      expect(overridden.rounds[0]?.ties[0]?.winnerId).toBe(tie.playerBId)
+    })
 })
 
 describe('late entrant fixtures', () => {

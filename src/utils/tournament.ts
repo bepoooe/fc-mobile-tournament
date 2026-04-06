@@ -317,6 +317,7 @@ const buildTie = (
   leg2: { homeGoals: null, awayGoals: null, completed: false },
   coinTossWinnerId: null,
   decider: { homeGoals: null, awayGoals: null, completed: false, homeId: null },
+  manualWinnerId: null,
   winnerId: playerAId && !playerBId ? playerAId : playerBId && !playerAId ? playerBId : null,
 })
 
@@ -416,6 +417,7 @@ export const swapBracketPlayers = (
           leg2: { homeGoals: null, awayGoals: null, completed: false },
           coinTossWinnerId: null,
           decider: { homeGoals: null, awayGoals: null, completed: false, homeId: null },
+          manualWinnerId: null,
         }
       }),
     }
@@ -427,11 +429,46 @@ export const swapBracketPlayers = (
   }
 }
 
+export const resetKnockoutAfterRound = (
+  knockout: KnockoutState,
+  roundIndex: number,
+): KnockoutState => {
+  if (!knockout.enabled || knockout.rounds.length === 0) {
+    return knockout
+  }
+
+  return {
+    ...knockout,
+    rounds: knockout.rounds.map((round, index) => {
+      if (index <= roundIndex) return round
+
+      return {
+        ...round,
+        ties: round.ties.map((tie) => ({
+          ...tie,
+          playerAId: null,
+          playerBId: null,
+          leg1: { homeGoals: null, awayGoals: null, completed: false },
+          leg2: { homeGoals: null, awayGoals: null, completed: false },
+          coinTossWinnerId: null,
+          decider: { homeGoals: null, awayGoals: null, completed: false, homeId: null },
+          manualWinnerId: null,
+          winnerId: null,
+        })),
+      }
+    }),
+  }
+}
+
 const evaluateTwoLegWinner = (
   tie: KnockoutTie,
   gdMap: Record<string, number>,
 ): string | null => {
   const { playerAId, playerBId, leg1, leg2, decider } = tie
+  const manualWinnerId =
+    tie.manualWinnerId === playerAId || tie.manualWinnerId === playerBId
+      ? tie.manualWinnerId
+      : null
 
   if (!playerAId && !playerBId) return null
   // Structural byes only exist in round 0 (bracket padding with empty strings).
@@ -441,6 +478,8 @@ const evaluateTwoLegWinner = (
     if (playerBId && !playerAId) return playerBId
   }
   if (!playerAId || !playerBId) return null
+
+  if (manualWinnerId) return manualWinnerId
 
   if (!leg1.completed || !leg2.completed) return null
   if (
@@ -478,8 +517,7 @@ const evaluateTwoLegWinner = (
 
   const gdA = gdMap[playerAId] ?? 0
   const gdB = gdMap[playerBId] ?? 0
-  if (gdA >= gdB) return playerAId
-  return playerBId
+  return gdA >= gdB ? playerAId : playerBId
 }
 
 export const propagateKnockout = (knockout: KnockoutState): KnockoutState => {

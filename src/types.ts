@@ -65,6 +65,7 @@ export interface KnockoutTie {
   leg2: TieMatch
   coinTossWinnerId: string | null
   decider: DeciderMatch
+  manualWinnerId: string | null
   winnerId: string | null
 }
 
@@ -153,6 +154,7 @@ export interface TournamentContextType {
     leg: 'leg1' | 'leg2' | 'decider',
   ) => void
   coinTossTie: (roundIndex: number, tieId: string) => void
+  setTieWinner: (roundIndex: number, tieId: string, winnerId: string | null) => void
   setFinalGameResult: (gameId: string, winnerId: string | null, isVoid: boolean) => void
   clearFinalGameResult: (gameId: string) => void
   swapBracketPlayers: (playerId1: string, playerId2: string) => void

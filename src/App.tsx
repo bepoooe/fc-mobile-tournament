@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { TournamentProvider, useGroupFixtures, usePlayerMap, useTournament } from './context/TournamentContext'
 import { calculateStandings } from './utils/tournament'
 import { MAX_PLAYERS, MIN_PLAYERS } from './utils/tournament'
@@ -2460,6 +2460,7 @@ const KnockoutManagement = () => {
     setTieLegScore,
     clearTieLegScore,
     coinTossTie,
+    setTieWinner,
     setFinalGameResult,
     clearFinalGameResult,
     swapBracketPlayers,
@@ -2571,6 +2572,18 @@ const KnockoutManagement = () => {
                     onSave={(home, away) => setTieLegScore(roundIndex, tie.id, 'decider', home, away)}
                     onClear={() => clearTieLegScore(roundIndex, tie.id, 'decider')}
                   />
+                  {tie.playerAId && tie.playerBId && (
+                    <ManualWinnerOverride
+                      tieId={tie.id}
+                      roundIndex={roundIndex}
+                      playerAId={tie.playerAId}
+                      playerBId={tie.playerBId}
+                      playerAName={playerAName}
+                      playerBName={playerBName}
+                      currentWinnerId={tie.manualWinnerId}
+                      onSave={setTieWinner}
+                    />
+                  )}
                 </div>
                 <p className="text-neonPink text-xs sm:text-sm">Winner: {(tie.winnerId && playerMap[tie.winnerId]?.name) || 'Pending'}</p>
               </div>
@@ -2634,6 +2647,63 @@ const KnockoutManagement = () => {
         </div>
       )}
     </section>
+  )
+}
+
+const ManualWinnerOverride = ({
+  roundIndex,
+  tieId,
+  playerAId,
+  playerBId,
+  playerAName,
+  playerBName,
+  currentWinnerId,
+  onSave,
+}: {
+  roundIndex: number
+  tieId: string
+  playerAId: string
+  playerBId: string
+  playerAName: string
+  playerBName: string
+  currentWinnerId: string | null
+  onSave: (roundIndex: number, tieId: string, winnerId: string | null) => void
+}) => {
+  const [selectedWinnerId, setSelectedWinnerId] = useState(currentWinnerId ?? '')
+  const [savedWinnerId, setSavedWinnerId] = useState(currentWinnerId ?? '')
+
+  useEffect(() => {
+    setSelectedWinnerId(currentWinnerId ?? '')
+    setSavedWinnerId(currentWinnerId ?? '')
+  }, [currentWinnerId, playerAId, playerBId, tieId])
+
+  const isDirty = selectedWinnerId !== savedWinnerId
+  const buttonLabel = isDirty ? 'Save Override' : 'Saved'
+
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <span className="text-zinc-400 text-xs sm:w-36">Admin winner override</span>
+      <select
+        className="input flex-1 text-xs"
+        value={selectedWinnerId}
+        onChange={(event) => setSelectedWinnerId(event.target.value)}
+      >
+        <option value="">Auto verdict</option>
+        <option value={playerAId}>{playerAName}</option>
+        <option value={playerBId}>{playerBName}</option>
+      </select>
+      <button
+        type="button"
+        className={`btn-secondary text-xs sm:flex-initial ${isDirty ? '' : 'opacity-70'}`}
+        onClick={() => {
+          onSave(roundIndex, tieId, selectedWinnerId || null)
+          setSavedWinnerId(selectedWinnerId)
+        }}
+        disabled={!isDirty}
+      >
+        {buttonLabel}
+      </button>
+    </div>
   )
 }
 

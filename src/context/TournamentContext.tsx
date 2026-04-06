@@ -22,6 +22,7 @@ import {
   snakeDraftGroups,
   standingsGoalDiffMap,
   suggestBalancedGroup,
+  resetKnockoutAfterRound,
   swapBracketPlayers,
 } from '../utils/tournament'
 import type {
@@ -143,6 +144,7 @@ const updateTie = (
         awayGoals,
         completed: true,
       },
+      manualWinnerId: null,
     }
   }
 
@@ -154,6 +156,7 @@ const updateTie = (
       awayGoals,
       completed: true,
     },
+    manualWinnerId: null,
   }
 }
 
@@ -707,6 +710,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
                     awayGoals: null,
                     completed: false,
                   },
+                  manualWinnerId: null,
                 }
               }
 
@@ -718,6 +722,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
                   awayGoals: null,
                   completed: false,
                 },
+                manualWinnerId: null,
               }
             }),
           }
@@ -734,6 +739,44 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
     },
     [],
   )
+
+  const setTieWinner = useCallback((roundIndex: number, tieId: string, winnerId: string | null) => {
+    setState((prev) => {
+      const rounds = resetKnockoutAfterRound(prev.knockout, roundIndex).rounds.map((round, index) => {
+        if (index !== roundIndex) return round
+
+        return {
+          ...round,
+          ties: round.ties.map((tie) => {
+            if (tie.id !== tieId) return tie
+
+            const allowedWinnerIds = new Set([tie.playerAId, tie.playerBId].filter(Boolean))
+            const manualWinnerId = winnerId && allowedWinnerIds.has(winnerId) ? winnerId : null
+
+            return {
+              ...tie,
+              manualWinnerId,
+            }
+          }),
+        }
+      })
+
+      const next = propagateKnockout({ ...prev.knockout, rounds })
+
+      const stage = next.finalSeries?.championId
+        ? 'completed'
+        : next.finalSeries?.player1Id && next.finalSeries?.player2Id
+          ? 'final'
+          : 'knockout'
+
+      return {
+        ...prev,
+        knockout: next,
+        championId: next.finalSeries?.championId ?? null,
+        stage,
+      }
+    })
+  }, [])
 
   const coinTossTie = useCallback((roundIndex: number, tieId: string) => {
     setState((prev) => {
@@ -872,6 +915,7 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
       setTieLegScore,
       clearTieLegScore,
       coinTossTie,
+      setTieWinner,
       setFinalGameResult,
       clearFinalGameResult,
       swapBracketPlayers: swapBracketPlayersHandler,
