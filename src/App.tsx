@@ -30,6 +30,8 @@ declare global {
 type Page = 'groups' | 'fixtures' | 'stats' | 'knockout' | 'rules' | 'admin'
 type AdminTab = 'players' | 'groups' | 'fixtures' | 'score_entry' | 'knockout' | 'settings'
 
+const ADMIN_AUTH_STORAGE_KEY = 'techstorm_admin_authenticated'
+
 const navItems: Array<{ key: Page; label: string }> = [
   { key: 'groups', label: 'Groups' },
   { key: 'fixtures', label: 'Fixtures' },
@@ -1411,16 +1413,28 @@ const RulesPage = () => (
 
 const AdminPage = () => {
   const { state } = useTournament()
-  const [authenticated, setAuthenticated] = useState(false)
+  const [authenticated, setAuthenticated] = useState(
+    () => localStorage.getItem(ADMIN_AUTH_STORAGE_KEY) === '1',
+  )
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [adminTab, setAdminTab] = useState<AdminTab>('players')
   const [authError, setAuthError] = useState('')
 
+  const handleAdminLogout = () => {
+    localStorage.removeItem(ADMIN_AUTH_STORAGE_KEY)
+    setAuthenticated(false)
+    setPassword('')
+    setShowPassword(false)
+    setAuthError('')
+    setAdminTab('players')
+  }
+
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
     if (password === state.settings.adminPassword) {
       setAuthenticated(true)
+      localStorage.setItem(ADMIN_AUTH_STORAGE_KEY, '1')
       setPassword('')
       setShowPassword(false)
       setAuthError('')
@@ -1518,7 +1532,7 @@ const AdminPage = () => {
       {adminTab === 'fixtures' && <FixturesManagement />}
       {adminTab === 'score_entry' && <ScoreEntryManagement />}
       {adminTab === 'knockout' && <KnockoutManagement />}
-      {adminTab === 'settings' && <SettingsManagement />}
+      {adminTab === 'settings' && <SettingsManagement onLogout={handleAdminLogout} />}
     </section>
   )
 }
@@ -2752,7 +2766,7 @@ const ScoreLegInput = ({
   )
 }
 
-const SettingsManagement = () => {
+const SettingsManagement = ({ onLogout }: { onLogout: () => void }) => {
   const { state, setSettings, setAdminPassword, exportState, importState, resetTournament } = useTournament()
   const fileRef = useRef<HTMLInputElement | null>(null)
   const [newPassword, setNewPassword] = useState(state.settings.adminPassword)
@@ -2851,6 +2865,9 @@ const SettingsManagement = () => {
         </button>
         <button type="button" className="btn-secondary text-xs sm:text-sm" onClick={() => fileRef.current?.click()}>
           Import Data
+        </button>
+        <button type="button" className="btn-danger text-xs sm:text-sm" onClick={onLogout}>
+          Logout Admin
         </button>
         <button type="button" className="btn-danger text-xs sm:text-sm" onClick={warnAndReset}>
           Clear Tournament Data
