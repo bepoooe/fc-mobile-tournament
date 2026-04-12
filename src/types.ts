@@ -79,6 +79,9 @@ export interface FinalGame {
   id: string
   winnerId: string | null
   void: boolean
+  homeGoals: number | null
+  awayGoals: number | null
+  scoreNulled: boolean
 }
 
 export interface FinalSeries {
@@ -155,7 +158,14 @@ export interface TournamentContextType {
   ) => void
   coinTossTie: (roundIndex: number, tieId: string) => void
   setTieWinner: (roundIndex: number, tieId: string, winnerId: string | null) => void
-  setFinalGameResult: (gameId: string, winnerId: string | null, isVoid: boolean) => void
+  setFinalGameResult: (
+    gameId: string,
+    winnerId: string | null,
+    isVoid: boolean,
+    homeGoals?: number | null,
+    awayGoals?: number | null,
+    scoreNulled?: boolean,
+  ) => void
   clearFinalGameResult: (gameId: string) => void
   swapBracketPlayers: (playerId1: string, playerId2: string) => void
 }

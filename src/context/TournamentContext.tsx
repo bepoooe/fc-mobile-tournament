@@ -58,6 +58,19 @@ const normalizeTournamentState = (incoming?: Partial<TournamentState>): Tourname
     ? incoming.players.slice(0, MAX_PLAYERS)
     : fallback.players
 
+  const normalizedKnockout = { ...fallback.knockout, ...(incoming?.knockout ?? {}) }
+  if (normalizedKnockout.finalSeries) {
+    normalizedKnockout.finalSeries = {
+      ...normalizedKnockout.finalSeries,
+      games: normalizedKnockout.finalSeries.games.map((game) => ({
+        ...game,
+        homeGoals: game.homeGoals ?? null,
+        awayGoals: game.awayGoals ?? null,
+        scoreNulled: game.scoreNulled ?? false,
+      })),
+    }
+  }
+
   return {
     ...fallback,
     ...incoming,
@@ -76,7 +89,7 @@ const normalizeTournamentState = (incoming?: Partial<TournamentState>): Tourname
           ? mergedSettings.tiebreakers
           : fallback.settings.tiebreakers,
     },
-    knockout: { ...fallback.knockout, ...(incoming?.knockout ?? {}) },
+    knockout: normalizedKnockout,
   }
 }
 
@@ -807,14 +820,37 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const setFinalGameResult = useCallback(
-    (gameId: string, winnerId: string | null, isVoid: boolean) => {
+    (
+      gameId: string,
+      winnerId: string | null,
+      isVoid: boolean,
+      homeGoals?: number | null,
+      awayGoals?: number | null,
+      scoreNulled?: boolean,
+    ) => {
       setState((prev) => {
         if (!prev.knockout.finalSeries) return prev
 
         const finalSeries = {
           ...prev.knockout.finalSeries,
           games: prev.knockout.finalSeries.games.map((game) =>
-            game.id === gameId ? { ...game, winnerId, void: isVoid } : game,
+            game.id === gameId
+              ? {
+                  ...game,
+                  winnerId,
+                  void: isVoid,
+                  homeGoals:
+                    homeGoals !== undefined ? homeGoals : game.homeGoals,
+                  awayGoals:
+                    awayGoals !== undefined ? awayGoals : game.awayGoals,
+                  scoreNulled:
+                    scoreNulled !== undefined
+                      ? scoreNulled
+                      : isVoid
+                        ? false
+                        : game.scoreNulled,
+                }
+              : game,
           ),
         }
 
@@ -838,7 +874,16 @@ export const TournamentProvider = ({ children }: { children: ReactNode }) => {
       const finalSeries = {
         ...prev.knockout.finalSeries,
         games: prev.knockout.finalSeries.games.map((game) =>
-          game.id === gameId ? { ...game, winnerId: null, void: false } : game,
+          game.id === gameId
+            ? {
+                ...game,
+                winnerId: null,
+                void: false,
+                homeGoals: null,
+                awayGoals: null,
+                scoreNulled: false,
+              }
+            : game,
         ),
       }
 

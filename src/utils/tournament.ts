@@ -366,9 +366,30 @@ export const createKnockout = (
     player1Id: rounds.length === 0 ? seeded[0] || null : null,
     player2Id: rounds.length === 0 ? seeded[1] || null : null,
     games: [
-      { id: createId(), winnerId: null, void: false },
-      { id: createId(), winnerId: null, void: false },
-      { id: createId(), winnerId: null, void: false },
+      {
+        id: createId(),
+        winnerId: null,
+        void: false,
+        homeGoals: null,
+        awayGoals: null,
+        scoreNulled: false,
+      },
+      {
+        id: createId(),
+        winnerId: null,
+        void: false,
+        homeGoals: null,
+        awayGoals: null,
+        scoreNulled: false,
+      },
+      {
+        id: createId(),
+        winnerId: null,
+        void: false,
+        homeGoals: null,
+        awayGoals: null,
+        scoreNulled: false,
+      },
     ],
     championId: null,
   }

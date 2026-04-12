@@ -1019,6 +1019,19 @@ const aggregatePlayerStats = (state: TournamentState): PlayerStatsRow[] => {
     })
   })
 
+  if (state.knockout.finalSeries) {
+    const { player1Id, player2Id, games } = state.knockout.finalSeries
+    games.forEach((game) => {
+      recordMatch(
+        player1Id,
+        player2Id,
+        game.homeGoals,
+        game.awayGoals,
+        !game.void && game.homeGoals !== null && game.awayGoals !== null,
+      )
+    })
+  }
+
   return Object.values(stats)
 }
 
@@ -1105,7 +1118,7 @@ const StatsPage = () => {
       <div className="panel space-y-3">
         <h2 className="section-heading text-sm sm:text-base">Tournament Stats</h2>
         <p className="text-xs sm:text-sm text-zinc-300">
-          Rankings include completed group-stage matches and completed knockout legs.
+          Rankings include completed group-stage matches, knockout legs, and final best-of-3 matches.
         </p>
       </div>
 
@@ -2467,6 +2480,16 @@ const KnockoutManagement = () => {
   } = useTournament()
   const playerMap = usePlayerMap()
   const finalSeries = state.knockout.finalSeries
+  const canNullThirdFinalGame = useMemo(() => {
+    if (!finalSeries || finalSeries.games.length < 3) return false
+
+    const [game1, game2] = finalSeries.games
+    if (!game1 || !game2) return false
+    if (game1.void || game2.void) return false
+    if (!game1.winnerId || !game2.winnerId) return false
+
+    return game1.winnerId === game2.winnerId
+  }, [finalSeries])
 
   return (
     <section className="space-y-4">
@@ -2606,7 +2629,14 @@ const KnockoutManagement = () => {
                   className="input flex-1 sm:flex-initial"
                   value={game.winnerId ?? ''}
                   onChange={(event) =>
-                    setFinalGameResult(game.id, event.target.value || null, false)
+                    setFinalGameResult(
+                      game.id,
+                      event.target.value || null,
+                      false,
+                      game.homeGoals,
+                      game.awayGoals,
+                      false,
+                    )
                   }
                 >
                   <option value="">Pending</option>
@@ -2622,11 +2652,45 @@ const KnockoutManagement = () => {
                   )}
                 </select>
               </div>
+              <ScoreLegInput
+                key={`${game.id}:final:${game.homeGoals ?? ''}:${game.awayGoals ?? ''}`}
+                label="Final Game Score"
+                homePlayerName={(finalSeries.player1Id && playerMap[finalSeries.player1Id]?.name) || 'Player 1'}
+                awayPlayerName={(finalSeries.player2Id && playerMap[finalSeries.player2Id]?.name) || 'Player 2'}
+                defaultHome={game.homeGoals}
+                defaultAway={game.awayGoals}
+                onSave={(home, away) => {
+                  const winnerId =
+                    home > away
+                      ? finalSeries.player1Id
+                      : away > home
+                        ? finalSeries.player2Id
+                        : null
+
+                  setFinalGameResult(game.id, winnerId ?? null, false, home, away, false)
+                }}
+                onClear={() => clearFinalGameResult(game.id)}
+              />
               <div className="flex flex-col sm:flex-row gap-2">
+                {index === 2 && canNullThirdFinalGame && (
+                  <button
+                    className={`text-xs flex-1 sm:flex-initial ${
+                      game.scoreNulled ? 'btn-primary' : 'btn-secondary'
+                    }`}
+                    type="button"
+                    onClick={() =>
+                      setFinalGameResult(game.id, null, false, null, null, true)
+                    }
+                  >
+                    {game.scoreNulled ? 'Score Nulled' : 'Null Score'}
+                  </button>
+                )}
                 <button
                   className="btn-secondary text-xs flex-1 sm:flex-initial"
                   type="button"
-                  onClick={() => setFinalGameResult(game.id, null, true)}
+                  onClick={() =>
+                    setFinalGameResult(game.id, null, true, null, null, false)
+                  }
                 >
                   Mark Void
                 </button>
@@ -2637,7 +2701,13 @@ const KnockoutManagement = () => {
                 >
                   Clear
                 </button>
-                <span className="text-zinc-400 text-xs self-center sm:ml-auto">{game.void ? 'Replay Required' : 'Recorded'}</span>
+                <span className="text-zinc-400 text-xs self-center sm:ml-auto">
+                  {game.void
+                    ? 'Replay Required'
+                    : game.scoreNulled
+                      ? 'Score Nulled'
+                      : 'Recorded'}
+                </span>
               </div>
             </div>
           ))}
