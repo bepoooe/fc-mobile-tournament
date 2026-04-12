@@ -2148,6 +2148,49 @@ const FixturesManagement = () => {
 const ScoreEntryManagement = () => {
   const { state, setFixtureScore, clearFixtureScore } = useTournament()
   const playerMap = usePlayerMap()
+  const [groupFilter, setGroupFilter] = useState<string>('all')
+  const [groupSort, setGroupSort] = useState<'group_asc' | 'group_desc'>('group_asc')
+  const [playerSearch, setPlayerSearch] = useState('')
+
+  const groupNameById = useMemo(
+    () =>
+      state.groups.reduce<Record<string, string>>((acc, group) => {
+        acc[group.id] = group.name
+        return acc
+      }, {}),
+    [state.groups],
+  )
+
+  const visibleFixtures = useMemo(() => {
+    const query = playerSearch.trim().toLowerCase()
+
+    const filtered = state.fixtures.filter((fixture) => {
+      if (groupFilter !== 'all' && fixture.groupId !== groupFilter) {
+        return false
+      }
+
+      if (!query) return true
+
+      const home = (playerMap[fixture.homeId]?.name ?? '').toLowerCase()
+      const away = (playerMap[fixture.awayId]?.name ?? '').toLowerCase()
+
+      return home.includes(query) || away.includes(query)
+    })
+
+    return [...filtered].sort((left, right) => {
+      const leftGroup = groupNameById[left.groupId] ?? ''
+      const rightGroup = groupNameById[right.groupId] ?? ''
+      const groupCompare = leftGroup.localeCompare(rightGroup)
+
+      if (groupCompare !== 0) {
+        return groupSort === 'group_asc' ? groupCompare : -groupCompare
+      }
+
+      const leftHome = playerMap[left.homeId]?.name ?? ''
+      const rightHome = playerMap[right.homeId]?.name ?? ''
+      return leftHome.localeCompare(rightHome)
+    })
+  }, [groupFilter, groupNameById, groupSort, playerMap, playerSearch, state.fixtures])
 
   if (!state.fixtures.length) {
     return <EmptyState text="No fixtures available for score entry yet." />
@@ -2157,17 +2200,71 @@ const ScoreEntryManagement = () => {
     <section className="panel overflow-x-auto">
       <h3 className="section-heading">Score Entry</h3>
       <p className="mt-2 text-xs text-zinc-300">Enter scores using the keyboard and confirm each fixture.</p>
-      <div className="mt-3 space-y-2">
-        {state.fixtures.map((fixture) => (
-          <FixtureEditor
-            key={`${fixture.id}:${fixture.homeGoals ?? ''}:${fixture.awayGoals ?? ''}`}
-            fixture={fixture}
-            homeName={playerMap[fixture.homeId]?.name || 'Player A'}
-            awayName={playerMap[fixture.awayId]?.name || 'Player B'}
-            onConfirm={(home, away) => setFixtureScore(fixture.id, home, away)}
-            onClear={() => clearFixtureScore(fixture.id)}
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <div className="sm:col-span-1">
+          <label className="mb-1 block text-[11px] uppercase tracking-wider text-zinc-400">
+            Group Filter
+          </label>
+          <select
+            className="input"
+            value={groupFilter}
+            onChange={(event) => setGroupFilter(event.target.value)}
+          >
+            <option value="all">All Groups</option>
+            {state.groups.map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="sm:col-span-1">
+          <label className="mb-1 block text-[11px] uppercase tracking-wider text-zinc-400">
+            Group Sort
+          </label>
+          <select
+            className="input"
+            value={groupSort}
+            onChange={(event) => setGroupSort(event.target.value as 'group_asc' | 'group_desc')}
+          >
+            <option value="group_asc">Group A-Z</option>
+            <option value="group_desc">Group Z-A</option>
+          </select>
+        </div>
+        <div className="sm:col-span-1">
+          <label className="mb-1 block text-[11px] uppercase tracking-wider text-zinc-400">
+            Search Player
+          </label>
+          <input
+            className="input"
+            type="search"
+            placeholder="Search by player name"
+            value={playerSearch}
+            onChange={(event) => setPlayerSearch(event.target.value)}
           />
-        ))}
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-zinc-400">
+        Showing {visibleFixtures.length} of {state.fixtures.length} fixtures
+      </p>
+      <div className="mt-3 space-y-2">
+        {visibleFixtures.length ? (
+          visibleFixtures.map((fixture) => (
+            <FixtureEditor
+              key={`${fixture.id}:${fixture.homeGoals ?? ''}:${fixture.awayGoals ?? ''}`}
+              fixture={fixture}
+              groupName={groupNameById[fixture.groupId] ?? 'Unknown Group'}
+              homeName={playerMap[fixture.homeId]?.name || 'Player A'}
+              awayName={playerMap[fixture.awayId]?.name || 'Player B'}
+              onConfirm={(home, away) => setFixtureScore(fixture.id, home, away)}
+              onClear={() => clearFixtureScore(fixture.id)}
+            />
+          ))
+        ) : (
+          <div className="rounded border border-neonPurple/20 bg-zinc-950/50 px-3 py-4 text-xs text-zinc-400">
+            No fixtures match the selected group/search.
+          </div>
+        )}
       </div>
     </section>
   )
@@ -2228,12 +2325,14 @@ const GroupFixtureCard = ({
 
 const FixtureEditor = ({
   fixture,
+  groupName,
   homeName,
   awayName,
   onConfirm,
   onClear,
 }: {
   fixture: Fixture
+  groupName: string
   homeName: string
   awayName: string
   onConfirm: (home: number, away: number) => void
@@ -2272,9 +2371,10 @@ const FixtureEditor = ({
         ? 'border-green-500/50 bg-green-950/30' 
         : 'border-neonPurple/30 bg-zinc-950/70'
     }`}>
-      <p className="sm:col-span-4 md:col-span-1">
-        {homeName} vs {awayName}
-      </p>
+      <div className="sm:col-span-4 md:col-span-1">
+        <p className="text-[10px] uppercase tracking-wider text-neonPurple/80">{groupName}</p>
+        <p>{homeName} vs {awayName}</p>
+      </div>
       <input
         className="input input-score w-full sm:w-[60px]"
         type="text"
