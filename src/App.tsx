@@ -1063,6 +1063,9 @@ const StatsPage = () => {
       [...statsRows]
         .filter((row) => row.matches > 0)
         .sort((a, b) => {
+          const aConcededPerMatch = a.goalsAgainst / a.matches
+          const bConcededPerMatch = b.goalsAgainst / b.matches
+          if (aConcededPerMatch !== bConcededPerMatch) return aConcededPerMatch - bConcededPerMatch
           if (a.goalsAgainst !== b.goalsAgainst) return a.goalsAgainst - b.goalsAgainst
           if (b.matches !== a.matches) return b.matches - a.matches
           return (playerMap[a.playerId]?.name ?? '').localeCompare(playerMap[b.playerId]?.name ?? '')
@@ -1190,6 +1193,7 @@ const StatsPage = () => {
                 <tr>
                   <th className="w-8 px-1.5 sm:px-2 py-2 whitespace-nowrap">#</th>
                   <th className="px-1.5 sm:px-2 py-2">Player</th>
+                  <th className="w-16 sm:w-24 px-1.5 sm:px-2 py-2 text-center whitespace-nowrap">GA/Match</th>
                   <th className="w-12 sm:w-16 px-1.5 sm:px-2 py-2 text-center whitespace-nowrap">GA</th>
                   <th className="w-14 sm:w-20 px-1.5 sm:px-2 py-2 text-center whitespace-nowrap">Matches</th>
                 </tr>
@@ -1202,13 +1206,16 @@ const StatsPage = () => {
                       <td className="px-1.5 sm:px-2 py-2 truncate" title={playerMap[row.playerId]?.name ?? 'Unknown'}>
                         {playerMap[row.playerId]?.name ?? 'Unknown'}
                       </td>
+                      <td className="px-1.5 sm:px-2 py-2 text-center font-semibold text-emerald-300 whitespace-nowrap">
+                        {(row.goalsAgainst / row.matches).toFixed(2)}
+                      </td>
                       <td className="px-1.5 sm:px-2 py-2 text-center font-semibold text-emerald-300 whitespace-nowrap">{row.goalsAgainst}</td>
                       <td className="px-1.5 sm:px-2 py-2 text-center whitespace-nowrap">{row.matches}</td>
                     </tr>
                   ))
                 ) : (
                   <tr className="border-t border-neonPurple/20">
-                    <td className="px-2 py-3 text-center text-zinc-400" colSpan={4}>
+                    <td className="px-2 py-3 text-center text-zinc-400" colSpan={5}>
                       No concession stats yet.
                     </td>
                   </tr>
